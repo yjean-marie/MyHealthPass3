@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="1d54d9b242ab430e9a5e94359abaf8b2" Name="Diagram1" >
+        <EntityTypeShape EntityType="MyHealthPass.Person" Width="1.5" PointX="1" PointY="0.5" />
+        <EntityTypeShape EntityType="MyHealthPass.Role" Width="1.5" PointX="3.375" PointY="0.5" />
+        <EntityTypeShape EntityType="MyHealthPass.Client" Width="2.375" PointX="6.125" PointY="0.625" />
+        <EntityTypeShape EntityType="MyHealthPass.Scope" Width="1.5" PointX="4.875" PointY="5" />
+        <EntityTypeShape EntityType="MyHealthPass.Claim" Width="1.5" PointX="10" PointY="5.125" />
+        <EntityTypeShape EntityType="MyHealthPass.ClientScope" Width="1.5" PointX="11.75" PointY="4.875" />
+        <EntityTypeShape EntityType="MyHealthPass.ScopeClaim" Width="1.5" PointX="7.75" PointY="5.125" />
+        <EntityTypeShape EntityType="MyHealthPass.ClientCorsOrigin" Width="1.5" PointX="9.75" PointY="0.5" />
+        <EntityTypeShape EntityType="MyHealthPass.User" Width="1.5" PointX="1" PointY="4.25" />
+        <EntityTypeShape EntityType="MyHealthPass.ClientRedirectUri" Width="1.5" PointX="10" PointY="3" />
+        <EntityTypeShape EntityType="MyHealthPass.ClientPostLogoutRedirectUri" Width="1.5" PointX="12.5" PointY="0.875" />
+        <AssociationConnector Association="MyHealthPass.UserRole" />
+        <AssociationConnector Association="MyHealthPass.UserPerson" />
+        <AssociationConnector Association="MyHealthPass.ClientCorsOriginClient" />
+        <AssociationConnector Association="MyHealthPass.ClientPostLogoutRedirectUriClient" />
+        <AssociationConnector Association="MyHealthPass.ClientClientRedirectUri" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>
