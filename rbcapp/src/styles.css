@@ -1,0 +1,108 @@
+/* You can add global styles to this file, and also import other style files */
+  
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Roboto:wght@400;500&display=swap');
+body {
+  font-family: 'Roboto', sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0;
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--background-light);
+    color: var(--text-dark);
+}
+html {
+  height: 100%;
+}
+
+
+
+h1, h2, h3, h4 {
+  font-family: 'Poppins', sans-serif;
+}
+.custom-mat-card {
+  background-color: #009688; /* Teal background */
+  color: #ffffff; /* White text */
+}
+.custom-chat-dialog .mat-dialog-container {
+    padding: 0;
+    border-radius: 10px 10px 0 0;
+    overflow: hidden; /* This ensures the content does not overflow the rounded corners */
+  }
+
+  :root {
+    --royal-blue: #003087;
+    --light-royal-blue: #4169e1;
+    --accent-yellow: #FFD700;
+    --text-light: #ffffff;
+    --text-dark: #333;
+    --background-light: #f0f2f5;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 0 20px;
+  }
+  
+  /* Header */
+  .custom-toolbar {
+    background: linear-gradient(45deg, var(--royal-blue), var(--light-royal-blue));
+    color: var(--text-light);
+  }
+  
+  /* Hero Section */
+  .hero-section {
+    background: linear-gradient(to right, var(--royal-blue), var(--light-royal-blue));
+    color: var(--text-light);
+    padding: 60px 0;
+    text-align: center;
+  }
+  
+  .hero-section h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 300;
+  }
+  
+  .hero-section p {
+    font-size: 1.2rem;
+    margin: 20px 0;
+  }
+  
+  /* Cards Section */
+  .cards-section {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 20px;
+    padding: 40px 0;
+  }
+  
+  .mat-card {
+    flex: 1;
+    min-width: 250px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  }
+  
+  .mat-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+  }
+  
+  .mat-card img {
+    width: 100%;
+    height: auto;
+  }
+  
+  /* Footer */
+  .custom-footer {
+    background: var(--royal-blue);
+    color: var(--text-light);
+    padding: 20px;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+
+

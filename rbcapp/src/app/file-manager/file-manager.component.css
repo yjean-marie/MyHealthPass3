@@ -1,0 +1,30 @@
+.file-manager-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+  }
+  
+  .upload-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    margin: 20px;
+    width: 100%;
+  }
+  
+  .selected-file-name {
+    margin: 0 15px;
+    font-weight: bold;
+  }
+  
+  .list-card {
+    width: 60%;
+    max-width: 800px;
+    margin-top: 20px;
+  }
+  
+  mat-toolbar {
+    width: 100%;
+  }
+  

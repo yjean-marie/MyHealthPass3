@@ -1,0 +1,89 @@
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    padding:0px;
+  }
+  
+  .chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #e0e0ff; /* Light blue background */
+    border-bottom: 1px solid #ccc;
+  }
+  
+  .contact-name {
+    font-weight: 500;
+    color: #444950;
+  }
+  .text {
+    color:#444950;
+  }
+  .chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #f0f0f0; /* Light gray background */
+  }
+  
+  .message {
+    display: flex;
+    align-items: center; /* This will vertically center the avatar with the text */
+    margin-bottom: 10px;
+  }
+  
+  .received, .sent {
+    display: flex;
+    flex-direction: row; /* Adjust based on the message flow */
+  }
+  
+  .received .text, .sent .text {
+    background-color: #e0e0e0; /* Example color - received message */
+    border-radius: 15px;
+    padding: 10px;
+    margin: 0 10px;
+  }
+  
+  .sent .text {
+    background-color: #d0e0ff; /* Example color - sent message */
+  }
+  
+  .avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    /* You may need to adjust margin depending on your design */
+  }
+  
+  .chat-input {
+    display: flex;
+    padding: 10px;
+    background-color: #fff;
+    border-top: 1px solid #ccc;
+  }
+  
+  .chat-input input {
+    flex-grow: 1;
+    margin-right: 10px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 15px;
+  }
+  
+  .chat-input button {
+    border: none;
+    background: none;
+  }
+  
+  /* Adjust mat-icon size if needed */
+  .chat-input mat-icon {
+    font-size: 24px;
+    line-height: 1;
+  }
+  
+  /* Additional styles for action icons in the header */
+  /* ... */
+  

@@ -1,0 +1,21 @@
+
+<section class="hero-section">
+  <div class="container">
+    <h1>Welcome to Your Financial Future</h1>
+    <p>Discover the world of opportunities with BankName.</p>
+  </div>
+</section>
+<section class="cards-section">
+    <mat-card *ngFor="let service of services" class="custom-mat-card">
+      <mat-card-header>
+        <mat-card-title>{{service.title}}</mat-card-title>
+        <mat-card-subtitle>{{service.subtitle}}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p>{{service.description}}</p>
+      </mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-button color="primary">Learn More</button>
+      </mat-card-actions>
+    </mat-card>
+  </section>

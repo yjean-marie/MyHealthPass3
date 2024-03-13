@@ -1,0 +1,23 @@
+<mat-dialog-content class="chat-container">
+    <div class="chat-header">
+      <span class="contact-name">RBCC Chat Assistant</span>
+      <!-- Add action icons as needed -->
+    </div>
+    
+    <div class="chat-messages">
+      <!-- Chat messages will be iterated here -->
+      <div *ngFor="let message of messages" class="message" [ngClass]="{'received': message.sender === 'assistant', 'sent': message.sender === 'user'}">
+        
+        <img *ngIf="message.sender === 'user'" src="../../assets/user.png" alt="User Avatar" class="avatar">
+        <div class="text">{{ message.text }}</div>
+        <img *ngIf="message.sender === 'assistant'" src="../../assets/rbc_assistant.png" alt="Assistant Avatar" class="avatar">
+      </div>
+    </div>
+  </mat-dialog-content>
+  
+  <mat-dialog-actions class="chat-input">
+    <input matInput placeholder="Type a message..." [(ngModel)]="messageText" (keyup.enter)="sendMessage()">
+    <button mat-button (click)="sendMessage()">
+      <mat-icon>send</mat-icon>
+    </button>
+  </mat-dialog-actions>
