@@ -1,0 +1,189 @@
+To create a solution for handling idempotency in a core project, including SQL table creation, Dapper integration for database connectivity, and C# services for CRUD operations, we'll design a simple yet comprehensive setup. This approach ensures your operations are idempotent, meaning repeated requests with the same parameters result in the same state without unintended side effects.
+
+### Step 1: Database Table Design
+
+The SQL script below creates a table named `IdempotencyKeys` designed to store unique keys for each operation, ensuring idempotency.
+
+```sql
+CREATE TABLE IdempotencyKeys (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Key VARCHAR(255) NOT NULL,
+    RequestHash VARCHAR(255) NOT NULL,
+    Response NVARCHAR(MAX) NULL,
+    DateCreated DATETIME NOT NULL DEFAULT GETDATE(),
+    DateUpdated DATETIME NULL,
+    Status VARCHAR(50) NOT NULL,
+    CONSTRAINT UC_IdempotencyKey UNIQUE (Key, RequestHash)
+);
+```
+
+- **Key**: A unique identifier for each operation, such as a transaction ID or operation name.
+- **RequestHash**: A hash of the request payload, ensuring uniqueness of requests.
+- **Response**: Stored response to return for repeated requests.
+- **Status**: Indicates the operation's status (e.g., "Pending", "Completed", "Failed").
+
+### Step 2: Dapper Integration
+
+First, ensure Dapper is added to your project via NuGet:
+
+```shell
+Install-Package Dapper
+```
+
+Next, create a simple `DatabaseService` class for connecting to your SQL Server database and executing operations using Dapper:
+
+```csharp
+using Dapper;
+using System.Data.SqlClient;
+using System.Threading.Tasks;
+
+public class DatabaseService
+{
+    private readonly string _connectionString;
+
+    public DatabaseService(string connectionString)
+    {
+        _connectionString = connectionString;
+    }
+
+    public async Task<T> QueryFirstOrDefaultAsync<T>(string sql, object parameters = null)
+    {
+        using (var connection = new SqlConnection(_connectionString))
+        {
+            return await connection.QueryFirstOrDefaultAsync<T>(sql, parameters);
+        }
+    }
+
+    public async Task<int> ExecuteAsync(string sql, object parameters = null)
+    {
+        using (var connection = new SqlConnection(_connectionString))
+        {
+            return await connection.ExecuteAsync(sql, parameters);
+        }
+    }
+}
+```
+
+### Step 3: Idempotency Services
+
+Now, let's create services for handling idempotency. This includes inserting a new idempotency key, checking for its existence, and updating the key with the operation's outcome.
+
+```csharp
+public class IdempotencyService
+{
+    private readonly DatabaseService _databaseService;
+
+    public IdempotencyService(DatabaseService databaseService)
+    {
+        _databaseService = databaseService;
+    }
+
+    public async Task<bool> TryAddIdempotencyKeyAsync(string key, string requestHash, string status)
+    {
+        var sql = @"INSERT INTO IdempotencyKeys (Key, RequestHash, Status) VALUES (@Key, @RequestHash, @Status)";
+        try
+        {
+            await _databaseService.ExecuteAsync(sql, new { Key = key, RequestHash = requestHash, Status = status });
+            return true;
+        }
+        catch (SqlException)
+        {
+            // Handle exception or log as needed, assuming unique constraint violation
+            return false;
+        }
+    }
+
+    public async Task<bool> UpdateIdempotencyKeyAsync(string key, string requestHash, string response, string status)
+    {
+        var sql = @"UPDATE IdempotencyKeys SET Response = @Response, Status = @Status, DateUpdated = GETDATE() WHERE Key = @Key AND RequestHash = @RequestHash";
+        var result = await _databaseService.ExecuteAsync(sql, new { Key = key, RequestHash = requestHash, Response = response, Status = status });
+        return result > 0;
+    }
+
+    public async Task<(bool Exists, string Response)> CheckIdempotencyKeyAsync(string key, string requestHash)
+    {
+        var sql = @"SELECT Response FROM IdempotencyKeys WHERE Key = @Key AND RequestHash = @RequestHash";
+        var response = await _databaseService.QueryFirstOrDefaultAsync<string>(sql, new { Key = key, RequestHash = requestHash });
+        return (response != null, response);
+    }
+}
+```
+
+This `IdempotencyService` class provides methods to:
+- Try adding a new idempotency key with the initial status.
+- Update the key after the operation completes, including the response and final status.
+- Check if an operation with a given key and request hash already exists, and if so, retrieve its stored response.
+
+### Usage Example
+
+To use the `IdempotencyService`, instantiate it with a `DatabaseService` configured with your database's connection string. Before performing an operation that you want to make idempotent, call `Check
+
+
+
+Apologies for that abrupt stop. Let's continue with how you would use the `IdempotencyService` in your application:
+
+### Using the IdempotencyService
+
+Assuming you have instantiated `IdempotencyService` in your application, here’s how you might use it in a scenario where you want to ensure idempotency:
+
+```csharp
+// Instantiate the DatabaseService with your SQL Server connection string
+var databaseService = new DatabaseService("YourConnectionStringHere");
+
+// Instantiate the IdempotencyService with the DatabaseService
+var idempotencyService = new IdempotencyService(databaseService);
+
+// Assume these are passed from your API
+string operationKey = "unique-operation-identifier";
+string requestPayloadHash = "hash-of-request-payload"; // This should be generated
+string operationStatus = "Pending";
+string response = null;
+
+// Check if this operation was already performed
+var (exists, storedResponse) = await idempotencyService.CheckIdempotencyKeyAsync(operationKey, requestPayloadHash);
+
+if (exists)
+{
+    // Return the stored response for this operation
+    response = storedResponse;
+}
+else
+{
+    // Operation not found, proceed with adding a new idempotency key
+    bool added = await idempotencyService.TryAddIdempotencyKeyAsync(operationKey, requestPayloadHash, operationStatus);
+
+    if (added)
+    {
+        // Perform the operation here...
+
+        // Update the operation's outcome
+        operationStatus = "Completed"; // or "Failed" based on the outcome
+        response = "operation response"; // This should be the actual response from your operation
+
+        await idempotencyService.UpdateIdempotencyKeyAsync(operationKey, requestPayloadHash, response, operationStatus);
+    }
+    else
+    {
+        // Handle the case where adding the idempotency key fails (e.g., due to a race condition)
+    }
+}
+
+// Return the response
+```
+
+This example illustrates a typical flow for using the `IdempotencyService`:
+
+1. **Check for Existing Operations**: Before executing the intended operation, check if it has already been performed by looking for an existing idempotency key with the same operation key and request hash.
+   
+2. **Perform the Operation**: If the operation hasn't been performed, proceed with it. This might involve business logic, database operations, external API calls, etc.
+   
+3. **Store the Outcome**: After the operation is performed, update the idempotency key record with the operation's result (success or failure) and the response to be returned for any subsequent requests with the same key and hash.
+
+### Notes
+
+- **Generating Request Hash**: The request hash should uniquely represent the request's payload. A common approach is to serialize the request payload to a string and hash it using SHA-256 or a similar algorithm.
+- **Concurrency Considerations**: This implementation assumes that concurrent requests with the same key and hash are rare or that the database's unique constraint on the `Key` and `RequestHash` columns effectively prevents duplicate records. If your application is highly concurrent, you might need additional locking or synchronization mechanisms to handle race conditions.
+- **Cleaning Up Old Records**: Depending on your application's requirements, you might want to periodically clean up old records from the `IdempotencyKeys` table to prevent unbounded growth. This could be achieved through a background task or scheduled job that deletes records older than a certain threshold.
+
+This setup provides a robust foundation for ensuring idempotency in your applications, making your APIs more reliable and user-friendly.
+
