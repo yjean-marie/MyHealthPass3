@@ -1,0 +1,212 @@
+To write unit tests for the `IdempotencyService` using NUnit and mock the `DatabaseService` dependency with Moq, you'll focus on testing the behavior of `IdempotencyService` methods under various conditions. This involves mocking calls to `DatabaseService` and verifying that `IdempotencyService` correctly interprets and responds to different database outcomes.
+
+First, ensure your test project references NUnit and Moq:
+
+```shell
+Install-Package NUnit
+Install-Package Moq
+```
+
+### Testing IdempotencyService
+
+Here's how you could write tests for the `TryAddIdempotencyKeyAsync`, `UpdateIdempotencyKeyAsync`, and `CheckIdempotencyKeyAsync` methods.
+
+```csharp
+using Moq;
+using NUnit.Framework;
+using System.Threading.Tasks;
+
+[TestFixture]
+public class IdempotencyServiceTests
+{
+    private Mock<DatabaseService> _mockDatabaseService;
+    private IdempotencyService _idempotencyService;
+
+    [SetUp]
+    public void Setup()
+    {
+        _mockDatabaseService = new Mock<DatabaseService>("fake-connection-string");
+        _idempotencyService = new IdempotencyService(_mockDatabaseService.Object);
+    }
+
+    [Test]
+    public async Task TryAddIdempotencyKeyAsync_KeyAdded_ReturnsTrue()
+    {
+        // Arrange
+        _mockDatabaseService.Setup(m => m.ExecuteAsync(It.IsAny<string>(), It.IsAny<object>()))
+                            .ReturnsAsync(1); // Simulate successful insert
+
+        // Act
+        var result = await _idempotencyService.TryAddIdempotencyKeyAsync("testKey", "testHash", "Pending");
+
+        // Assert
+        Assert.IsTrue(result);
+    }
+
+    [Test]
+    public async Task TryAddIdempotencyKeyAsync_KeyNotAdded_ReturnsFalse()
+    {
+        // Arrange
+        _mockDatabaseService.Setup(m => m.ExecuteAsync(It.IsAny<string>(), It.IsAny<object>()))
+                            .ThrowsAsync(new System.Data.SqlClient.SqlException()); // Simulate an SQL exception
+
+        // Act & Assert
+        Assert.ThrowsAsync<System.Data.SqlClient.SqlException>(() => _idempotencyService.TryAddIdempotencyKeyAsync("testKey", "testHash", "Pending"));
+    }
+
+    [Test]
+    public async Task UpdateIdempotencyKeyAsync_KeyExists_ReturnsTrue()
+    {
+        // Arrange
+        _mockDatabaseService.Setup(m => m.ExecuteAsync(It.IsAny<string>(), It.IsAny<object>()))
+                            .ReturnsAsync(1); // Simulate successful update
+
+        // Act
+        var result = await _idempotencyService.UpdateIdempotencyKeyAsync("testKey", "testHash", "response", "Completed");
+
+        // Assert
+        Assert.IsTrue(result);
+    }
+
+    [Test]
+    public async Task CheckIdempotencyKeyAsync_KeyExists_ReturnsTrueWithResponse()
+    {
+        // Arrange
+        string expectedResponse = "cached response";
+        _mockDatabaseService.Setup(m => m.QueryFirstOrDefaultAsync<string>(It.IsAny<string>(), It.IsAny<object>()))
+                            .ReturnsAsync(expectedResponse); // Simulate finding the key
+
+        // Act
+        var (exists, response) = await _idempotencyService.CheckIdempotencyKeyAsync("testKey", "testHash");
+
+        // Assert
+        Assert.IsTrue(exists);
+        Assert.AreEqual(expectedResponse, response);
+    }
+
+    [Test]
+    public async Task CheckIdempotencyKeyAsync_KeyDoesNotExist_ReturnsFalse()
+    {
+        // Arrange
+        _mockDatabaseService.Setup(m => m.QueryFirstOrDefaultAsync<string>(It.IsAny<string>(), It.IsAny<object>()))
+                            .ReturnsAsync((string)null); // Simulate not finding the key
+
+        // Act
+        var (exists, response) = await _idempotencyService.CheckIdempotencyKeyAsync("testKey", "testHash");
+
+        // Assert
+        Assert.IsFalse(exists);
+        Assert.IsNull(response);
+    }
+}
+```
+
+### Explanation
+
+1. **Setup**: Before each test, a `Mock<DatabaseService>` is created along with an instance of `IdempotencyService`, injecting the mocked `DatabaseService`. This allows you to control the database interaction outcomes.
+
+2. **Tests**: Each test simulates different scenarios by setting up the `DatabaseService` mock to return specific values or throw exceptions. Then, it asserts whether `IdempotencyService` behaves as expected under those conditions.
+
+3. **Arrange-Act-Assert (AAA) Pattern**: Each test follows this pattern, where you first arrange the necessary preconditions and inputs, act by calling the method under test, and assert to check if the outcome is as expected.
+
+4. **Mock Setup and Verification**: The `.Setup` method of the mock is used to define return values or exceptions for specific calls. This approach isolates the test to only the `IdempotencyService` logic
+
+
+
+
+
+Incorporating edge cases into your unit tests for the `IdempotencyService` enhances the robustness and reliability of your application. Here are examples that extend the initial test suite with edge cases and more nuanced scenarios:
+
+### Edge Case Tests for IdempotencyService
+
+#### Null or Invalid Inputs
+
+It's important to verify how your service behaves when provided with null or invalid inputs. These tests ensure that your method contracts are enforced and that meaningful exceptions or errors are returned when inputs don't meet expected criteria.
+
+```csharp
+[Test]
+public void TryAddIdempotencyKeyAsync_NullKey_ThrowsArgumentException()
+{
+    // Arrange is covered by the setup.
+
+    // Act & Assert for null key
+    Assert.ThrowsAsync<ArgumentException>(() => _idempotencyService.TryAddIdempotencyKeyAsync(null, "testHash", "Pending"));
+}
+
+[Test]
+public void TryAddIdempotencyKeyAsync_EmptyKey_ThrowsArgumentException()
+{
+    // Act & Assert for empty key
+    Assert.ThrowsAsync<ArgumentException>(() => _idempotencyService.TryAddIdempotencyKeyAsync("", "testHash", "Pending"));
+}
+
+// Similar tests can be written for null or empty requestHash and invalid status.
+```
+
+#### Handling Duplicate Keys
+
+Testing how the system behaves when attempting to insert a duplicate key can help ensure that your idempotency logic correctly handles re-entrant operations without creating unwanted side effects.
+
+```csharp
+[Test]
+public async Task TryAddIdempotencyKeyAsync_DuplicateKey_ReturnsFalse()
+{
+    // Arrange
+    _mockDatabaseService.Setup(m => m.ExecuteAsync(It.IsAny<string>(), It.IsAny<object>()))
+                        .ReturnsAsync(0); // Simulate no rows affected, indicating a duplicate
+
+    // Act
+    var result = await _idempotencyService.TryAddIdempotencyKeyAsync("duplicateKey", "testHash", "Pending");
+
+    // Assert
+    Assert.IsFalse(result, "Expected false when trying to add a duplicate idempotency key.");
+}
+```
+
+#### Update Without Existing Key
+
+Ensure that attempts to update a non-existent key handle gracefully, reflecting the operation's idempotent nature.
+
+```csharp
+[Test]
+public async Task UpdateIdempotencyKeyAsync_KeyDoesNotExist_ReturnsFalse()
+{
+    // Arrange
+    _mockDatabaseService.Setup(m => m.ExecuteAsync(It.IsAny<string>(), It.IsAny<object>()))
+                        .ReturnsAsync(0); // Simulate no rows updated
+
+    // Act
+    var result = await _idempotencyService.UpdateIdempotencyKeyAsync("nonExistingKey", "testHash", "response", "Completed");
+
+    // Assert
+    Assert.IsFalse(result, "Expected false when trying to update a non-existent key.");
+}
+```
+
+#### Comprehensive Check for Idempotency Key
+
+Extending the check for an existing idempotency key to cover scenarios where the key exists but with different attributes can uncover handling inconsistencies.
+
+```csharp
+[Test]
+public async Task CheckIdempotencyKeyAsync_KeyExistsWithDifferentHash_ReturnsFalse()
+{
+    // Arrange
+    _mockDatabaseService.Setup(m => m.QueryFirstOrDefaultAsync<string>(It.IsAny<string>(), It.IsAny<object>()))
+                        .ReturnsAsync((string)null); // Simulate key not found due to different hash
+
+    // Act
+    var (exists, _) = await _idempotencyService.CheckIdempotencyKeyAsync("existingKey", "differentHash");
+
+    // Assert
+    Assert.IsFalse(exists, "Expected false when key exists with a different hash.");
+}
+```
+
+### Note on Testing Approach
+
+These edge case tests are designed to ensure that your service behaves predictably and correctly under a wide range of input conditions and scenarios. They help to guard against common development oversights, such as failing to validate inputs or incorrectly handling database operation results.
+
+Remember, the above tests assume that your `IdempotencyService` methods throw exceptions like `ArgumentException` for invalid inputs. If your current implementation does not throw these exceptions, you might need to adjust the tests or update your method implementations accordingly.
+
+Adding these edge case tests to your suite strengthens the overall quality and reliability of your idempotency handling logic, making your application more robust against a variety of real-world usage patterns and data conditions.
