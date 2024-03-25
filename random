@@ -1,0 +1,29 @@
+public class ApiService
+{
+    private readonly HttpClient _httpClient;
+
+    public ApiService(HttpClient httpClient)
+    {
+        _httpClient = httpClient;
+    }
+
+    public async Task<ApiResult> CreateCustomerAsync(CustomerCreateRequest request)
+    {
+        HttpResponseMessage response = await _httpClient.PostAsJsonAsync("api/customers", request);
+
+        return await ProcessResponseBasedOnStatusCode<ApiResult>(response);
+    }
+
+    private async Task<T> ProcessResponseBasedOnStatusCode<T>(HttpResponseMessage response) where T : class
+    {
+        if (!response.IsSuccessStatusCode)
+        {
+            // Optionally, handle non-success scenarios differently
+            var errorContent = await response.Content.ReadAsStringAsync();
+            // Logging, throwing custom exceptions, or converting to error models could be done here
+            throw new ApiException(response.StatusCode, errorContent);
+        }
+
+        return await response.Content.ReadAsAsync<T>();
+    }
+}
