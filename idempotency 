@@ -291,3 +291,78 @@ public class ResourceModel
     public string Name { get; set; }
     public string Description { get; set; }
 }
+
+
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
+
+[Route("api/[controller]")]
+[ApiController]
+public class IdempotencyController : ControllerBase
+{
+    private readonly IdempotencyService _idempotencyService;
+
+    public IdempotencyController(IdempotencyService idempotencyService)
+    {
+        _idempotencyService = idempotencyService;
+    }
+
+    // POST: api/Idempotency
+    [HttpPost]
+    public async Task<IActionResult> AddOrUpdateKey([FromBody] IdempotencyKeyRequest request)
+    {
+        var (exists, storedResponse) = await _idempotencyService.CheckIdempotencyKeyAsync(request.Key, request.RequestHash);
+
+        if (!exists)
+        {
+            // Assume "Pending" as initial status for new keys
+            var added = await _idempotencyService.TryAddIdempotencyKeyAsync(request.Key, request.RequestHash, "Pending");
+            if (!added)
+            {
+                return BadRequest("Failed to add idempotency key.");
+            }
+        }
+
+        return Ok(new { Key = request.Key, Exists = exists, StoredResponse = storedResponse });
+    }
+
+    // GET: api/Idempotency/{key}/{hash}
+    [HttpGet("{key}/{hash}")]
+    public async Task<IActionResult> CheckKey(string key, string hash)
+    {
+        var (exists, response) = await _idempotencyService.CheckIdempotencyKeyAsync(key, hash);
+
+        if (!exists)
+        {
+            return NotFound(new { Key = key, Hash = hash });
+        }
+
+        return Ok(new { Key = key, Hash = hash, Response = response });
+    }
+
+    // PUT: api/Idempotency
+    [HttpPut]
+    public async Task<IActionResult> UpdateKey([FromBody] IdempotencyKeyUpdateRequest request)
+    {
+        var updated = await _idempotencyService.UpdateIdempotencyKeyAsync(request.Key, request.RequestHash, request.Response, request.Status);
+
+        if (!updated)
+        {
+            return BadRequest("Failed to update idempotency key.");
+        }
+
+        return Ok(new { Key = request.Key, Status = request.Status });
+    }
+}
+
+public class IdempotencyKeyRequest
+{
+    public string Key { get; set; }
+    public string RequestHash { get; set; }
+}
+
+public class IdempotencyKeyUpdateRequest : IdempotencyKeyRequest
+{
+    public string Response { get; set; }
+    public string Status { get; set; }
+}
