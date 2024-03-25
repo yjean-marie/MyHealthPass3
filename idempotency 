@@ -187,3 +187,107 @@ This example illustrates a typical flow for using the `IdempotencyService`:
 
 This setup provides a robust foundation for ensuring idempotency in your applications, making your APIs more reliable and user-friendly.
 
+
+
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
+
+[Route("api/[controller]")]
+[ApiController]
+public class ResourcesController : ControllerBase
+{
+    private readonly IdempotencyService _idempotencyService;
+
+    public ResourcesController(IdempotencyService idempotencyService)
+    {
+        _idempotencyService = idempotencyService;
+    }
+
+    // POST: api/Resources
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] ResourceModel model, [FromHeader(Name = "Idempotency-Key")] string idempotencyKey)
+    {
+        if (string.IsNullOrWhiteSpace(idempotencyKey))
+        {
+            return BadRequest("Idempotency-Key header is required.");
+        }
+
+        var requestHash = GenerateHashFromModel(model);
+        var (exists, storedResponse) = await _idempotencyService.CheckIdempotencyKeyAsync(idempotencyKey, requestHash);
+
+        if (exists)
+        {
+            return Ok(storedResponse);
+        }
+
+        // Simulate resource creation
+        var operationResult = "Resource created successfully!";
+        await _idempotencyService.UpdateIdempotencyKeyAsync(idempotencyKey, requestHash, operationResult, "Completed");
+
+        return Ok(operationResult);
+    }
+
+    // GET: api/Resources/{id}
+    [HttpGet("{id}")]
+    public IActionResult Get(int id)
+    {
+        // Simulate retrieving a resource
+        // In a real application, you'd fetch the resource from your database or repository
+        var resource = new ResourceModel { Id = id, Name = "Sample Resource", Description = "This is a sample resource." };
+
+        if (resource == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(resource);
+    }
+
+    // PUT: api/Resources/{id}
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromBody] ResourceModel model, [FromHeader(Name = "Idempotency-Key")] string idempotencyKey)
+    {
+        if (string.IsNullOrWhiteSpace(idempotencyKey))
+        {
+            return BadRequest("Idempotency-Key header is required.");
+        }
+
+        var requestHash = GenerateHashFromModel(model);
+        var (exists, storedResponse) = await _idempotencyService.CheckIdempotencyKeyAsync(idempotencyKey, requestHash);
+
+        if (exists)
+        {
+            return Ok(storedResponse);
+        }
+
+        // Simulate resource update
+        var operationResult = $"Resource {id} updated successfully!";
+        await _idempotencyService.UpdateIdempotencyKeyAsync(idempotencyKey, requestHash, operationResult, "Completed");
+
+        return Ok(operationResult);
+    }
+
+    // DELETE: api/Resources/{id}
+    [HttpDelete("{id}")]
+    public IActionResult Delete(int id)
+    {
+        // Simulate resource deletion
+        // In a real application, you'd remove the resource from your database or repository
+
+        return Ok($"Resource {id} deleted successfully.");
+    }
+
+    private string GenerateHashFromModel(ResourceModel model)
+    {
+        // Implement hashing logic based on the model's properties
+        // This is a placeholder for actual hash generation logic
+        return model.GetHashCode().ToString();
+    }
+}
+
+public class ResourceModel
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
+}
