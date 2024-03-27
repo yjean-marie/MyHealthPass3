@@ -1,0 +1,24 @@
+import requests
+
+# Replace 'your_api_key_here' with your actual OpenAI API key
+api_key = 'your_api_key_here'
+headers = {
+    'Authorization': f'Bearer {api_key}'
+}
+
+# Setting up the data for the API request
+data = {
+    'model': 'text-davinci-004',  # Assuming 'text-davinci-004' is the latest or replace with the model you wish to use
+    'prompt': 'Correct the spelling errors, infer missing country, and standardize the address format for: "Blu Hil Rd, PO Box N-4585, New Providense".',
+    'temperature': 0.5,  # Adjusts randomness in the response. Lower is more deterministic.
+    'max_tokens': 100  # Adjust based on expected length of the response
+}
+
+# Making the post request to the OpenAI API
+response = requests.post('https://api.openai.com/v1/completions', headers=headers, json=data)
+
+# Parsing the response
+if response.status_code == 200:
+    print(response.json()['choices'][0]['text'].strip())
+else:
+    print("Error:", response.status_code, response.text)
