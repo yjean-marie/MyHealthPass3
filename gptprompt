@@ -1,2 +1,28 @@
-'prompt': """Correct the spelling errors, infer missing country, and standardize the address format for the following input: "Blu Hil Rd, PO Box N-4585, New Providense". Return the response as a JSON object with the following fields: new_address (the corrected and standardized address), success (a boolean flag indicating whether the operation was successful), and error_message (a message detailing the error if the operation was not successful). If the address can be successfully corrected and standardized, set success to true and provide the new address. If not, set success to false and include an appropriate error message.""",
-    
+import json
+import requests
+
+# Replace 'your_api_key_here' with your actual OpenAI API key
+api_key = 'your_api_key_here'
+headers = {
+    'Authorization': f'Bearer {api_key}'
+}
+
+data = {
+    'model': 'gpt-4',
+    'prompt': """Correct the spelling errors, infer missing country, and standardize the address format for the following input: "Blu Hil Rd, PO Box N-4585, New Providense". Return the response as a JSON object with the following fields: new_address, success, and error_message.""",
+    'temperature': 0.5,
+    'max_tokens': 150
+}
+
+response = requests.post('https://api.openai.com/v1/completions', headers=headers, json=data)
+
+if response.status_code == 200:
+    response_text = response.json()['choices'][0]['text'].strip()
+    try:
+        # Convert the response string to a JSON object (Python dictionary)
+        response_data = json.loads(response_text)
+        print(response_data)
+    except json.JSONDecodeError:
+        print("Failed to decode the response as JSON. Here's the response text:", response_text)
+else:
+    print("Error:", response.status_code, response.text)
