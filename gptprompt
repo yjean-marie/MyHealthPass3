@@ -26,3 +26,19 @@ if response.status_code == 200:
         print("Failed to decode the response as JSON. Here's the response text:", response_text)
 else:
     print("Error:", response.status_code, response.text)
+
+
+
+
+json_match = re.search(r'\{.*?\}(?![\s\S]*\{)', response_text)
+
+if json_match:
+    json_text = json_match.group()
+    try:
+        # Convert the found JSON text to a Python dictionary
+        json_data = json.loads(json_text)
+        print("Extracted JSON:", json_data)
+    except json.JSONDecodeError as e:
+        print("Error decoding JSON:", e)
+else:
+    print("No JSON found in the response.")
