@@ -1,0 +1,75 @@
+Deploying a .NET API via Jenkins involves several steps, starting from building the solution to deploying it on the target server. Below is a high-level process that includes the build and deployment steps for a .NET API which has a business layer project named "Core" and a testing project. This process assumes that you are using Git for version control and IIS (Internet Information Services) for hosting the API.
+
+### Prerequisites
+
+- Jenkins installed and running.
+- .NET SDK installed on the Jenkins server.
+- MSBuild plugin installed in Jenkins (if using a .NET Framework project).
+- Git plugin installed in Jenkins.
+- IIS installed on the target server where the API will be hosted.
+- Proper permissions for Jenkins to interact with the source code repository, build server, and deployment server.
+
+### Steps
+
+#### 1. Source Code Management
+
+- Configure your Jenkins job to pull the source code from the Git repository where your .NET API is stored. This is done in the job configuration under the "Source Code Management" section.
+
+#### 2. Build Trigger Configuration
+
+- Configure the build triggers according to your needs, such as polling SCM, triggering builds on push using webhooks, or manually triggering builds.
+
+#### 3. Build Environment Configuration
+
+- In the job configuration, set up the build environment. This might include setting environment variables that your build or tests require.
+
+#### 4. Build Step: Restore NuGet Packages
+
+- Add a build step to restore the NuGet packages. This can be done using the command line script:
+  ```
+  dotnet restore YourSolution.sln
+  ```
+  Or for .NET Framework projects:
+  ```
+  nuget restore YourSolution.sln
+  ```
+
+#### 5. Build Step: Build the Solution
+
+- Add a build step to compile the solution using MSBuild for .NET Framework projects:
+  ```
+  msbuild YourSolution.sln /p:Configuration=Release /p:Platform="Any CPU"
+  ```
+  Or use `dotnet build` for .NET Core/.NET 5+ projects:
+  ```
+  dotnet build YourSolution.sln --configuration Release
+  ```
+
+#### 6. Test Step: Run Unit Tests
+
+- Add a step to run the unit tests in your testing project. For .NET Core/.NET 5+:
+  ```
+  dotnet test YourSolution.sln --configuration Release --no-build
+  ```
+  This step ensures that your application passes all tests before it gets deployed.
+
+#### 7. Deployment Preparation
+
+- Add a step to prepare your application for deployment. This might involve publishing the API project to a folder. For .NET Core/.NET 5+:
+  ```
+  dotnet publish YourAPIProject/YourAPIProject.csproj --configuration Release -o publish
+  ```
+
+#### 8. Deployment Step
+
+- Finally, add a step to deploy the application to the IIS server. This step can vary significantly depending on your specific setup. A common approach is to use a tool like `MSDeploy` or scripting via PowerShell to copy the published application to the target server and configure it in IIS.
+
+#### 9. Post-Deployment
+
+- Optional steps to verify the deployment, such as running integration tests or health checks against the deployed application.
+
+### Notes
+
+- Ensure you have proper error handling and notifications configured in Jenkins to alert you of build or deployment failures.
+- The exact commands might vary based on the version of .NET and the specifics of your project.
+- Consider using Jenkins pipelines (Jenkinsfile) for more complex build/deployment workflows, as they offer more flexibility and version control for your CI/CD process.
