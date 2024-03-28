@@ -73,3 +73,36 @@ Deploying a .NET API via Jenkins involves several steps, starting from building 
 - Ensure you have proper error handling and notifications configured in Jenkins to alert you of build or deployment failures.
 - The exact commands might vary based on the version of .NET and the specifics of your project.
 - Consider using Jenkins pipelines (Jenkinsfile) for more complex build/deployment workflows, as they offer more flexibility and version control for your CI/CD process.
+
+
+
+The `dotnet publish` command compiles the application, reads through its dependencies specified in the project file, and publishes the resulting set of files to a directory. The output includes the .NET runtime and the application's dependencies, making the application ready for deployment to a hosting system.
+
+Here’s a typical example of using the `dotnet publish` command for a .NET Core or .NET 5/6+ application:
+
+```sh
+dotnet publish -c Release -o ./publish
+```
+
+- `-c Release` specifies that the build should be compiled using the Release configuration, which is optimized for performance and size. The alternative is Debug, which is suited for development.
+- `-o ./publish` specifies the output directory for the published app. In this example, it's a directory named `publish` in the current directory. You can specify any path as the output directory.
+
+For more specific scenarios, such as targeting a specific runtime or including all dependencies for a self-contained deployment, you might add additional options:
+
+- **Framework-dependent Deployment (FDD):** Doesn't include the .NET runtime. The application relies on the presence of a shared system-wide version of .NET on the target system.
+  ```sh
+  dotnet publish -c Release -o ./publish
+  ```
+
+- **Self-contained Deployment (SCD):** Includes the .NET runtime and libraries, and the application and its dependencies. Useful when you can't rely on the .NET runtime being installed on the target system.
+  ```sh
+  dotnet publish -c Release -r <RID> --self-contained true -o ./publish
+  ```
+  Replace `<RID>` with your target runtime identifier, e.g., `win-x64`, `linux-x64`, etc.
+
+- **Single-file Deployment:** Publishes the application and its dependencies (and optionally the .NET runtime) into a single executable file.
+  ```sh
+  dotnet publish -c Release -r <RID> --self-contained true -p:PublishSingleFile=true -o ./publish
+  ```
+
+Remember to replace `-c Release` with `-c Debug` if you are publishing for a development or test environment, though for deployment, Release is recommended.
