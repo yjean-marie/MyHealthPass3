@@ -37,3 +37,32 @@ with open('data.csv', mode='r', encoding='utf-8') as csv_file:
                 'Full Address': joined_address,
                 'CTRY RESID': row['CTRY RESID']
             })
+
+
+
+import csv
+import json
+
+# Initialize a list to hold the cleaned data
+cleaned_data = []
+
+# Open the source CSV file
+with open('data.csv', mode='r', encoding='utf-8') as csv_file:
+    csv_reader = csv.DictReader(csv_file)
+    
+    # Process each row
+    for row in csv_reader:
+        # Strip whitespaces and join the address parts into one string
+        joined_address = ', '.join(filter(None, [row['Addr 1'].strip(), row['Addr 2'].strip(), row['Addr 3'].strip(), row['Addr 4'].strip()]))
+        
+        # Append the processed data to the list
+        cleaned_data.append({
+            'Jurisdiction': row['Jurisdiction'],
+            'Cust Type': row['Cust Type'],
+            'Full Address': joined_address,
+            'CTRY RESID': row['CTRY RESID']
+        })
+
+# Write the cleaned data to a JSON file
+with open('processed_data.json', mode='w', encoding='utf-8') as json_file:
+    json.dump(cleaned_data, json_file, ensure_ascii=False, indent=4)
