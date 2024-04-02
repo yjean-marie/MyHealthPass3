@@ -10,3 +10,30 @@ with open('data.csv', mode='r', encoding='utf-8') as csv_file:
         joined_address = ', '.join(filter(None, [row['Addr 1'], row['Addr 2'], row['Addr 3'], row['Addr 4']]))
         
         print(f"Jurisdiction: {row['Jurisdiction']}, Cust Type: {row['Cust Type']}, Address: {joined_address}, Country: {row['CTRY RESID']}")
+
+
+import csv
+
+# Open the source CSV file
+with open('data.csv', mode='r', encoding='utf-8') as csv_file:
+    csv_reader = csv.DictReader(csv_file)
+    
+    # Create or open the destination CSV file
+    with open('processed_data.csv', mode='w', encoding='utf-8', newline='') as new_csv_file:
+        fieldnames = ['Jurisdiction', 'Cust Type', 'Full Address', 'CTRY RESID']
+        csv_writer = csv.DictWriter(new_csv_file, fieldnames=fieldnames)
+        
+        csv_writer.writeheader()
+        
+        # For each row, clean up whitespaces, join the address fields and write them with other info
+        for row in csv_reader:
+            # Strip whitespaces and join the address parts into one string
+            joined_address = ', '.join(filter(None, [row['Addr 1'].strip(), row['Addr 2'].strip(), row['Addr 3'].strip(), row['Addr 4'].strip()]))
+            
+            # Write the processed row to the new CSV
+            csv_writer.writerow({
+                'Jurisdiction': row['Jurisdiction'],
+                'Cust Type': row['Cust Type'],
+                'Full Address': joined_address,
+                'CTRY RESID': row['CTRY RESID']
+            })
