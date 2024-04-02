@@ -1,0 +1,12 @@
+import csv
+
+# Open the source CSV file
+with open('data.csv', mode='r', encoding='utf-8') as csv_file:
+    csv_reader = csv.DictReader(csv_file)
+    
+    # For each row, join the address fields and print them with other info
+    for row in csv_reader:
+        # Join the address parts into one string
+        joined_address = ', '.join(filter(None, [row['Addr 1'], row['Addr 2'], row['Addr 3'], row['Addr 4']]))
+        
+        print(f"Jurisdiction: {row['Jurisdiction']}, Cust Type: {row['Cust Type']}, Address: {joined_address}, Country: {row['CTRY RESID']}")
