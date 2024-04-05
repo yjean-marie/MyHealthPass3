@@ -110,4 +110,10 @@ This comprehensive solution includes:
 
 SQL model definitions for users and conversations.
 A /register/ endpoint for user registration, storing Confluence connection details in the database.
-A /chat/ endpoint that fetches page titles from the specified Confluence space based on the user's stored credentials, simulating a chat response. It also logs the conversation details in the database, including whether the conversation was marked as useful,
+A /chat/ endpoint that fetches page titles from the specified Confluence space based on the user's stored credentials, simulating a chat response. It also logs the conversation details in the database, including whether the conversation was marked as useful
+
+
+
+DATABASE_URL=mssql+pyodbc://username:password@hostname:port/databasename?driver=SQL+Server
+CONFLUENCE_URL=https://your-confluence-site.atlassian.net/wiki
+CONFLUENCE_API_TOKEN=your_confluence_api_token,
