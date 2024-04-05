@@ -1,52 +1,51 @@
-To complete the integration with a Microsoft SQL Server instance for user registration and tracking conversation statistics, let's fill in the missing parts and adapt the database connection string for SQL Server. This example assumes you have an existing SQL Server instance you can connect to.
-
-Prerequisites
-Ensure you have pyodbc and SQLAlchemy installed, as pyodbc is a common adapter used for connecting to SQL Server from Python applications.
-bash
-Copy code
-pip install fastapi sqlalchemy uvicorn python-dotenv pyodbc
-Make sure your SQL Server is accessible and you have the necessary credentials.
-Step 1: Update Database Connection
-In database.py, adjust the connection string to connect to your Microsoft SQL Server instance. You might need to install the ODBC driver for SQL Server if you haven't already.
-
-python
-Copy code
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-# Example connection string for SQL Server (adjust as needed)
-DATABASE_URL = os.getenv("DATABASE_URL", "mssql+pyodbc://username:password@hostname:port/databasename?driver=SQL+Server")
-
-engine = create_engine(DATABASE_URL, echo=True)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-def create_db_tables():
-    from models import Base
-    Base.metadata.create_all(bind=engine)
-Step 2: Define Models
-Your models.py remains the same as previously outlined.
-
-Step 3: FastAPI Application Endpoints
-Complete the implementation of your FastAPI application in main.py, including both the registration and chat endpoints.
+Certainly, let's compile a comprehensive solution that includes user registration, database interactions for storing user and conversation data, and integrating Confluence content fetching using the atlassian-python-api. This all-in-one example is a cohesive solution for your requirements.
 
 python
 Copy code
 from fastapi import FastAPI, HTTPException, Depends
-from sqlalchemy.orm import Session
-from models import User, Conversation
-from database import SessionLocal, create_db_tables
-from pydantic import BaseModel, Field
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, ForeignKey, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship, Session
+from pydantic import BaseModel
 from datetime import datetime
-import uvicorn
+from atlassian import Confluence
+import os
+from dotenv import load_dotenv
 
+# Load environment variables
+load_dotenv()
+
+# Database setup
+DATABASE_URL = os.getenv("DATABASE_URL", "mssql+pyodbc://username:password@hostname:port/databasename?driver=SQL+Server")
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+# Database models
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    confluence_space_key = Column(String)
+    confluence_url = Column(String)
+    confluence_access_token = Column(String)
+
+class Conversation(Base):
+    __tablename__ = 'conversations'
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    conversation_datetime = Column(DateTime, default=datetime.utcnow)
+    was_useful = Column(Boolean)
+    feedback_description = Column(Text)
+    time_spent_seconds = Column(Integer)
+    user = relationship("User", back_populates="conversations")
+
+User.conversations = relationship("Conversation", order_by=Conversation.id, back_populates="user")
+
+# FastAPI app setup
 app = FastAPI()
 
-# Models for request and response
+# Pydantic models for request and response bodies
 class UserRegistration(BaseModel):
     username: str
     confluence_space_key: str
@@ -56,10 +55,11 @@ class UserRegistration(BaseModel):
 class ChatQuery(BaseModel):
     username: str
     query: str
-    was_useful: bool = Field(default=True)
-    feedback_description: str = Field(default="")
+    was_useful: bool = True
+    feedback_description: str = ""
     time_spent_seconds: int
 
+# Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -68,52 +68,46 @@ def get_db():
         db.close()
 
 @app.post("/register/")
-async def register_user(user: UserRegistration, db: Session = Depends(get_db)):
+def register_user(user: UserRegistration, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already exists")
-    new_user = User(
-        username=user.username,
-        confluence_space_key=user.confluence_space_key,
-        confluence_url=user.confluence_url,
-        confluence_access_token=user.confluence_access_token
-    )
+    new_user = User(**user.dict())
     db.add(new_user)
     db.commit()
     return {"message": f"User {user.username} registered successfully."}
 
 @app.post("/chat/")
-async def chat_with_bot(query: ChatQuery, db: Session = Depends(get_db)):
+def chat_with_bot(query: ChatQuery, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == query.username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    new_conversation = Conversation(
-        user_id=user.id,
-        conversation_datetime=datetime.utcnow(),
-        was_useful=query.was_useful,
-        feedback_description=query.feedback_description,
-        time_spent_seconds=query.time_spent_seconds
+    
+    confluence = Confluence(
+        url=user.confluence_url,
+        username='dummy',  # API token used in password field, username is not needed
+        password=user.confluence_access_token
     )
+    pages = confluence.get_all_pages_from_space(space=user.confluence_space_key, status="current")
+    titles = [page['title'] for page in pages]
+
+    new_conversation = Conversation(user_id=user.id, **query.dict())
     db.add(new_conversation)
     db.commit()
-    # Implement the logic to fetch and return Confluence content
-    return {"answer": "This is a placeholder response. Implement logic to utilize Confluence content."}
+
+    return {"answer": f"Pages in your Confluence space include: {', '.join(titles)}"}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-Step 4: Environment Variables
-Ensure your .env file contains the correct connection string for your SQL Server instance.
+    Base.metadata.create_all(bind=engine)  # Create DB tables
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+Before running this script, make sure to:
 
-bash
-Copy code
-DATABASE_URL=mssql+pyodbc://username:password@hostname:port/databasename?driver=SQL+Server
-Replace username, password, hostname, port, and databasename with your actual SQL Server details. The driver name (SQL+Server) might need to be adjusted based on the version installed on your system.
+Replace the placeholder DATABASE_URL in your .env file with your actual SQL Server connection string.
+Ensure all required Python packages (fastapi, sqlalchemy, uvicorn, python-dotenv, atlassian-python-api, pyodbc) are installed.
+Adjust any SQL Server-specific URL parameters as needed, depending on your SQL Server version and the ODBC driver you have installed.
+This comprehensive solution includes:
 
-Running the Application
-Execute your FastAPI app using Uvicorn with the command below. This will also create the necessary tables in your SQL Server database on the first run:
-
-bash
-Copy code
-uvicorn main:app --reload
-This setup provides a basic framework for registering users, tracking conversations, and storing usage statistics in a Microsoft SQL Server database. Remember to adjust the logic within the chat endpoint to fetch and utilize content from Confluence based on your specific requirements.
+SQL model definitions for users and conversations.
+A /register/ endpoint for user registration, storing Confluence connection details in the database.
+A /chat/ endpoint that fetches page titles from the specified Confluence space based on the user's stored credentials, simulating a chat response. It also logs the conversation details in the database, including whether the conversation was marked as useful,
