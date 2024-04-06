@@ -713,3 +713,191 @@ Chat with Index: During a chat session, the system loads the index specific to t
 Security and Error Handling: Ensure you handle errors gracefully and secure sensitive endpoints.
 Dependencies and Integration: This example assumes the presence of certain classes (PromptResponse, ConversationalRetrievalChain, OpenAIEmbeddings) and functions (fetch_confluence_content, index_confluence_content) which you need to integrate based on your actual implementation.
 This approach ties the user registration process with the functionality of indexing Confluence content and utilizing these indexes in chat sessions. Remember to adjust and test these implementations according to your application's specific architecture and requirements.
+
+
+
+
+from pydantic import BaseModel, Field
+from typing import Optional
+
+class UsageStatisticsCreate(BaseModel):
+    user_id: int = Field(..., description="The ID of the user")
+    was_useful: bool = Field(..., description="Flag indicating whether the conversation was useful")
+    feedback_description: Optional[str] = Field(None, description="Description of why the feedback was poor, if applicable")
+    conversation_duration: int = Field(..., description="Duration of the conversation in seconds")
+Step 2: Add an Endpoint to Create Usage Statistics
+Next, add an endpoint in your FastAPI app to receive the data based on the Pydantic model and create a new entry in the database.
+
+python
+Copy code
+from fastapi import FastAPI, HTTPException, Depends
+from sqlalchemy.orm import Session
+from models import UsageStatistics  # Ensure this model is defined in your models.py
+from database import get_db  # Ensure you have this dependency function
+from datetime import datetime
+
+app = FastAPI()
+
+@app.post("/usage-statistics/", response_model=UsageStatisticsCreate)
+def create_usage_statistics(stats: UsageStatisticsCreate, db: Session = Depends(get_db)):
+    # Create a new UsageStatistics object
+    new_stats = UsageStatistics(
+        user_id=stats.user_id,
+        was_useful=stats.was_useful,
+        feedback_description=stats.feedback_description,
+        conversation_duration=stats.conversation_duration,
+        conversation_datetime=datetime.utcnow()  # Capture the current time as the conversation datetime
+    )
+    
+    # Add the new object to the session and commit it to the database
+    db.add(new_stats)
+    db.commit()
+    db.refresh(new_stats)  # Refresh the instance from the database to return the generated ID, if needed
+    
+    return new_stats
+Notes
+Database Session: The get_db function is a dependency that provides a database session from SQLAlchemy. This function should yield a session and ensure its closure after the request is processed.
+Model Definitions: Ensure that the UsageStatistics model in models.py matches the fields you're using here. Adjust field types and names as necessary based on your database schema.
+Response Model: The example uses UsageStatisticsCreate as the response model for simplicity. You might want to define a separate response model if the data returned by the endpoint should differ from the input data.
+Error Handling: You may want to add error handling (try-except blocks) around the database operations to manage potential issues, such as integrity errors if the user_id does not exist in the users table.
+With this setup, you now have an endpoint /usage-statistics/ that accepts POST requests with data about user interactions and stores this information in your usage_statistics table.
+
+
+
+Sure, I'll create a basic outline for a Postman collection JSON that includes the endpoints we've discussed. This collection will contain examples for registering a user, updating Confluence details, creating usage statistics, and initiating a chat session.
+
+Basic Postman Collection for FastAPI Application
+json
+Copy code
+{
+  "info": {
+    "_postman_id": "a unique identifier",
+    "name": "FastAPI Application",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register User",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"johndoe\",\n    \"name\": \"John Doe\",\n    \"department\": \"IT\",\n    \"confluence_space_key\": \"ABC\",\n    \"confluence_url\": \"http://your-confluence-url.com\",\n    \"confluence_access_token\": \"youraccesstoken\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/register/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "register",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Confluence Details",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"confluence_url\": \"http://new-confluence-url.com\",\n    \"confluence_access_token\": \"newaccesstoken\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/users/1/update-confluence-details",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users",
+            "1",
+            "update-confluence-details"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Usage Statistics",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"user_id\": 1,\n    \"was_useful\": true,\n    \"feedback_description\": \"Very helpful\",\n    \"conversation_duration\": 120\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/usage-statistics/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "usage-statistics",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Chat with Confluence",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"prompt\": \"What is Confluence?\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/chat/1/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "chat",
+            "1",
+            ""
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "protocolProfileBehavior": {}
+}
+Instructions:
+Replace Placeholder Values: You'll need to replace {{baseUrl}} with your actual FastAPI application's base URL, such as http://localhost:8000. Additionally, adjust the JSON bodies and URL paths as necessary to match your specific implementation details and requirements.
+
+Import to Postman: To use this collection, open Postman and import this JSON. You can do this by copying the JSON to your clipboard, clicking "Import" in Postman, then pasting the JSON into the "Raw text" tab of the import dialog.
+
+Environment Variables: I've used {{baseUrl}} as an environment variable in Postman. You might want to set up an environment in Postman and define baseUrl there, so it can be easily reused and changed across requests.
+
+Running Requests: After importing, ensure your FastAPI application is running, and then you can start making requests using Postman to test the functionality we've discussed.
+
+This collection is a starting point. Depending on your application's final implementation, further adjustments may be necessary to fully test all functionalities and handle authentication or other
+
+
