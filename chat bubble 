@@ -1,4 +1,4 @@
-Converting Angular components to React involves changing the structure and syntax to fit React's model of development, which includes JSX for templating and state management through hooks or class component state. Since you've provided the code for both the chat bubble button and the chat dialog, I'll convert these components to React, including styling and functionality.
+seeConverting Angular components to React involves changing the structure and syntax to fit React's model of development, which includes JSX for templating and state management through hooks or class component state. Since you've provided the code for both the chat bubble button and the chat dialog, I'll convert these components to React, including styling and functionality.
 
 ### Chat Bubble Button Component
 
@@ -97,3 +97,22 @@ export default ChatDialog;
 - You can use the provided CSS, making sure to adjust any Angular Material-specific classes to more generic ones if necessary. Ensure the path in the import statement matches where you place this CSS file.
 
 This React version expects you to handle dialog opening and closing logic outside these components, likely within a parent component that manages the dialog's visibility state. For icons (like the message icon in the `ChatBubble` component), you might want to use a library like FontAwesome, or simply replace it with an SVG or similar graphic.
+
+
+import React, { useState } from 'react';
+import ChatBubble from '../components/ChatBubble/ChatBubble';
+import ChatDialog from '../components/ChatDialog/ChatDialog';
+
+const Page = () => {
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  return (
+    <div>
+      <h1>Your Page Content</h1>
+      {isChatOpen && <ChatDialog onClose={() => setIsChatOpen(false)} />}
+      <ChatBubble onOpenChat={() => setIsChatOpen(true)} />
+    </div>
+  );
+};
+
+export default Page;
