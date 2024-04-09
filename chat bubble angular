@@ -1,0 +1,209 @@
+can you convert these 2 components to react components
+
+chat.component.css
+.chat-bubble {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+
+
+
+chat.component.html 
+<button mat-fab color="primary" class="chat-bubble" (click)="openChat()"> <mat-icon>message</mat-icon> </button>
+
+chat.component.ts
+import { Component } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { ChatDialogComponent } from '../chat-dialog/chat-dialog.component';
+
+@Component({
+  selector: 'app-chat',
+  templateUrl: './chat.component.html',
+  styleUrl: './chat.component.css'
+})
+export class ChatComponent {
+  constructor(public dialog: MatDialog) {}
+
+  openChat(): void {
+    this.dialog.open(ChatDialogComponent, {
+      width: '300px',
+      height: '400px',
+      position: {
+        bottom: '0px',
+        right: '0px'
+      },
+      panelClass: 'custom-chat-dialog'
+    });
+  }
+}
+
+chat-dialog.component.css
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    padding:0px;
+  }
+  
+  .chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #e0e0ff; /* Light blue background */
+    border-bottom: 1px solid #ccc;
+  }
+  
+  .contact-name {
+    font-weight: 500;
+    color: #444950;
+  }
+  .text {
+    color:#444950;
+  }
+  .chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #f0f0f0; /* Light gray background */
+  }
+  
+  .message {
+    display: flex;
+    align-items: center; /* This will vertically center the avatar with the text */
+    margin-bottom: 10px;
+  }
+  
+  .received, .sent {
+    display: flex;
+    flex-direction: row; /* Adjust based on the message flow */
+  }
+  
+  .received .text, .sent .text {
+    background-color: #e0e0e0; /* Example color - received message */
+    border-radius: 15px;
+    padding: 10px;
+    margin: 0 10px;
+  }
+  
+  .sent .text {
+    background-color: #d0e0ff; /* Example color - sent message */
+  }
+  
+  .avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    /* You may need to adjust margin depending on your design */
+  }
+  
+  .chat-input {
+    display: flex;
+    padding: 10px;
+    background-color: #fff;
+    border-top: 1px solid #ccc;
+  }
+  
+  .chat-input input {
+    flex-grow: 1;
+    margin-right: 10px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 15px;
+  }
+  
+  .chat-input button {
+    border: none;
+    background: none;
+  }
+  
+  /* Adjust mat-icon size if needed */
+  .chat-input mat-icon {
+    font-size: 24px;
+    line-height: 1;
+  }
+  
+  /* Additional styles for action icons in the header */
+  /* ... */
+  chat-dialog.component.html
+
+<mat-dialog-content class="chat-container">
+    <div class="chat-header">
+      <span class="contact-name">RBCC Chat Assistant</span>
+      <!-- Add action icons as needed -->
+    </div>
+    
+    <div class="chat-messages">
+      <!-- Chat messages will be iterated here -->
+      <div *ngFor="let message of messages" class="message" [ngClass]="{'received': message.sender === 'assistant', 'sent': message.sender === 'user'}">
+        
+        <img *ngIf="message.sender === 'user'" src="../../assets/user.png" alt="User Avatar" class="avatar">
+        <div class="text">{{ message.text }}</div>
+        <img *ngIf="message.sender === 'assistant'" src="../../assets/rbc_assistant.png" alt="Assistant Avatar" class="avatar">
+      </div>
+    </div>
+  </mat-dialog-content>
+  
+  <mat-dialog-actions class="chat-input">
+    <input matInput placeholder="Type a message..." [(ngModel)]="messageText" (keyup.enter)="sendMessage()">
+    <button mat-button (click)="sendMessage()">
+      <mat-icon>send</mat-icon>
+    </button>
+  </mat-dialog-actions>
+
+chat-dialog.component.ts
+import { Component } from '@angular/core';
+import { MatDialogRef } from '@angular/material/dialog';
+import { HttpClient } from '@angular/common/http';
+
+@Component({
+  selector: 'app-chat-dialog',
+  templateUrl: './chat-dialog.component.html',
+  styleUrl: './chat-dialog.component.css'
+})
+export class ChatDialogComponent {
+  messageText = '';
+  loading = false;
+  messages: {text: string, sender: 'user' | 'assistant'}[] = [];
+
+  constructor(
+    public dialogRef: MatDialogRef<ChatDialogComponent>,
+    private http: HttpClient
+  ) {}
+
+  sendMessage(): void {
+    if (!this.messageText.trim()) return;
+    this.messages.push({ text: this.messageText, sender: 'user' });
+    this.loading = true;
+    // Replace 'YOUR_ENDPOINT' with your actual endpoint URL
+    this.http.post<{answer: string}>('http://localhost:8000/chat/', { prompt: this.messageText })
+      .subscribe({
+        next: (response) => {
+          this.messages.push({ text: response.answer, sender: 'assistant' });
+          this.loading = false;
+        },
+        error: () => {
+          this.loading = false;
+          // Handle error
+        }
+      });
+    this.messageText = '';
+  }
+  confirmClose(): void {
+    const confirmation = window.confirm('Are you sure you want to close the chat?');
+    if (confirmation) {
+      this.dialogRef.close();
+    }
+  }
+
+  // Placeholder for minimize functionality
+  minimize(): void {
+    // Minimize action
+    // This might involve updating the dialog's position or size,
+    // but as a direct manipulation of MatDialog is limited,
+    // consider alternative UI approaches or custom implementations.
+  }
+}
