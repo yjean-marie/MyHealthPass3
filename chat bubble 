@@ -1,0 +1,99 @@
+Converting Angular components to React involves changing the structure and syntax to fit React's model of development, which includes JSX for templating and state management through hooks or class component state. Since you've provided the code for both the chat bubble button and the chat dialog, I'll convert these components to React, including styling and functionality.
+
+### Chat Bubble Button Component
+
+**ChatBubble.js**
+```jsx
+import React from 'react';
+import './ChatBubble.css'; // Assuming you've placed the CSS in the same directory
+
+const ChatBubble = ({ onOpenChat }) => {
+  return (
+    <button className="chat-bubble" onClick={onOpenChat}>
+      {/* Replace "message" with an SVG or an icon from a library like FontAwesome */}
+      <span>💬</span> 
+    </button>
+  );
+};
+
+export default ChatBubble;
+```
+
+**ChatBubble.css**
+```css
+.chat-bubble {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+```
+
+### Chat Dialog Component
+
+**ChatDialog.js**
+```jsx
+import React, { useState } from 'react';
+import './ChatDialog.css'; // Adjust the path as necessary
+
+const ChatDialog = ({ onClose }) => {
+  const [messageText, setMessageText] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const sendMessage = async () => {
+    if (!messageText.trim()) return;
+    const newMessage = { text: messageText, sender: 'user' };
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
+    setMessageText('');
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:8000/chat/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: messageText }),
+      });
+      const data = await response.json();
+      setMessages((prevMessages) => [...prevMessages, { text: data.answer, sender: 'assistant' }]);
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="chat-container">
+      <div className="chat-header">
+        <span className="contact-name">RBCC Chat Assistant</span>
+        <button onClick={onClose}>Close</button> {/* Implement onClose to close dialog */}
+      </div>
+      <div className="chat-messages">
+        {messages.map((msg, index) => (
+          <div key={index} className={`message ${msg.sender}`}>
+            <div className="text">{msg.text}</div>
+          </div>
+        ))}
+      </div>
+      <div className="chat-input">
+        <input
+          placeholder="Type a message..."
+          value={messageText}
+          onChange={(e) => setMessageText(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+        />
+        <button onClick={sendMessage}>Send</button>
+      </div>
+    </div>
+  );
+};
+
+export default ChatDialog;
+```
+
+**ChatDialog.css**
+- You can use the provided CSS, making sure to adjust any Angular Material-specific classes to more generic ones if necessary. Ensure the path in the import statement matches where you place this CSS file.
+
+This React version expects you to handle dialog opening and closing logic outside these components, likely within a parent component that manages the dialog's visibility state. For icons (like the message icon in the `ChatBubble` component), you might want to use a library like FontAwesome, or simply replace it with an SVG or similar graphic.
