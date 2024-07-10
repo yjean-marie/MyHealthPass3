@@ -1,4 +1,4 @@
-https://www.central-bank.org.tt/sites/default/files/page-file-uploads/Financial%20Obligations%20Regulations.pdf
+uuhttps://www.central-bank.org.tt/sites/default/files/page-file-uploads/Financial%20Obligations%20Regulations.pdf
 
 
 Here’s the updated version without using a dictionary, mapping to regular variables:
@@ -103,3 +103,111 @@ In this implementation:
 4. If `Island` is present and `OffStreet` is not, `Community` and `City` are mapped to `address2` and `Island` to `address3`. If `OffStreet` is present, `Island` is mapped to `address4`.
 
 This ensures that there are no gaps in the address fields.
+
+
+
+
+
+To handle cases where `OffStreet` and `Island` are empty strings, we need to ensure that the mapping correctly assigns the non-empty fields sequentially without gaps. Here’s how you can implement it:
+
+```csharp
+public class Address
+{
+    [Required]
+    [StringLength(35, MinimumLength = 1, ErrorMessage = "The value cannot be more than 35 characters.")]
+    public string StreetAddress { get; set; }
+    
+    [StringLength(35, MinimumLength = 1, ErrorMessage = "The value cannot be more than 35 characters.")]
+    public string OffStreet { get; set; }
+    
+    [StringLength(35, MinimumLength = 1, ErrorMessage = "The value cannot be more than 35 characters.")]
+    public string Community { get; set; }
+    
+    [Required]
+    [StringLength(35, MinimumLength = 1, ErrorMessage = "The value cannot be more than 35 characters.")]
+    public string City { get; set; }
+    
+    [StringLength(35, MinimumLength = 1, ErrorMessage = "The value cannot be more than 35 characters.")]
+    public string Island { get; set; }
+    
+    [Required]
+    [StringLength(35, MinimumLength = 1, ErrorMessage = "The value cannot be more than 35 characters.")]
+    public string PostalCode { get; set; }
+    
+    public CountryObj Country { get; set; }
+}
+
+public class CountryObj
+{
+    [StringLength(20, MinimumLength = 1, ErrorMessage = "The key must be between 1 and 20 characters.")]
+    public string Key { get; set; }
+    
+    [Required]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "The value must be between 1 and 100 characters.")]
+    public string Value { get; set; }
+}
+
+public class AddressTranslator
+{
+    public static (string address1, string address2, string address3, string address4) TranslateAddress(Address address)
+    {
+        string address1 = address.StreetAddress;
+        string address2 = null;
+        string address3 = null;
+        string address4 = null;
+
+        List<string> addressParts = new List<string>();
+
+        if (!string.IsNullOrEmpty(address.OffStreet))
+        {
+            addressParts.Add(address.OffStreet);
+        }
+        if (!string.IsNullOrEmpty(address.Community) || !string.IsNullOrEmpty(address.City))
+        {
+            addressParts.Add($"{address.Community} {address.City}".Trim());
+        }
+        if (!string.IsNullOrEmpty(address.Island))
+        {
+            addressParts.Add(address.Island);
+        }
+
+        if (addressParts.Count > 0)
+        {
+            address2 = addressParts.ElementAtOrDefault(0);
+            address3 = addressParts.ElementAtOrDefault(1);
+            address4 = addressParts.ElementAtOrDefault(2);
+        }
+
+        return (address1, address2, address3, address4);
+    }
+}
+
+// Example usage
+public static void Main(string[] args)
+{
+    var address = new Address
+    {
+        StreetAddress = "#1 Everywhere Lane",
+        OffStreet = "",
+        Community = "Happy Village",
+        City = "Joyous City",
+        Island = "",
+        PostalCode = "123456",
+        Country = new CountryObj { Key = "TT", Value = "Trinidad and Tobago" }
+    };
+
+    var (address1, address2, address3, address4) = AddressTranslator.TranslateAddress(address);
+
+    Console.WriteLine($"address1: {address1}");
+    Console.WriteLine($"address2: {address2}");
+    Console.WriteLine($"address3: {address3}");
+    Console.WriteLine($"address4: {address4}");
+}
+```
+
+In this implementation:
+1. `StreetAddress` is always mapped to `address1`.
+2. Non-empty optional fields (`OffStreet`, `Community + City`, `Island`) are collected into a list.
+3. The collected fields are sequentially mapped to `address2`, `address3`, and `address4`.
+
+This ensures that there are no gaps in the address fields, even if some optional fields are empty strings.
