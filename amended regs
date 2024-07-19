@@ -373,3 +373,142 @@ public class Startup
 4. **Configuration**: Configuration for the API endpoint is more flexible and can be managed using options or configuration files.
 
 This approach maintains the same core functionality but enhances maintainability, scalability, and testability.
+
+
+
+
+
+
+
+
+
+
+Yes, the middleware can be modified to return an unauthorized response if the user sign-on name cannot be found or if the credentials validation fails. This can be achieved by setting the response status code to 401 (Unauthorized) and ending the request processing.
+
+Here is the updated middleware code to handle unauthorized responses:
+
+```csharp
+using System.Net.Http;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+
+public class CredentialValidationMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly IMemoryCache _cache;
+    private readonly HttpClient _httpClient;
+    private readonly ILogger<CredentialValidationMiddleware> _logger;
+
+    public CredentialValidationMiddleware(RequestDelegate next, IMemoryCache cache, HttpClient httpClient, ILogger<CredentialValidationMiddleware> logger)
+    {
+        _next = next;
+        _cache = cache;
+        _httpClient = httpClient;
+        _logger = logger;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        if (context.Request.Headers.TryGetValue("Credentials", out var credentials))
+        {
+            string cacheKey = $"userSignOnName_{credentials}";
+            if (!_cache.TryGetValue(cacheKey, out string userSignOnName))
+            {
+                // Make the API request
+                var response = await _httpClient.GetAsync($"https://api.example.com/validate?credentials={credentials}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse>();
+                    userSignOnName = apiResponse?.UserSignOnName;
+
+                    // Cache the value
+                    if (!string.IsNullOrEmpty(userSignOnName))
+                    {
+                        _cache.Set(cacheKey, userSignOnName, TimeSpan.FromMinutes(60));
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("API request failed with status code {StatusCode}", response.StatusCode);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(userSignOnName))
+            {
+                // Replace the "Credentials" header with the user sign-on name
+                context.Request.Headers["Credentials"] = userSignOnName;
+            }
+            else
+            {
+                // Return unauthorized response if user sign-on name is not found
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsync("Unauthorized: Invalid credentials");
+                return;
+            }
+        }
+        else
+        {
+            // Return unauthorized response if "Credentials" header is not present
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsync("Unauthorized: Credentials header missing");
+            return;
+        }
+
+        await _next(context);
+    }
+}
+
+public class ApiResponse
+{
+    public string UserSignOnName { get; set; }
+}
+```
+
+### Explanation:
+1. **Check for the "Credentials" Header**:
+   - The middleware checks if the "Credentials" header is present in the request.
+
+2. **Validate Credentials and Cache the Result**:
+   - If the credentials are not cached, it makes an API call to validate the credentials and retrieve the user sign-on name.
+   - The result is cached for 60 minutes.
+
+3. **Replace the "Credentials" Header**:
+   - If a valid user sign-on name is retrieved (from cache or API), the middleware replaces the "Credentials" header with the user sign-on name.
+
+4. **Handle Unauthorized Responses**:
+   - If the "Credentials" header is missing or if the user sign-on name cannot be found, the middleware returns a 401 Unauthorized response with an appropriate message.
+
+5. **Proceed to the Next Middleware**:
+   - If the credentials are valid, the middleware calls `_next(context)` to pass control to the next middleware in the pipeline.
+
+### Register the Middleware
+
+Ensure the middleware is registered in the `Startup.cs` or `Program.cs`:
+
+```csharp
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddMemoryCache();
+        services.AddHttpClient();
+        services.AddLogging();
+        services.AddControllers(); // or any other services you need
+    }
+
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        app.UseMiddleware<CredentialValidationMiddleware>();
+
+        app.UseRouting();
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+        });
+    }
+}
+```
+
+This implementation ensures that if the credentials are invalid or missing, the middleware will return a 401 Unauthorized response, preventing further processing of the request.
