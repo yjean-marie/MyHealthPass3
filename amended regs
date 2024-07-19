@@ -1,4 +1,4 @@
-uuhttps://www.central-bank.org.tt/sites/default/files/page-file-uploads/Financial%20Obligations%20Regulations.pdf
+Iuuhttps://www.central-bank.org.tt/sites/default/files/page-file-uploads/Financial%20Obligations%20Regulations.pdf
 
 
 Here’s the updated version without using a dictionary, mapping to regular variables:
@@ -211,3 +211,165 @@ In this implementation:
 3. The collected fields are sequentially mapped to `address2`, `address3`, and `address4`.
 
 This ensures that there are no gaps in the address fields, even if some optional fields are empty strings.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The provided implementation is quite straightforward and adheres to common practices for handling middleware, caching, and HTTP requests in ASP.NET Core. However, there are always potential improvements or adjustments based on specific requirements or preferences. Here are some enhancements and refinements:
+
+1. **Use `IHttpClientFactory` for Better HttpClient Management**:
+   - This approach helps to manage the lifetime of `HttpClient` instances properly, avoiding socket exhaustion issues.
+
+2. **Improve Error Handling**:
+   - Handle different types of HTTP errors more gracefully.
+
+3. **Refactor Middleware for Better Testability**:
+   - Decouple the logic into services to make the middleware more testable.
+
+4. **Use Strongly Typed Configuration**:
+   - Store the API endpoint in configuration files and use strongly typed options.
+
+Here's an improved version of the middleware implementation:
+
+### Step 1: Define a Service for Credential Validation
+
+```csharp
+public interface ICredentialValidationService
+{
+    Task<string> ValidateCredentialsAsync(string credentials);
+}
+
+public class CredentialValidationService : ICredentialValidationService
+{
+    private readonly HttpClient _httpClient;
+    private readonly ILogger<CredentialValidationService> _logger;
+
+    public CredentialValidationService(HttpClient httpClient, ILogger<CredentialValidationService> logger)
+    {
+        _httpClient = httpClient;
+        _logger = logger;
+    }
+
+    public async Task<string> ValidateCredentialsAsync(string credentials)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"https://api.example.com/validate?credentials={credentials}");
+            if (response.IsSuccessStatusCode)
+            {
+                var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse>();
+                return apiResponse?.UserSignOnName;
+            }
+            else
+            {
+                _logger.LogWarning("API request failed with status code {StatusCode}", response.StatusCode);
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while validating credentials.");
+            return null;
+        }
+    }
+}
+
+public class ApiResponse
+{
+    public string UserSignOnName { get; set; }
+}
+```
+
+### Step 2: Update the Middleware to Use the Service
+
+```csharp
+public class CredentialValidationMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly IMemoryCache _cache;
+    private readonly ICredentialValidationService _credentialValidationService;
+    private readonly ILogger<CredentialValidationMiddleware> _logger;
+
+    public CredentialValidationMiddleware(RequestDelegate next, IMemoryCache cache, ICredentialValidationService credentialValidationService, ILogger<CredentialValidationMiddleware> logger)
+    {
+        _next = next;
+        _cache = cache;
+        _credentialValidationService = credentialValidationService;
+        _logger = logger;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        if (context.Request.Headers.TryGetValue("Credentials", out var credentials))
+        {
+            string cacheKey = $"userSignOnName_{credentials}";
+            if (!_cache.TryGetValue(cacheKey, out string userSignOnName))
+            {
+                userSignOnName = await _credentialValidationService.ValidateCredentialsAsync(credentials);
+
+                if (!string.IsNullOrEmpty(userSignOnName))
+                {
+                    _cache.Set(cacheKey, userSignOnName, TimeSpan.FromMinutes(60));
+                }
+            }
+
+            if (!string.IsNullOrEmpty(userSignOnName))
+            {
+                context.Items["UserSignOnName"] = userSignOnName;
+            }
+        }
+
+        await _next(context);
+    }
+}
+```
+
+### Step 3: Register Services in `Startup.cs` or `Program.cs`
+
+```csharp
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddMemoryCache();
+        services.AddHttpClient<ICredentialValidationService, CredentialValidationService>(client =>
+        {
+            // You can configure the HttpClient here if needed
+            client.BaseAddress = new Uri("https://api.example.com/");
+        });
+        services.AddLogging();
+        services.AddControllers(); // or any other services you need
+    }
+
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        app.UseMiddleware<CredentialValidationMiddleware>();
+
+        app.UseRouting();
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+        });
+    }
+}
+```
+
+### Improvements Summary
+
+1. **Separation of Concerns**: The logic for credential validation is moved to a separate service, making the middleware simpler and more testable.
+2. **HttpClient Management**: Using `IHttpClientFactory` ensures better management of `HttpClient` instances.
+3. **Error Handling**: Improved error handling within the service.
+4. **Configuration**: Configuration for the API endpoint is more flexible and can be managed using options or configuration files.
+
+This approach maintains the same core functionality but enhances maintainability, scalability, and testability.
