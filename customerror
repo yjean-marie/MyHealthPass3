@@ -1,0 +1,138 @@
+To return a custom error response object when an error occurs, you typically wouldn't use `response.sendError()` since it only allows setting the status code and a simple error message. Instead, you can write a custom error response directly to the `HttpServletResponse`.
+
+Here’s how you can do it:
+
+1. **Create a Custom Error Response Class**:
+
+```java
+public class ErrorResponse {
+    private int status;
+    private String message;
+
+    public ErrorResponse(int status, String message) {
+        this.status = status;
+        this.message = message;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+}
+```
+
+2. **Update the Filter to Return the Custom Error Response**:
+
+Modify the filter to write a custom error response in JSON format:
+
+```java
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+
+@Component
+public class CredentialValidationFilter extends OncePerRequestFilter {
+
+    private final CredentialValidationService credentialValidationService;
+    private final ObjectMapper objectMapper;
+
+    public CredentialValidationFilter(CredentialValidationService credentialValidationService, ObjectMapper objectMapper) {
+        this.credentialValidationService = credentialValidationService;
+        this.objectMapper = objectMapper;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+
+        String credentials = request.getHeader("Credentials");
+        if (credentials != null) {
+            String userSignOnName = credentialValidationService.validateCredentials(credentials);
+            if (userSignOnName != null) {
+                request.setAttribute("UserSignOnName", userSignOnName);
+                filterChain.doFilter(request, response);
+            } else {
+                sendCustomError(response, HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: Invalid credentials");
+            }
+        } else {
+            sendCustomError(response, HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: Credentials header missing");
+        }
+    }
+
+    private void sendCustomError(HttpServletResponse response, int status, String message) throws IOException {
+        ErrorResponse errorResponse = new ErrorResponse(status, message);
+        response.setStatus(status);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        String jsonResponse = objectMapper.writeValueAsString(errorResponse);
+        response.getWriter().write(jsonResponse);
+    }
+}
+```
+
+3. **Ensure ObjectMapper is Configured**:
+
+Make sure an `ObjectMapper` bean is available in your Spring Boot configuration:
+
+```java
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class AppConfig {
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
+    }
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+}
+```
+
+### Explanation
+
+1. **Custom Error Response Class**:
+   - Defines a simple POJO to represent the error response.
+
+2. **Filter Modification**:
+   - Adds logic to create and send a custom error response in JSON format when credentials are invalid or missing.
+   - Uses `ObjectMapper` to serialize the `ErrorResponse` object to JSON.
+
+3. **ObjectMapper Configuration**:
+   - Ensures an `ObjectMapper` bean is available for dependency injection.
+
+### Example Scenario
+
+1. **Client Request**:
+   - A client makes a request to `http://localhost:8080/api/userinfo` with a "Credentials" header.
+
+2. **Filter Processing**:
+   - The `CredentialValidationFilter` intercepts the request, validates the "Credentials" header, retrieves the `UserSignOnName` from the external API, and sets it as an attribute in the request.
+   - If the credentials are invalid or missing, the filter sends a custom error response.
+
+3. **Custom Error Response**:
+   - The filter writes a custom JSON error response to the `HttpServletResponse`.
+
+This setup ensures that when an error occurs, a well-structured JSON error response is returned to the client, providing more informative and customizable error handling.
