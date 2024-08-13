@@ -1,0 +1,73 @@
+Given the log message format:
+
+plaintext
+Copy code
+... IRSC_CL_{statusCode} in CRT_CL_{elapsedTime}ms ...
+You can extract statusCode and elapsedTime using Kibana's runtime fields with the appropriate painless scripts. Here’s how you can add these fields:
+
+Adding Runtime Fields in Kibana
+Navigate to Stack Management:
+
+Open Kibana.
+Click on the menu icon (usually in the top left corner).
+Go to Stack Management under the Management section.
+Select Index Patterns:
+
+In Stack Management, click on Index Patterns under the "Kibana" section.
+Select the index pattern associated with your logs (e.g., application-logs-*).
+Add Runtime Fields: Add runtime fields to extract the necessary information from the message field.
+
+Example: Adding a Runtime Field for ResponseTime
+Click on Add Field.
+Name the field (e.g., response_time).
+Set the type to number.
+Use a painless script to extract the response time.
+painless
+Copy code
+if (doc['message.keyword'].size() != 0) {
+  def m = /CRT_CL_(\d+)ms/.matcher(doc['message.keyword'].value);
+  if (m.find()) {
+    return Integer.parseInt(m.group(1));
+  }
+}
+return null;
+Example: Adding a Runtime Field for StatusCode
+Click on Add Field.
+Name the field (e.g., status_code).
+Set the type to number.
+Use a painless script to extract the status code.
+painless
+Copy code
+if (doc['message.keyword'].size() != 0) {
+  def m = /IRSC_CL_(\d+)/.matcher(doc['message.keyword'].value);
+  if (m.find()) {
+    return Integer.parseInt(m.group(1));
+  }
+}
+return null;
+Verifying and Using the Runtime Fields
+Go to Discover:
+
+Navigate to the Discover tab in Kibana.
+Ensure that the new runtime fields (response_time, status_code, etc.) appear and contain the correct values.
+Create Visualizations:
+
+Use these runtime fields to create visualizations in the Visualize tab.
+Creating Visualizations
+Go to Visualize: Navigate to the Visualize tab in Kibana and create a new visualization.
+
+Choose Visualization Type: Select the type of visualization you want (e.g., Line chart, Bar chart).
+
+Configure the Visualization:
+
+For a Line Chart:
+
+Select the index pattern.
+In the Metrics section, set the Y-Axis to Average and choose response_time.
+In the Buckets section, add a Date Histogram on the X-Axis with timestamp.
+For a Bar Chart:
+
+Select the index pattern.
+In the Metrics section, set the Y-Axis to Average and choose response_time.
+In the Buckets section, add a Terms aggregation on status_code or other relevant fields.
+By following these steps, you can effectively extract and visualize the statusCode and responseTime from your log messages in Kibana.
