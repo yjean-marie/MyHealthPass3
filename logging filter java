@@ -1,0 +1,104 @@
+Certainly! Here's the updated approach to limit the logging to 4k (4096 bytes) for both incoming requests and outgoing responses in a Java Spring Boot filter:
+
+### Updated `LoggingFilter` Class
+
+```java
+import org.springframework.stereotype.Component;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
+@Component
+public class LoggingFilter implements Filter {
+
+    private static final int MAX_LOG_LENGTH = 4096;
+
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+        // Any initialization code goes here
+    }
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletResponse httpResponse = (HttpServletResponse) response;
+
+        // Log the incoming request
+        logRequest(httpRequest);
+
+        // Wrap the response to capture the output
+        ResponseWrapper wrappedResponse = new ResponseWrapper(httpResponse);
+
+        // Proceed with the next filter in the chain
+        chain.doFilter(request, wrappedResponse);
+
+        // Log the outgoing response
+        logResponse(wrappedResponse);
+    }
+
+    @Override
+    public void destroy() {
+        // Any cleanup code goes here
+    }
+
+    private void logRequest(HttpServletRequest request) {
+        String method = request.getMethod();
+        String uri = request.getRequestURI();
+        String queryString = request.getQueryString();
+        String requestInfo = "Incoming request: " + method + " " + uri + (queryString != null ? "?" + queryString : "");
+
+        // Truncate if exceeds max log length
+        String truncatedRequestInfo = truncateLog(requestInfo);
+
+        System.out.println(truncatedRequestInfo);
+    }
+
+    private void logResponse(ResponseWrapper response) throws IOException {
+        StringWriter writer = new StringWriter();
+        writer.write("Outgoing response: ");
+        writer.write(response.getContentType() + "\n");
+
+        String content = response.getContentAsString();
+
+        // Truncate if exceeds max log length
+        String truncatedContent = truncateLog(content);
+
+        writer.write(truncatedContent);
+        System.out.println(writer.toString());
+    }
+
+    private String truncateLog(String logContent) {
+        if (logContent.length() > MAX_LOG_LENGTH) {
+            return logContent.substring(0, MAX_LOG_LENGTH) + "...(truncated)";
+        }
+        return logContent;
+    }
+}
+```
+
+### Explanation
+
+1. **MAX_LOG_LENGTH Constant:** The `MAX_LOG_LENGTH` constant is defined with a value of `4096` to represent the maximum length of the logged content.
+
+2. **Truncate Log Method:**
+   - I created a helper method `truncateLog` that takes a string as input and checks if its length exceeds `MAX_LOG_LENGTH`.
+   - If the content is longer than 4096 characters, it truncates the content and appends `"...(truncated)"` to indicate that the log was cut off.
+
+3. **Request Logging:**
+   - In the `logRequest` method, the request information is logged.
+   - The request details are passed through the `truncateLog` method before being logged.
+
+4. **Response Logging:**
+   - In the `logResponse` method, the response content is similarly logged after passing through the `truncateLog` method.
+
+This implementation ensures that both the incoming request and outgoing response logs do not exceed 4k in size, keeping your logs concise and manageable.
