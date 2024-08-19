@@ -1,0 +1,139 @@
+Here’s how you can outline the two tasks using Gherkin language for acceptance criteria:
+
+### Task 1: Modify the Co-Agnostic Layer to Accept a Comma-Separated List of Keys
+
+**Title:** Modify Co-Agnostic Layer to Accept Comma-Separated Keys for Factor Document
+
+**Acceptance Criteria:**
+
+**Given** the Co-Agnostic Layer receives a request with a single field for Factor Document,  
+**And** the request contains a comma-separated list of keys (e.g., "02,03,04"),  
+**When** the request is processed,  
+**Then** the system should split the comma-separated list of keys,  
+**And** generate a list of Factor Document objects,  
+**And** each Factor Document should have the key field populated according to the corresponding value in the comma-separated list,  
+**And** the other two fields in Factor Document should remain unused.
+
+### Task 2: Future Implementation to Accept a List of Factor Documents
+
+**Title:** Update Co-Agnostic Layer to Accept a List of Factor Documents
+
+**Acceptance Criteria:**
+
+**Given** the Co-Agnostic Layer receives a request containing a list of Factor Documents,  
+**When** the request is processed,  
+**Then** the system should accept and correctly parse the list of Factor Document objects,  
+**And** each Factor Document should be fully populated according to the data provided in the list,  
+**And** the system should handle multiple Factor Documents according to the requirements specified in the interface.
+
+These tasks should help guide the implementation and ensure that the modifications and future changes are properly documented and tested.
+
+
+
+Here’s how you can outline the task with the specifics included:
+
+### Task: Modify Occupation Logic to Check 'School Name' Field Instead of Occupation Key
+
+**Title:** Update Occupation Logic to Use 'School Name' for Validation in Co-Agnostic Layer
+
+**Acceptance Criteria:**
+
+**Given** the Co-Agnostic Layer processes a request where the occupation field contains both a key and a value,  
+**And** the key was previously checked against an enum to determine if the person was a student or retired,  
+**And** the system received text instead of an integer for the occupation key,  
+**When** the request is processed,  
+**Then** the system should no longer check the occupation key against the enum,  
+**And** the system should instead check if the 'school name' field is filled,  
+**And** if the 'school name' field is filled, the system should proceed with the necessary logic,  
+**And** the logic should work consistently without relying on the occupation key being an integer.
+
+This description captures the detailed change you made, ensuring the logic is correctly documented and understood for future reference.
+
+
+Here’s how you can outline the task for the postal code bug fix:
+
+### Task: Remove Required Annotation from Postal Code Field
+
+**Title:** Bug Fix: Remove Required Annotation from Postal Code Field in Co-Agnostic Layer
+
+**Acceptance Criteria:**
+
+**Given** the Co-Agnostic Layer processes a request containing a postal code field,  
+**And** the postal code field was previously marked as required,  
+**When** the request is processed,  
+**Then** the system should no longer enforce the postal code as a required field,  
+**And** the 'required' annotation should be removed from the postal code field in the codebase,  
+**And** the system should accept requests without a postal code without throwing validation errors.
+
+This task outlines the simple but critical fix you made, ensuring the postal code field behaves as expected.
+
+
+
+
+
+
+Certainly! Here’s a draft of the task along with the acceptance criteria:
+
+**Task Title:**  
+Update API to Translate 400 Status Code to 401 for Insufficient Privileges Error
+
+**Task Description:**  
+Currently, one of the core systems in our mid-tier co-agnostic solution returns a `400 Bad Request` status code for cases where a user has insufficient privileges, which should correctly be returning a `401 Unauthorized` status code. This task involves implementing a translation layer in our mid-tier solution that will intercept responses from the core system. When the error text indicates "not sufficient privileges," the system should update the HTTP status code from `400` to `401` before returning it to the client.
+
+**Acceptance Criteria:**
+
+1. **Error Interception:**  
+   - The mid-tier solution intercepts any `400 Bad Request` responses from the core system.
+
+2. **Text Check:**  
+   - The system checks if the error message text contains or equals "not sufficient privileges."
+
+3. **Status Code Update:**  
+   - If the error text matches the condition above, the mid-tier solution updates the status code from `400 Bad Request` to `401 Unauthorized`.
+
+4. **Response Integrity:**  
+   - All other parts of the response (headers, body, etc.) remain unchanged except for the status code.
+
+5. **Logging:**  
+   - Appropriate logging is in place to record when a status code is translated from `400` to `401` for this specific scenario.
+
+6. **Unit Tests:**  
+   - Unit tests are created to ensure that:
+     - A `400` response with the error text "not sufficient privileges" is correctly translated to `401`.
+     - A `400` response with different error texts is not altered.
+     - No other status codes are affected by this change.
+
+7. **End-to-End Testing:**  
+   - Conduct end-to-end tests to validate the functionality by simulating a scenario where the core system returns a `400` due to insufficient privileges, ensuring the client receives a `401` instead.
+
+Does this align with what you're looking for, or would you like to make any adjustments?
+
+
+Certainly! Here’s the acceptance criteria written in Gherkin:
+
+```gherkin
+Feature: Translate 400 Status Code to 401 for Insufficient Privileges Error
+
+  Scenario: Core system returns 400 with "not sufficient privileges" error text
+    Given the core system returns a 400 Bad Request status code
+    And the error message text contains "not sufficient privileges"
+    When the mid-tier system processes the response
+    Then the status code is updated from 400 Bad Request to 401 Unauthorized
+    And the response body and headers remain unchanged
+    And a log entry is created indicating the status code translation
+
+  Scenario: Core system returns 400 with a different error text
+    Given the core system returns a 400 Bad Request status code
+    And the error message text does not contain "not sufficient privileges"
+    When the mid-tier system processes the response
+    Then the status code remains 400 Bad Request
+    And the response body and headers remain unchanged
+
+  Scenario: Core system returns a status code other than 400
+    Given the core system returns a status code other than 400
+    When the mid-tier system processes the response
+    Then the status code is not altered
+    And the response body and headers remain unchanged
+```
+
+This Gherkin language should help in clearly defining the behavior of the system when processing different scenarios. Let me know if you need further adjustments!
