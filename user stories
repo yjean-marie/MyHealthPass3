@@ -137,3 +137,23 @@ Feature: Translate 400 Status Code to 401 for Insufficient Privileges Error
 ```
 
 This Gherkin language should help in clearly defining the behavior of the system when processing different scenarios. Let me know if you need further adjustments!
+
+
+
+Here’s how you can outline the task for the new update:
+
+### Task: Add Check for Integer in Occupation Key Before Proceeding with Student Check
+
+**Title:** Add Integer Validation for Occupation Key in T24 Jurisdictions
+
+**Acceptance Criteria:**
+
+**Given** the Co-Agnostic Layer processes a request with an occupation key for T24 jurisdictions,  
+**And** the key is expected to be an integer,  
+**When** the request is processed,  
+**Then** the system should first check if the occupation key is an integer,  
+**And** if the key is not an integer or is left blank, the system should fail gracefully,  
+**And** the system should not proceed with the student check if the key is not a valid integer,  
+**And** if the occupation key is an integer, the system should continue with the existing logic, including the check on the 'school name' field.
+
+This task description ensures that the system handles unexpected cases gracefully, while still maintaining the integrity of the logic for T24 jurisdictions.
