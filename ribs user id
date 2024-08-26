@@ -1,0 +1,37 @@
+You're correct that the second and third user stories may be redundant if their functionality is essentially captured within the first story. Instead, we can refine the first user story to include the additional requirement of verifying that the customer record (created or updated) is reflected correctly in RIBS with the user ID based on the LAN ID.
+
+Here’s the revised single user story:
+
+---
+
+### **User Story: Lookup and Verify RIBS User ID Using LAN ID from Custom Header**
+
+**As a** developer working on the core-agnostic layer,  
+**I want to** extract the LAN ID from a custom header called "credentials," map it to the `ReferenceNumber2` field, and ensure the correct RIBS user ID is fetched and verified,  
+**so that** the customer record is updated accurately in RIBS with the correct User ID based on the LAN ID.
+
+#### **Acceptance Criteria:**
+
+1. **Given** a valid LAN ID in the custom header "credentials" of the incoming request,
+   **when** the core-agnostic layer processes the request,
+   **then** it should extract the LAN ID, map it to the `ReferenceNumber2` field, and pass it to the RIBS API to lookup the corresponding RIBS user ID.
+
+2. **Given** an incoming request without the "credentials" header,
+   **when** the core-agnostic layer attempts to process the request,
+   **then** it should return an error indicating that the LAN ID is missing and mandatory.
+
+3. **Given** multiple RIBS user IDs match the LAN ID provided in the "credentials" header,
+   **when** the core-agnostic layer calls the RIBS API,
+   **then** it should select and use the first matching RIBS user ID for the specified jurisdiction.
+
+4. **Given** that the RIBS API successfully returns a User ID,
+   **when** the core-agnostic layer updates or creates a customer record,
+   **then** it should ensure that the updated/created customer record is accurately reflected in RIBS with the fetched User ID, and the record is marked as verified.
+
+5. **Given** a request where the bank officer does not have access to RIBS,
+   **when** the core-agnostic layer calls the RIBS API,
+   **then** it should return an error indicating the rejection of the request due to lack of access.
+
+---
+
+This consolidated user story captures all the necessary steps, from extracting the LAN ID to verifying that the customer record is updated correctly in RIBS, streamlining the requirements into a single comprehensive story.
