@@ -1,0 +1,59 @@
+To check if a string is valid JSON in C#, you can use the `JsonDocument` class from the `System.Text.Json` namespace. Here's how you can do it:
+
+```csharp
+using System;
+using System.Text.Json;
+
+public class Program
+{
+    public static bool IsValidJson(string jsonString)
+    {
+        if (string.IsNullOrWhiteSpace(jsonString))
+        {
+            return false;
+        }
+
+        try
+        {
+            using (JsonDocument doc = JsonDocument.Parse(jsonString))
+            {
+                // No exception means the JSON is valid
+                return true;
+            }
+        }
+        catch (JsonException)
+        {
+            // Parsing error, not a valid JSON
+            return false;
+        }
+        catch (NotSupportedException)
+        {
+            // Unsupported encoding format, not a valid JSON
+            return false;
+        }
+    }
+
+    public static void Main()
+    {
+        string jsonString = "{\"name\": \"John\", \"age\": 30}";
+
+        if (IsValidJson(jsonString))
+        {
+            Console.WriteLine("Valid JSON");
+        }
+        else
+        {
+            Console.WriteLine("Invalid JSON");
+        }
+    }
+}
+```
+
+### Explanation:
+- The `IsValidJson` method checks if the input string is a valid JSON string.
+- It first checks if the string is `null` or whitespace; if so, it returns `false`.
+- It then attempts to parse the string using `JsonDocument.Parse`.
+- If `JsonDocument.Parse` succeeds without throwing an exception, the string is valid JSON, and the method returns `true`.
+- If a `JsonException` or `NotSupportedException` is thrown, the method returns `false`, indicating the string is not valid JSON.
+
+You can use this method to verify if a string is valid JSON in your C# projects.
