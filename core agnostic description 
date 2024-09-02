@@ -1,0 +1,62 @@
+For your client domain service API in the core-agnostic service project, a good Swagger description should clearly communicate the purpose of the API, its functionality, and how it fits into the broader context of your system. Here’s an example of how you might write the description:
+
+### Example Swagger API Description
+
+```yaml
+openapi: 3.0.1
+info:
+  title: Client Domain Service API
+  description: |
+    This API is part of the core-agnostic service layer and provides client-related operations. 
+    It is designed to be core-agnostic, meaning it can interface with multiple core banking systems, abstracting their complexities and providing a unified interface for client management.
+
+    ### Key Features:
+    - **Client Creation**: Create new client records in the system, with support for up to 120 fields.
+    - **Client Update**: Update existing client information, ensuring data consistency across different core systems.
+    - **Client Retrieval**: Retrieve client data using various search criteria, facilitating integration with front-end applications and other services.
+
+    ### Core Agnostic Design:
+    This API utilizes a core-agnostic design, allowing seamless communication with different core banking systems. It translates incoming requests into the appropriate format and protocol required by the underlying core system, ensuring that client operations are handled consistently regardless of the core system in use.
+
+    ### Usage:
+    This API is intended for use by internal applications and services that require access to client information, such as account management, KYC processing, and customer service applications.
+
+  version: 1.0.0
+
+paths:
+  /clients:
+    post:
+      summary: Create a new client
+      description: Creates a new client record with the provided information. This operation is core-agnostic and supports up to 120 fields.
+      # Additional operation details...
+
+    put:
+      summary: Update existing client information
+      description: Updates the information of an existing client. The operation ensures that data is consistent across different core banking systems.
+      # Additional operation details...
+
+    get:
+      summary: Retrieve client information
+      description: Retrieves client data based on search criteria. This allows integration with front-end applications to display or process client information.
+      # Additional operation details...
+```
+
+### Explanation of the Description:
+
+- **Overview**: The description provides an overview of the API, emphasizing that it is part of a core-agnostic service layer, which is important for understanding its purpose.
+
+- **Key Features**: Specific operations like client creation, updating, and retrieval are mentioned, which are likely the main functionalities of your API.
+
+- **Core Agnostic Design**: Since your service is core-agnostic, this part explains how the API handles communication with different core systems, which is crucial for users to understand its flexibility and purpose.
+
+- **Usage**: This section briefly describes who the intended users of the API are (e.g., internal applications) and how it might be used within the broader system.
+
+### Tips for Writing Swagger Descriptions:
+
+1. **Be Clear and Concise**: Ensure that the description is easy to understand and free of unnecessary jargon.
+2. **Highlight Key Features**: Make sure to call out the most important features and operations that the API provides.
+3. **Contextual Information**: Include information that helps users understand how the API fits within the overall architecture of your system.
+4. **Target Audience**: Tailor the description to the intended audience, which may be developers, integrators, or system architects.
+5. **Consistency**: Keep a consistent tone and structure across all APIs in your project.
+
+This description should give users a clear understanding of what the API does, how it fits into your service layer, and what they can expect when using it.
