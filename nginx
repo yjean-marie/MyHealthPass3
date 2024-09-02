@@ -1,0 +1,153 @@
+### Option 1: Using a Reverse Proxy to Whitelist a URL
+
+If you don't have access to the JBoss application code but need to restrict access to certain URLs so that only requests from a specific host or URL are allowed, setting up a reverse proxy in front of your JBoss server is a practical and powerful solution. A reverse proxy like Nginx or Apache HTTP Server can intercept requests, evaluate them based on criteria such as the `Referer` or `Origin` headers, and either allow or deny them before they reach your JBoss server.
+
+#### **How a Reverse Proxy Works**
+
+A reverse proxy sits between the client and your JBoss server. It receives all incoming requests from clients, processes them according to predefined rules, and forwards the allowed requests to your JBoss server. It can be used to load balance, cache, and secure web traffic, including enforcing access control based on IP addresses, headers, and more.
+
+#### **Setting Up a Reverse Proxy with Nginx**
+
+Here’s a step-by-step guide on how to set up Nginx as a reverse proxy to whitelist access to a specific URL:
+
+1. **Install Nginx:**
+   If Nginx is not already installed on your server, you can install it using your package manager:
+
+   ```bash
+   sudo apt-get update
+   sudo apt-get install nginx
+   ```
+
+   or for CentOS/RHEL:
+
+   ```bash
+   sudo yum install nginx
+   ```
+
+2. **Configure Nginx to Whitelist a URL:**
+
+   Edit the Nginx configuration file, typically located at `/etc/nginx/nginx.conf` or `/etc/nginx/sites-available/default` (or another file in `/etc/nginx/conf.d/`).
+
+   Example configuration:
+
+   ```nginx
+   server {
+       listen 80;
+       server_name yourserver.com;
+
+       location /restricted {
+           # Allow only requests coming from 'allowed-host.com'
+           if ($http_referer !~* "^https://allowed-host.com") {
+               return 403;
+           }
+
+           # Forward allowed requests to the JBoss server
+           proxy_pass http://localhost:8080;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+       }
+   }
+   ```
+
+   - **Explanation:**
+     - `location /restricted`: Defines the URL path that should be restricted.
+     - The `if` statement checks if the `Referer` header matches the allowed URL (`https://allowed-host.com`). If it does not, a `403 Forbidden` response is returned.
+     - `proxy_pass http://localhost:8080;`: Forwards the request to your JBoss server running on `localhost` and listening on port `8080`.
+     - The `proxy_set_header` directives ensure that the original request headers are passed on to the JBoss server.
+
+3. **Test and Reload Nginx:**
+
+   After saving the configuration file, test the Nginx configuration for syntax errors:
+
+   ```bash
+   sudo nginx -t
+   ```
+
+   If the test is successful, reload Nginx to apply the changes:
+
+   ```bash
+   sudo systemctl reload nginx
+   ```
+
+4. **Verify the Setup:**
+
+   Try accessing the `/restricted` URL from different hosts or without the correct `Referer` header. Requests that don't match the criteria should receive a `403 Forbidden` response, while allowed requests should be successfully proxied to your JBoss server.
+
+#### **Setting Up a Reverse Proxy with Apache HTTP Server**
+
+Alternatively, if you prefer using Apache as the reverse proxy:
+
+1. **Install Apache HTTP Server:**
+
+   On Ubuntu/Debian:
+
+   ```bash
+   sudo apt-get update
+   sudo apt-get install apache2
+   ```
+
+   On CentOS/RHEL:
+
+   ```bash
+   sudo yum install httpd
+   ```
+
+2. **Enable Necessary Modules:**
+
+   Enable the necessary Apache modules:
+
+   ```bash
+   sudo a2enmod proxy
+   sudo a2enmod proxy_http
+   sudo a2enmod headers
+   ```
+
+3. **Configure Apache:**
+
+   Edit the Apache configuration file, typically found at `/etc/apache2/sites-available/000-default.conf`:
+
+   ```apache
+   <VirtualHost *:80>
+       ServerName yourserver.com
+
+       <Location /restricted>
+           SetEnvIf Referer "https://allowed-host.com" allowed_referer
+           Order Deny,Allow
+           Deny from all
+           Allow from env=allowed_referer
+
+           ProxyPass http://localhost:8080/restricted
+           ProxyPassReverse http://localhost:8080/restricted
+       </Location>
+   </VirtualHost>
+   ```
+
+   - **Explanation:**
+     - `SetEnvIf Referer "https://allowed-host.com" allowed_referer`: Checks the `Referer` header and sets an environment variable if it matches the allowed URL.
+     - `Order Deny,Allow` and `Deny from all; Allow from env=allowed_referer`: Deny all requests except those that have the allowed `Referer`.
+     - `ProxyPass` and `ProxyPassReverse`: Forward the requests to the JBoss server.
+
+4. **Test and Restart Apache:**
+
+   Check the configuration and restart Apache:
+
+   ```bash
+   sudo apachectl configtest
+   sudo systemctl restart apache2
+   ```
+
+   or for CentOS/RHEL:
+
+   ```bash
+   sudo systemctl restart httpd
+   ```
+
+#### **Summary of Benefits:**
+
+- **Security:** The reverse proxy ensures that only requests from allowed sources reach your JBoss server, enhancing security.
+- **Flexibility:** Easily modify access rules without changing the application code.
+- **Scalability:** Reverse proxies can also handle load balancing, SSL termination, and more.
+
+Using a reverse proxy to whitelist URLs gives you control over incoming traffic and ensures that your JBoss server only processes requests from trusted sources.
