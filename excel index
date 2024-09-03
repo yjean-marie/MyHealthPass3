@@ -269,3 +269,107 @@ If your Excel file has sheets named "Sheet1" and "Sheet2", the resulting JSON st
 - **Structured Querying**: You can now query this structured JSON data using any JSON-compatible tool or library.
 
 This script should give you a well-structured JSON file that preserves the integrity and context of your Excel data, making it easier to work with in various applications, including LangChain.
+
+
+
+
+The error "Object of type datetime is not JSON serializable" occurs because the `json` module in Python does not know how to convert `datetime` objects into a JSON-compatible format. JSON only supports basic data types like strings, numbers, lists, and dictionaries, but not complex types like `datetime`.
+
+### Solution: Convert `datetime` Objects to Strings
+
+Before serializing the data to JSON, you can convert any `datetime` objects to strings. Here's how you can handle this:
+
+#### Method 1: Using a Custom Serializer
+
+You can write a custom serializer function that converts `datetime` objects to strings.
+
+```python
+import json
+import datetime
+import pandas as pd
+
+def custom_json_serializer(obj):
+    """Custom JSON serializer for objects not serializable by default json code."""
+    if isinstance(obj, (datetime.datetime, datetime.date)):
+        return obj.isoformat()  # Convert datetime to ISO format string
+    raise TypeError("Type not serializable")
+
+def excel_to_json_with_datetime_handling(excel_file_path, output_json_path):
+    """Convert an Excel file with multiple sheets to a JSON file, handling datetime objects."""
+    # Load the Excel file
+    excel_data = pd.read_excel(excel_file_path, sheet_name=None)
+
+    # Dictionary to hold the structured data
+    structured_data = {}
+
+    # Iterate over each sheet and convert it to a list of dictionaries
+    for sheet_name, df in excel_data.items():
+        # Convert the DataFrame to a list of dictionaries
+        structured_data[sheet_name] = df.to_dict(orient='records')
+
+    # Write the structured data to a JSON file with custom datetime handling
+    with open(output_json_path, 'w', encoding='utf-8') as json_file:
+        json.dump(structured_data, json_file, indent=4, ensure_ascii=False, default=custom_json_serializer)
+
+# Example usage
+excel_file_path = '/mnt/data/file-Uo5J0vtlPygQKKKBX6Zl16HC'
+output_json_path = '/mnt/data/output_data_with_datetime.json'
+excel_to_json_with_datetime_handling(excel_file_path, output_json_path)
+
+print(f"Excel data has been converted to JSON with datetime handling and saved to {output_json_path}.")
+```
+
+### Explanation:
+
+1. **Custom Serializer Function**:
+   - `custom_json_serializer` is a function that checks if an object is of type `datetime.datetime` or `datetime.date`. If it is, the function converts it to a string using the `isoformat()` method, which produces a string in the format `YYYY-MM-DDTHH:MM:SS`.
+
+2. **Handling Non-Serializable Objects**:
+   - The `json.dump()` method is called with the `default=custom_json_serializer` argument, which ensures that any `datetime` objects in your data are serialized correctly.
+
+3. **Usage**:
+   - The rest of the script remains the same as before, but now it can handle `datetime` objects when converting to JSON.
+
+#### Method 2: Pre-Processing DataFrames
+
+Alternatively, you can convert all `datetime` columns in your DataFrames to strings before converting them to JSON.
+
+```python
+def convert_datetime_columns_to_str(df):
+    """Convert all datetime columns in a DataFrame to string."""
+    for col in df.columns:
+        if pd.api.types.is_datetime64_any_dtype(df[col]):
+            df[col] = df[col].dt.strftime('%Y-%m-%d %H:%M:%S')  # Convert to desired format
+    return df
+
+def excel_to_json_with_preprocessing(excel_file_path, output_json_path):
+    """Convert an Excel file to a JSON file after pre-processing datetime columns."""
+    # Load the Excel file
+    excel_data = pd.read_excel(excel_file_path, sheet_name=None)
+
+    # Dictionary to hold the structured data
+    structured_data = {}
+
+    # Iterate over each sheet and convert datetime columns to string
+    for sheet_name, df in excel_data.items():
+        df = convert_datetime_columns_to_str(df)
+        structured_data[sheet_name] = df.to_dict(orient='records')
+
+    # Write the structured data to a JSON file
+    with open(output_json_path, 'w', encoding='utf-8') as json_file:
+        json.dump(structured_data, json_file, indent=4, ensure_ascii=False)
+
+# Example usage
+excel_file_path = '/mnt/data/file-Uo5J0vtlPygQKKKBX6Zl16HC'
+output_json_path = '/mnt/data/output_data_preprocessed.json'
+excel_to_json_with_preprocessing(excel_file_path, output_json_path)
+
+print(f"Excel data has been pre-processed and saved to JSON at {output_json_path}.")
+```
+
+### Summary:
+
+- **Custom Serializer**: Use a custom serializer to handle `datetime` objects on the fly when dumping to JSON.
+- **Pre-Processing**: Convert all `datetime` columns to strings before converting the DataFrame to JSON.
+
+Either approach will allow you to convert your Excel data to JSON while
