@@ -461,3 +461,33 @@ print(f"Excel data has been converted to JSON with datetime handling and saved t
 - The recursive function `convert_keys_to_string` is key to converting any `datetime` keys into string representations before the data is serialized to JSON.
 
 This should solve the issue and allow you to generate a JSON file from your Excel data without encountering serialization errors.
+
+
+
+import pdfplumber
+
+def extract_text_with_structure(pdf_path, output_text_path):
+    with pdfplumber.open(pdf_path) as pdf:
+        with open(output_text_path, 'w', encoding='utf-8') as file:
+            for page_num, page in enumerate(pdf.pages):
+                file.write(f"\n--- Page {page_num + 1} ---\n")
+                
+                # Extract text
+                text = page.extract_text()
+                if text:
+                    file.write(text)
+                
+                # Extract tables and convert them to a readable format
+                tables = page.extract_tables()
+                for table in tables:
+                    file.write("\n--- Table ---\n")
+                    for row in table:
+                        file.write("\t".join(str(cell) if cell else "" for cell in row) + "\n")
+                    file.write("\n")
+
+# Example usage
+pdf_path = '/mnt/data/sample.pdf'  # replace with your PDF file path
+output_text_path = '/mnt/data/output_text.txt'
+extract_text_with_structure(pdf_path, output_text_path)
+
+print(f"Text with structure extracted and saved to {output_text_path}.")
