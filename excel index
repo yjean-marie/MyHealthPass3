@@ -140,3 +140,56 @@ print(f"Text data from {excel_file_path} has been saved to {output_file_path}.")
 - **Plain Text Storage**: This approach is straightforward, making the extracted data easily accessible and readable. However, remember that storing large datasets in a flat text file might become unwieldy, so consider this method for smaller datasets or where simple storage is sufficient.
 
 This script will give you a text file with all the extracted data from your Excel sheets, neatly organized and ready to be used in a variety of applications, including feeding into a language model like ChatGPT.
+
+
+
+
+Given the data in the image, it appears to be structured with multiple columns where some columns contain categorical values like "NA," "Y," "N," and "Pass." When converting this type of data to text, especially for indexing or analysis purposes, it's important to maintain the structure and context of the data to ensure it remains meaningful.
+
+### Ensuring Correct Conversion to Text:
+
+1. **Column Headers**: Each column should be properly labeled in the text file. This helps in understanding what each value represents when reading the text output.
+
+2. **Row Integrity**: Each row should be represented as a coherent line or set of lines in the text file, keeping the column data aligned to ensure that the context of the data is not lost.
+
+3. **Delimiter Handling**: When saving data to a text file, make sure to use a clear delimiter (e.g., a comma or tab) between values. This will ensure that when the text is read back or analyzed, the data can be correctly parsed.
+
+### Updated Code to Ensure Proper Conversion:
+
+Here’s how you can modify the Python code to ensure the data is correctly converted to a text file, maintaining the structure and context:
+
+```python
+import pandas as pd
+
+def save_excel_to_text_with_structure(excel_file_path, output_file_path):
+    """Extract data from all sheets of an Excel file and save it to a text file with structure."""
+    # Load the Excel file
+    excel_data = pd.read_excel(excel_file_path, sheet_name=None)  # sheet_name=None loads all sheets
+
+    with open(output_file_path, 'w', encoding='utf-8') as file:
+        for sheet_name, df in excel_data.items():
+            file.write(f"Sheet: {sheet_name}\n")
+            df.to_string(file, index=False)
+            file.write("\n\n")
+
+# Example usage
+excel_file_path = '/mnt/data/file-Uo5J0vtlPygQKKKBX6Zl16HC'
+output_file_path = '/mnt/data/structured_output.txt'
+save_excel_to_text_with_structure(excel_file_path, output_file_path)
+
+print(f"Data from {excel_file_path} has been saved to {output_file_path}.")
+```
+
+### Explanation of the Code:
+
+- **`save_excel_to_text_with_structure` Function**: This function reads all sheets in the Excel file and writes each sheet’s content to a text file. It maintains the structure by writing the sheet name, followed by the content of the sheet in a tabular format.
+  
+- **`df.to_string(file, index=False)`**: This line writes the DataFrame to the file in a readable table format, ensuring that the columns and rows align correctly, making it easy to read and analyze later.
+
+### Considerations:
+
+- **Readable Format**: The text output is structured and formatted for readability, preserving the original structure of the Excel data.
+  
+- **Data Integrity**: The conversion process ensures that all data is correctly mapped from the Excel sheet to the text file, with no loss of information or context.
+
+This method should ensure that the data is correctly converted and remains useful when saved to a text file. Let me know if you need any further adjustments or if you'd like to inspect the output!
