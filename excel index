@@ -193,3 +193,79 @@ print(f"Data from {excel_file_path} has been saved to {output_file_path}.")
 - **Data Integrity**: The conversion process ensures that all data is correctly mapped from the Excel sheet to the text file, with no loss of information or context.
 
 This method should ensure that the data is correctly converted and remains useful when saved to a text file. Let me know if you need any further adjustments or if you'd like to inspect the output!
+
+
+
+Certainly! Below is a Python script that will convert an Excel file with multiple sheets into a JSON format. Each sheet in the Excel file will be represented as a separate key in the JSON output, with the sheet name as the key and the data as a list of dictionaries (where each dictionary represents a row in the sheet).
+
+### Python Script to Convert Excel to JSON
+
+```python
+import pandas as pd
+import json
+
+def excel_to_json(excel_file_path, output_json_path):
+    """Convert an Excel file with multiple sheets to a JSON file."""
+    # Load the Excel file
+    excel_data = pd.read_excel(excel_file_path, sheet_name=None)  # sheet_name=None loads all sheets
+
+    # Dictionary to hold the structured data
+    structured_data = {}
+
+    # Iterate over each sheet and convert it to a list of dictionaries
+    for sheet_name, df in excel_data.items():
+        structured_data[sheet_name] = df.to_dict(orient='records')
+
+    # Write the structured data to a JSON file
+    with open(output_json_path, 'w', encoding='utf-8') as json_file:
+        json.dump(structured_data, json_file, indent=4, ensure_ascii=False)
+
+# Example usage
+excel_file_path = '/mnt/data/file-Uo5J0vtlPygQKKKBX6Zl16HC'
+output_json_path = '/mnt/data/output_data.json'
+excel_to_json(excel_file_path, output_json_path)
+
+print(f"Excel data has been converted to JSON and saved to {output_json_path}.")
+```
+
+### Explanation of the Code:
+
+1. **Pandas DataFrame to Dictionary**:
+   - The `df.to_dict(orient='records')` converts each DataFrame (each sheet) into a list of dictionaries where each dictionary corresponds to a row in the DataFrame. The keys of the dictionary are the column headers, and the values are the corresponding cell data.
+
+2. **Multiple Sheets Handling**:
+   - The `sheet_name=None` argument in `pd.read_excel` loads all sheets from the Excel file into a dictionary where keys are sheet names and values are DataFrames.
+
+3. **Writing to JSON**:
+   - The resulting dictionary is written to a JSON file using `json.dump`, with `indent=4` for pretty-printing, and `ensure_ascii=False` to properly handle non-ASCII characters.
+
+### Example JSON Output Structure:
+
+If your Excel file has sheets named "Sheet1" and "Sheet2", the resulting JSON structure might look like this:
+
+```json
+{
+    "Sheet1": [
+        {
+            "Column1": "Value1",
+            "Column2": "Value2",
+            ...
+        },
+        ...
+    ],
+    "Sheet2": [
+        {
+            "Column1": "Value1",
+            "Column2": "Value2",
+            ...
+        },
+        ...
+    ]
+}
+```
+
+### Usage:
+- **Integration with Other Tools**: This JSON output can be used in other systems or databases, passed to APIs, or directly loaded into LangChain for indexing and querying.
+- **Structured Querying**: You can now query this structured JSON data using any JSON-compatible tool or library.
+
+This script should give you a well-structured JSON file that preserves the integrity and context of your Excel data, making it easier to work with in various applications, including LangChain.
