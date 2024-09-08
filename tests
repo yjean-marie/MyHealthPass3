@@ -1,0 +1,129 @@
+To write an NUnit test case for the `T24ClientUpdateComparator.compare` method (assuming this method is designed to set fields to `null` when they haven't changed), you need to simulate two objects: the `newClient` and the `oldClient` (extracted from the `CustomerInformationByIdResponse`). The test will check whether fields are set to `null` for unchanged values.
+
+Here’s a basic example of how you could write the NUnit test case:
+
+```csharp
+using NUnit.Framework;
+using System.Collections.Generic;
+
+namespace YourNamespace.Tests
+{
+    [TestFixture]
+    public class T24ClientUpdateComparatorTests
+    {
+        [Test]
+        public void Compare_ShouldSetFieldsToNull_WhenFieldsAreUnchanged()
+        {
+            // Arrange
+            var oldClient = new UpdateClient
+            {
+                AccountOfficerId = 123,
+                Addresses = new List<Address>
+                {
+                    new Address
+                    {
+                        AddressCity = "CityA",
+                        Street = "StreetA",
+                        Country = "CountryA",
+                        PostCode = "00001"
+                    }
+                }
+            };
+
+            var newClient = new UpdateClient
+            {
+                AccountOfficerId = 123, // Same as old client
+                Addresses = new List<Address>
+                {
+                    new Address
+                    {
+                        AddressCity = "CityA",  // Same as old client
+                        Street = "StreetA",     // Same as old client
+                        Country = "CountryA",   // Same as old client
+                        PostCode = "00001"      // Same as old client
+                    }
+                }
+            };
+
+            var customerInformationByIdResponse = new CustomerInformationByIdResponse
+            {
+                Body = new ClientBody
+                {
+                    FirstOrDefault = () => oldClient // Simulating the oldClient from response
+                }
+            };
+
+            // Act
+            var updatedClient = T24ClientUpdateComparator.compare(newClient, customerInformationByIdResponse);
+
+            // Assert
+            Assert.IsNull(updatedClient.AccountOfficerId); // Should be null because it's unchanged
+            Assert.IsNull(updatedClient.Addresses.First().AddressCity); // Should be null because it's unchanged
+            Assert.IsNull(updatedClient.Addresses.First().Street); // Should be null because it's unchanged
+            Assert.IsNull(updatedClient.Addresses.First().Country); // Should be null because it's unchanged
+            Assert.IsNull(updatedClient.Addresses.First().PostCode); // Should be null because it's unchanged
+        }
+
+        [Test]
+        public void Compare_ShouldNotSetFieldsToNull_WhenFieldsAreChanged()
+        {
+            // Arrange
+            var oldClient = new UpdateClient
+            {
+                AccountOfficerId = 123,
+                Addresses = new List<Address>
+                {
+                    new Address
+                    {
+                        AddressCity = "CityA",
+                        Street = "StreetA",
+                        Country = "CountryA",
+                        PostCode = "00001"
+                    }
+                }
+            };
+
+            var newClient = new UpdateClient
+            {
+                AccountOfficerId = 456, // Different from old client
+                Addresses = new List<Address>
+                {
+                    new Address
+                    {
+                        AddressCity = "CityB",  // Different from old client
+                        Street = "StreetB",     // Different from old client
+                        Country = "CountryB",   // Different from old client
+                        PostCode = "00002"      // Different from old client
+                    }
+                }
+            };
+
+            var customerInformationByIdResponse = new CustomerInformationByIdResponse
+            {
+                Body = new ClientBody
+                {
+                    FirstOrDefault = () => oldClient // Simulating the oldClient from response
+                }
+            };
+
+            // Act
+            var updatedClient = T24ClientUpdateComparator.compare(newClient, customerInformationByIdResponse);
+
+            // Assert
+            Assert.AreEqual(456, updatedClient.AccountOfficerId); // Should not be null because it's changed
+            Assert.AreEqual("CityB", updatedClient.Addresses.First().AddressCity); // Should not be null because it's changed
+            Assert.AreEqual("StreetB", updatedClient.Addresses.First().Street); // Should not be null because it's changed
+            Assert.AreEqual("CountryB", updatedClient.Addresses.First().Country); // Should not be null because it's changed
+            Assert.AreEqual("00002", updatedClient.Addresses.First().PostCode); // Should not be null because it's changed
+        }
+    }
+}
+```
+
+### Key Points:
+1. **Setup for `oldClient` and `newClient`:** You set up the `oldClient` and `newClient` to simulate an update scenario.
+2. **Arrange:** The setup creates `oldClient` with specific fields and a `newClient` with either the same or different fields.
+3. **Act:** Call the `compare` method.
+4. **Assert:** Use assertions like `Assert.IsNull()` to check if unchanged fields are set to `null`, and `Assert.AreEqual()` to ensure fields that changed are not set to `null`.
+
+In your project, you might need to adapt the class and method names based on how they're actually structured. Ensure the model classes `UpdateClient`, `Address`, and `CustomerInformationByIdResponse` are properly defined in your project. Let me know if you'd like me to refine this further!
