@@ -1,0 +1,59 @@
+Here's an example of a defect story in Jira for **Item 1**, based on the **Core Agnostic Domain Services project**:
+
+---
+
+**Story Title**:  
+Defect: Fields Resetting to Blank (Null) When Not Covered by Originations – Core Agnostic Domain Services
+
+---
+
+**Description**:  
+In the Core Agnostic Domain Services project, fields that are not being updated by Originations are being reset to blank (null) when passed to the core APIs. This behavior causes valid values to be lost and results in inaccurate data being stored in the system. The expected behavior is that fields should retain their original values unless explicitly updated.
+
+---
+
+**Steps to Reproduce**:
+1. Initiate an update request via the Core Agnostic Domain Services API for an existing record.
+2. Ensure that certain fields are not updated or covered by Originations.
+3. Submit the update request and observe the values sent for the fields not covered by Originations.
+4. Check the values saved in the core system for the corresponding fields.
+
+---
+
+**Observed Result**:  
+Fields not covered by Originations are reset to blank (null) in the core system after the update.
+
+---
+
+**Expected Result**:  
+Fields not covered by Originations should retain their original values unless explicitly updated.
+
+---
+
+**Acceptance Criteria**:
+
+1. **Fields Retention**:  
+   - When fields are not included in the update request or are not covered by Originations, their existing values should remain intact and not be reset to blank (null).
+   
+2. **No Overwrite on Blank Values**:  
+   - The system must not overwrite the existing field values with blank (null) values unless explicitly instructed to do so in the update request.
+
+3. **Unit and Integration Tests**:  
+   - Unit tests should cover scenarios where certain fields are excluded from the update. The test should validate that these fields retain their original values.
+   - Integration tests should ensure that no blank (null) values are passed to the core APIs unless specified.
+
+4. **QA Validation**:  
+   - QA must confirm through testing that any update involving fields not covered by Originations retains the original values and does not introduce any blank (null) values unless explicitly requested.
+
+5. **Logging**:  
+   - Ensure that logs are generated for any updates where fields are excluded, confirming that the values remain unchanged.
+
+---
+
+**Priority**: High  
+**Component**: Core Agnostic Domain Services  
+**Labels**: Defect, Core Services, Update Functionality
+
+---
+
+Let me know if you'd like further details or modifications!
