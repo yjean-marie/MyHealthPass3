@@ -1,0 +1,28 @@
+Feature: Ensure fields retain their original values when not updated by Originations
+
+  Scenario: Fields not covered by Originations retain original values
+    Given an existing record in the Core Agnostic Domain Service
+    And certain fields are not included in the update request
+    When the update request is submitted
+    Then the fields not covered by Originations should retain their original values
+    And no blank (null) values should be stored in the core system for these fields
+
+  Scenario: Fields not covered by Originations are not overwritten with null
+    Given an existing record in the Core Agnostic Domain Service
+    And certain fields are not updated by Originations
+    When the update request is submitted
+    Then the fields not covered by Originations should not be overwritten with blank (null) values
+    And no existing values should be changed unless explicitly updated
+
+  Scenario: Unit and integration tests validate field retention
+    Given an update request excluding certain fields
+    When unit tests are run
+    Then the tests should confirm that fields not included in the update retain their original values
+
+    And when integration tests are executed
+    Then the tests should confirm that no blank (null) values are passed to the core APIs unless specified
+
+  Scenario: Logging for excluded fields
+    Given fields not included in an update request
+    When the update is processed
+    Then logs should be generated confirming that the values for these fields were retained and not changed
