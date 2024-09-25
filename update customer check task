@@ -1,0 +1,33 @@
+Here’s an outline of the Jira task and acceptance criteria for the update:
+
+Task Title:
+Update T24 API to Check Customer ID Before Creating a Customer in VAR0
+
+Task Description:
+Currently, the update operation in the T24 API within the VAR0 app code allows a customer to be created if the customer ID is not found during an update. This task involves implementing a setting that checks whether the customer ID exists before proceeding with customer creation. If the customer ID does not exist, the creation should be halted, and an appropriate response should be returned.
+
+Acceptance Criteria (Gherkin):
+
+Feature: Update Customer ID Check in T24 API for VAR0
+
+  Scenario: Customer ID exists when updating a customer
+    Given a valid customer ID is provided in the update request
+    When the update operation is triggered
+    Then the customer information should be updated successfully
+    And no new customer should be created
+
+  Scenario: Customer ID does not exist when updating a customer
+    Given an invalid or non-existent customer ID is provided in the update request
+    When the update operation is triggered
+    Then the update operation should fail
+    And no new customer should be created
+    And an error message indicating "Customer ID not found" should be returned
+
+  Scenario: Valid customer ID check enabled before creating a new customer
+    Given the "Check customer ID before creation" setting is enabled
+    When an update request is triggered with a non-existent customer ID
+    Then the system should prevent the creation of a new customer
+    And an error message indicating "Customer ID not found" should be returned
+
+Would this meet your requirements, or would you like to adjust anything?
+
