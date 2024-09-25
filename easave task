@@ -1,0 +1,50 @@
+Here’s the updated Jira task with the scenario for "EU Save Directives" having a value removed:
+
+
+---
+
+Jira Task Title:
+
+Prevent "EU Save Directives" field from being sent from communication layer when creating customers in Aruba with EU country of residence
+
+
+---
+
+Description:
+
+When creating a customer in Aruba with an EU country of residence, an error occurs because the "EU Save Directives" field is being sent as null from the communication layer, although it is not part of the API. The communication layer should be updated to ensure that the "EU Save Directives" field is not sent when its value is null or empty.
+
+Steps:
+
+1. Locate the logic in the communication layer responsible for handling customer creation.
+
+
+2. Implement a conditional check to exclude the "EU Save Directives" field from the payload if its value is null.
+
+
+3. Test locally and in the dev environment to validate that the changes prevent the field from being sent when null.
+
+
+
+Acceptance Criteria:
+
+Feature: Customer creation in Aruba with EU country of residence
+
+  Scenario: Customer creation with null "EU Save Directives" from communication layer
+    Given a customer is being created in Aruba with a country of residence in the EU
+    And the "EU Save Directives" field is null in the communication layer
+    When the API request is sent
+    Then the "EU Save Directives" field should not be present in the request payload
+    And the customer should be created successfully
+
+  Scenario: Customer creation with non-EU country of residence
+    Given a customer is being created in Aruba with a country of residence outside the EU
+    When the API request is sent
+    Then the "EU Save Directives" field should not affect the creation process
+    And the customer should be created successfully
+
+
+---
+
+This version removes the scenario where the "EU Save Directives" field has a value, as it won't occur in this iteration.
+
