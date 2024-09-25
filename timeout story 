@@ -1,0 +1,68 @@
+Got it, thanks for the update! Yes, I’m familiar with Apigee. It’s used for API management and acts as a gateway for routing, monitoring, and securing APIs. I’ll adjust the terminology to reflect Apigee instead of RPG in the JIRA task:
+
+
+---
+
+Title: Update Timeout Settings Based on Environment for Apigee Interaction
+
+Description:
+The current application timeout is set at 34 seconds across all environments. However, Apigee (which the application interacts with) has different timeout configurations for production, QAT, and UAT environments. In production, the Apigee timeout is 60 seconds, but in QAT and UAT, the timeout is 30 seconds. To avoid issues where the service takes longer than Apigee’s timeout, leading to multiple client requests, the application should be updated to dynamically configure the timeout based on the environment.
+
+Prod: Timeout should remain 34 seconds.
+
+UAT/QAT: Timeout should be updated to 25 seconds to ensure the service responds before Apigee times out.
+
+
+
+---
+
+Acceptance Criteria:
+
+Feature: Update application timeout based on the environment
+
+  Scenario: Set application timeout in production environment
+    Given the application is running in the "Prod" environment
+    When a service call is made to Apigee
+    Then the application timeout should be set to 34 seconds
+
+  Scenario: Set application timeout in QAT environment
+    Given the application is running in the "QAT" environment
+    When a service call is made to Apigee
+    Then the application timeout should be set to 25 seconds
+    And the service response should be returned before Apigee times out at 30 seconds
+
+  Scenario: Set application timeout in UAT environment
+    Given the application is running in the "UAT" environment
+    When a service call is made to Apigee
+    Then the application timeout should be set to 25 seconds
+    And the service response should be returned before Apigee times out at 30 seconds
+
+
+---
+
+Let me know if that works or if you need any tweaks!
+
+
+
+Feature: Validate application timeout settings in different environments via Postman
+
+  Scenario: Validate timeout in the production environment
+    Given the application is deployed in the "Prod" environment
+    When the QA resource sends a request to the API using Postman
+    Then the API should return a response within 34 seconds
+    And the QA resource should not receive a timeout error in Postman
+
+  Scenario: Validate timeout in the QAT environment
+    Given the application is deployed in the "QAT" environment
+    When the QA resource sends a request to the API using Postman
+    Then the API should return a response within 25 seconds
+    And the QA resource should not receive a timeout error in Postman
+    And the response should return before Apigee times out at 30 seconds
+
+  Scenario: Validate timeout in the UAT environment
+    Given the application is deployed in the "UAT" environment
+    When the QA resource sends a request to the API using Postman
+    Then the API should return a response within 25 seconds
+    And the QA resource should not receive a timeout error in Postman
+    And the response should return before Apigee times out at 30 seconds
+
