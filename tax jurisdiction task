@@ -1,0 +1,28 @@
+Got it! Here's an example of a JIRA task with Gherkin acceptance criteria to cover this defect:
+
+Task Title: Handle Empty Tax Jurisdiction for US in API Integration with RIBS
+
+Description: This task addresses a defect where, if the Alpha 2 ISO code for a tax jurisdiction is 'US,' the corresponding jurisdiction and TIN fields are set to empty. When multiple tax jurisdictions are passed, this leaves the first jurisdiction blank, causing a misalignment in subsequent jurisdictions when sent to the RIBS system.
+
+The solution will ensure that if a US jurisdiction is set to empty, the next tax jurisdiction fills the position, preventing any blank lines in the core banking system.
+
+Acceptance Criteria (Gherkin Format):
+
+Given the API accepts a list of tax jurisdictions
+When the list contains a tax jurisdiction with the Alpha 2 ISO code 'US'
+Then the Alpha code and TIN number for 'US' should be set to empty
+
+Scenario: Tax jurisdiction list contains multiple jurisdictions, including 'US'
+Given the API receives a list of tax jurisdictions with 'US' as the first jurisdiction
+When the US jurisdiction is set to empty
+Then the next jurisdiction in the list should fill the position in the RIBS system
+And no blank lines should appear between jurisdictions in the system
+
+Scenario: Tax jurisdiction 'US' appears in a non-first position
+Given the API receives a list of tax jurisdictions where 'US' is not the first jurisdiction
+When the US jurisdiction is set to empty
+Then the previous and subsequent jurisdictions should maintain their correct positions in the system
+And no blank lines should be sent to the RIBS system
+
+This should cover the defect and ensure the correct handling of the empty US jurisdiction. Let me know if you'd like to adjust anything.
+
