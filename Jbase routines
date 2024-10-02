@@ -1,0 +1,120 @@
+Certainly! Here's how to write the routine in jBC (jBASE BASIC) for T24 Classic to replace the country code with the country name in the same field.
+
+jBC Code to Replace the Country Code with Country Name
+
+SUBROUTINE FETCH.COUNTRY.NAME(VERSION.REC, VERSION.COMMON, FLAGS, RETURN.STATUS)
+   $INSERT I_COMMON  ;* Common Inserts for T24 Versions
+   $INSERT I_EQUATE  ;* Common Equates
+
+   COUNTRY.CODE.POS = 5  ;* Replace with actual position of the country code field
+
+   ;* Retrieve the country code from the version record
+   COUNTRY.CODE = TRIM(VERSION.REC<COUNTRY.CODE.POS>)
+
+   ;* Check if the country code has been entered
+   IF COUNTRY.CODE THEN
+
+      ;* Open the COUNTRY.TABLE file (replace 'COUNTRY.TABLE' with the actual name of your country table)
+      OPEN "COUNTRY.TABLE" TO COUNTRY.FILE ELSE
+         RETURN.STATUS = "COUNTRY TABLE NOT FOUND"
+         RETURN
+      END
+
+      ;* Attempt to read the country name using the country code
+      READ COUNTRY.REC FROM COUNTRY.FILE, COUNTRY.CODE ELSE
+         ;* If country code is invalid or not found
+         RETURN.STATUS = "INVALID COUNTRY CODE"
+         RETURN
+      END
+
+      ;* Replace the country code with the country name from the country table
+      VERSION.REC<COUNTRY.CODE.POS> = COUNTRY.REC<1>  ;* Assuming the first field contains the country name
+   END ELSE
+      ;* If no country code was entered, clear the field (optional)
+      VERSION.REC<COUNTRY.CODE.POS> = ""
+   END
+
+   RETURN
+END
+
+Key Points:
+
+1. Country Code Field:
+
+COUNTRY.CODE.POS: The field position in the VERSION.REC where the country code is entered and where the country name will be replaced. Update this with the correct position from your version.
+
+
+
+2. Country Table Lookup:
+
+The routine opens the COUNTRY.TABLE (which should map country codes to country names).
+
+It reads the country record based on the country code entered.
+
+If the code exists, it fetches the country name (from the first field in the country record) and replaces the country code in the same field.
+
+
+
+3. Handling Errors:
+
+If the country code is not found, the routine returns an error message.
+
+You can modify the error handling logic as needed, depending on your business requirements.
+
+
+
+4. No Second Field:
+
+The country name replaces the entered country code in the same field, as requested.
+
+
+
+
+Compile and Catalog the Routine
+
+1. Compile the Routine: After writing the routine, you need to compile it in jBASE. Run the following command:
+
+BASIC BP FETCH.COUNTRY.NAME
+
+
+2. Catalog the Routine: Once the routine is compiled, catalog it so that it can be used in T24:
+
+CATALOG BP FETCH.COUNTRY.NAME
+
+
+
+Attach the Routine to the Version
+
+1. Open the Version in Version Maintenance:
+
+Use OV or another T24 command to open the version in maintenance mode.
+
+
+
+2. Attach the Routine:
+
+Attach the routine FETCH.COUNTRY.NAME to the field validation or commit trigger for the field where the country code is entered.
+
+
+Example:
+
+If the country code field is in position 5, attach the routine to the Validation Routine for that field.
+
+
+
+3. Save and Test:
+
+Save the version and test it by entering a country code. The routine should automatically replace the country code with the corresponding country name.
+
+
+
+
+Testing
+
+Enter the country code (e.g., TT).
+
+After validation (or upon moving out of the field), the country name (Trinidad and Tobago) should replace the country code in the same field.
+
+
+Let me know if you need further clarifications!
+
