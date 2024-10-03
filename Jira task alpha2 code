@@ -74,5 +74,21 @@ Summary:
 Update and test the mapping of the country object in the core-agnostic layer (EYP0) to ensure the 'key' (country code) is mapped to 'Identification Place of Issue' and 'Country' fields.
 
 Description:
-The current implementation requires the country object to include a 'key' (country code) and a 'value' (country name). The mapping should be updated so that the 'key' (country code) is used to populate the 'Identification Place of Issue' and 'Country' fields, rather than
+The current implementation requires the country object to include a 'key' (country code) and a 'value' (country name). The mapping should be updated so that the 'key' (country code) is used to populate the 'Identification Place of Issue' and 'Country' fields, rather than the 'value' (country name). This task involves testing this updated mapping to ensure data is correctly stored in T24.
+
+Acceptance Criteria (Gherkin):
+
+Feature: Country Code Mapping in Core-Agnostic Layer (EYP0)
+
+  Scenario: Map country code 'key' to 'Identification Place of Issue'
+    Given a client data payload with a country object that includes a 'key' for country code
+    When the core-agnostic API processes the request
+    Then the 'key' should be mapped to 'Identification Place of Issue' in T24
+
+  Scenario: Map country code 'key' to 'Country'
+    Given a client data payload with a country object that includes a 'key' for country code
+    When the core-agnostic API processes the request
+    Then the 'key' should be mapped to 'Country' in T24
+
+This task reflects the updated mapping logic in the core-agnostic layer. Let me know if any other adjustments are needed!
 
