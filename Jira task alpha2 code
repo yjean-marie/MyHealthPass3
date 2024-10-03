@@ -1,0 +1,60 @@
+Apologies for the incomplete response. Here's the rest of the Jira task with Gherkin acceptance criteria for the core-agnostic layer testing:
+
+
+---
+
+Jira Task: Test Alpha-2 Country Code Replacement at Core-Agnostic Layer (EYP0)
+
+Summary:
+Test the implementation of the routine that replaces alpha-2 country codes with country names in the core-agnostic layer for 'Identification Place of Issue' and 'Country' fields. Verification will be done in the T24 system.
+
+Description:
+We have integrated a routine within the core-agnostic layer to replace alpha-2 country codes with the corresponding country names for the 'Identification Place of Issue' and 'Country' fields. This task involves testing this implementation at the core-agnostic level to ensure proper functionality and accurate data storage in T24.
+
+Acceptance Criteria (Gherkin):
+
+Feature: Alpha-2 Country Code Replacement in Core-Agnostic Layer
+
+  Scenario: Replace alpha-2 country code with country name for 'Identification Place of Issue'
+    Given a client data payload with an alpha-2 country code for 'Identification Place of Issue'
+    When the core-agnostic API processes the request
+    Then the alpha-2 code should be replaced with the corresponding country name in T24
+
+  Scenario: Replace alpha-2 country code with country name for 'Country'
+    Given a client data payload with an alpha-2 country code for 'Country'
+    When the core-agnostic API processes the request
+    Then the alpha-2 code should be replaced with the corresponding country name in T24
+
+This should cover the key areas for testing the replacement of alpha-2 codes with country names. Let me know if you'd like to adjust or add any details.
+
+
+
+Got it! Let's create the Jira task for the VAR0 core API level testing as well. Here's how it might look:
+
+
+---
+
+Jira Task: Test Alpha-2 Country Code Replacement at Core API Level (VAR0)
+
+Summary:
+Test the implementation of the routine that replaces alpha-2 country codes with country names in the core API (VAR0) for the 'Identification Place of Issue' and 'Country' fields. Ensure data consistency in T24.
+
+Description:
+We have integrated a routine within the core API (VAR0) to replace alpha-2 country codes with the corresponding country names for the 'Identification Place of Issue' and 'Country' fields. This task involves testing this implementation at the core API level to ensure proper functionality and accurate data storage in T24.
+
+Acceptance Criteria (Gherkin):
+
+Feature: Alpha-2 Country Code Replacement in Core API (VAR0)
+
+  Scenario: Replace alpha-2 country code with country name for 'Identification Place of Issue'
+    Given a client request with an alpha-2 country code for 'Identification Place of Issue'
+    When the VAR0 core API processes the request
+    Then the alpha-2 code should be replaced with the corresponding country name in T24
+
+  Scenario: Replace alpha-2 country code with country name for 'Country'
+    Given a client request with an alpha-2 country code for 'Country'
+    When the VAR0 core API processes the request
+    Then the alpha-2 code should be replaced with the corresponding country name in T24
+
+This will ensure the alpha-2 country code replacement works at the core API level (VAR0), similar to the core-agnostic layer but specific to VAR0. Let me know if this works or needs any changes!
+
