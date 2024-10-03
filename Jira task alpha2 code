@@ -58,3 +58,21 @@ Feature: Alpha-2 Country Code Replacement in Core API (VAR0)
 
 This will ensure the alpha-2 country code replacement works at the core API level (VAR0), similar to the core-agnostic layer but specific to VAR0. Let me know if this works or needs any changes!
 
+
+
+
+
+
+Here’s the updated Jira task for the EYP0 layer:
+
+
+---
+
+Jira Task: Update and Test Country Code Mapping at Core-Agnostic Layer (EYP0)
+
+Summary:
+Update and test the mapping of the country object in the core-agnostic layer (EYP0) to ensure the 'key' (country code) is mapped to 'Identification Place of Issue' and 'Country' fields.
+
+Description:
+The current implementation requires the country object to include a 'key' (country code) and a 'value' (country name). The mapping should be updated so that the 'key' (country code) is used to populate the 'Identification Place of Issue' and 'Country' fields, rather than
+
