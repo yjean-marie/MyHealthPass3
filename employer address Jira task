@@ -1,0 +1,62 @@
+Here are two Jira tasks with Gherkin acceptance criteria:
+
+Task 1: Update T24 VAR0 Core Banking API to Replace Employer Address Field
+
+Description:
+Update the T24 VAR0 core banking API to replace the single employerAddress field with four fields: employerAddressStreet, employerAddressCity, employerAddressCountry, and employerAddressPostalCode. This change will apply to both create and update endpoints, and testing will verify the correct mapping and storage in T24.
+
+Acceptance Criteria:
+
+Scenario 1: Create operation with new fields
+Given I am using the T24 core banking API,
+When I provide the employerAddressStreet, employerAddressCity, employerAddressCountry, and employerAddressPostalCode fields in the create endpoint,
+Then the data should be stored correctly in the corresponding fields in T24,
+And the employerAddress field should no longer be used.
+
+Scenario 2: Update operation with new fields
+Given I am using the T24 core banking API,
+When I update an existing employer record with new employerAddressStreet, employerAddressCity, employerAddressCountry, and employerAddressPostalCode fields,
+Then the fields should be updated correctly in T24,
+And the previous employerAddress field should be replaced by the new fields.
+
+Scenario 3: Verification in T24
+Given the changes to the API,
+When I verify the employer's address in T24,
+Then the data should appear correctly in the new address fields (employerAddressStreet, employerAddressCity, employerAddressCountry, employerAddressPostalCode).
+
+
+---
+
+Task 2: Update Core Agnostic Layer Client API to Handle New Address Fields
+
+Description:
+Update the core agnostic layer client API to support four new fields (employerAddressStreet, employerAddressCity, employerAddressCountry, and employerAddressPostalCode). Maintain the existing employerAddress field for backward compatibility. If employerAddress is over 50 characters, split the address into the new fields. If employerAddress is less than or equal to 50 characters, populate employerAddressStreet. Clients may also choose to fill the new fields directly.
+
+Acceptance Criteria:
+
+Scenario 1: Split employerAddress if longer than 50 characters
+Given I have provided the employerAddress field with more than 50 characters,
+When the system processes the create or update request,
+Then the address should be split and distributed across employerAddressStreet, employerAddressCity, employerAddressCountry, and employerAddressPostalCode,
+And no errors should occur during the processing.
+
+Scenario 2: Use employerAddressStreet if less than or equal to 50 characters
+Given I have provided the employerAddress field with less than or equal to 50 characters,
+When the system processes the create or update request,
+Then the entire address should be placed in employerAddressStreet without splitting,
+And the other fields (employerAddressCity, employerAddressCountry, employerAddressPostalCode) should remain empty unless provided separately.
+
+Scenario 3: Use new fields directly
+Given I am using the core agnostic layer client API,
+When I provide employerAddressStreet, employerAddressCity, employerAddressCountry, and employerAddressPostalCode directly,
+Then the address should be stored as provided,
+And the employerAddress field should remain unused.
+
+Scenario 4: Verification in T24
+Given the changes to the core agnostic layer client API,
+When I verify the employer's address in T24,
+Then the data should appear correctly in the four new address fields (employerAddressStreet, employerAddressCity, employerAddressCountry, and employerAddressPostalCode),
+And backward compatibility should be maintained with employerAddress.
+
+Let me know if you'd like further modifications!
+
