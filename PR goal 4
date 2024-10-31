@@ -1,0 +1,8 @@
+Here’s a tailored comment that mirrors the structure of the Originations comment but reflects your work on the KYC Refresh program and your role in exposing the restrict customer endpoint:
+
+"This year, I supported the KYC Refresh program by contributing to the deployment of the EYP0 Core-Agnostic APIs, specifically through the development and exposure of the restrict customer endpoint. This endpoint, built into the core-agnostic layer, enables customer restrictions based on jurisdiction, allowing for streamlined, compliant functionality across both core banking systems. Although not directly assigned to the KYC Refresh project, my work on the integration layer provided critical support for the program, further extending the capabilities of the EYP0 framework.
+
+This deployment, now live in production, is a testament to the scalability and adaptability of our core-agnostic APIs, as these endpoints can be leveraged by other teams and across the bank, ensuring alignment with RBC’s commitment to regulatory compliance and operational efficiency. My contributions reinforce RBC’s strategic direction in simplifying and centralizing processes, ensuring that our APIs are versatile, reusable assets that drive impact across multiple programs and departments."
+
+This comment highlights the broader applicability of your work on the core-agnostic layer and aligns it with RBC’s regulatory and operational goals. Let me know if you’d like any adjustments!
+
