@@ -1,0 +1,12 @@
+Absolutely, let’s expand on the comment with more detail about the knowledge-based chatbot POC and how you exceeded expectations by integrating it with databases and adding advanced functionalities.
+
+Here’s the updated comment:
+
+"This year, I fully met and exceeded the Innovation and Technical Direction goal by developing a knowledge-based chatbot proof-of-concept (POC) that leverages GenAI to streamline information access across the organization. This chatbot was designed not only to handle document-based queries but also to integrate with databases, enabling dynamic, real-time access to structured information. By connecting the chatbot with our MSSQL database, I enabled capabilities for users to generate insights and summaries, enhancing its utility beyond static responses.
+
+The integration involved a dual-prompt system where one prompt generates insights, and another crafts SQL queries based on schema details, allowing users to draw deeper, data-driven conclusions. This feature aligns with RBC’s drive to bring analytical capabilities closer to end users, fostering a data-informed culture. Additionally, the chatbot’s integration with Confluence and other document storage solutions further enhanced its role as a centralized knowledge hub, effectively supporting cross-team collaboration and access to critical resources.
+
+This POC not only fulfilled the goal by demonstrating the potential of GenAI within RBC Caribbean but also exceeded expectations by pushing the boundaries of innovation through database integration and real-time query capabilities. The project contributes directly to RBC's strategic focus on technical leadership and continuous improvement, positioning us to leverage AI in transformative ways within our internal processes."
+
+This version includes more specifics on the POC’s technical aspects and shows how you exceeded the goal by integrating with databases and enabling real-time insights. Let me know if this captures everything accurately!
+
