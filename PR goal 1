@@ -1,0 +1,10 @@
+Got it! Here’s an updated comment that factors in your role in the workshops, as well as elements from RBC's leadership model, collective ambition, and the goal description:
+
+"This year, I played a pivotal role in advancing the Originations Journey by architecting and deploying the EYP0 Core-Agnostic APIs, built with two foundational layers: the translation layer and the communication layer. The communication layer manages the complexities of interacting with various core banking systems—leveraging MQ for RIBS and HTTP requests for T24—ensuring seamless integration across systems. On top of this, the translation layer standardizes data, allowing both create and update functionalities to adapt to core-specific requirements, all now live in production.
+
+To uphold RBC's commitment to operational excellence and client satisfaction, I integrated the ELK stack into our Site Reliability Engineering (SRE) framework, providing comprehensive logging of all incoming and outgoing requests, responses, application events, and exceptions. This robust monitoring setup has strengthened our ability to proactively address issues, reflecting RBC’s values of accountability and acting with speed and simplicity. Additionally, I implemented user-level integration, enabling Pine ID-based username retrieval for more precise tracking and accountability in T24 transactions.
+
+Throughout the project, I collaborated closely with the Digital team, participating in workshops to resolve issues swiftly, deliver new features promptly, and ensure the API met their evolving needs. This alignment and adaptability underscore RBC’s leadership model principles, including a commitment to client-first solutions, continuous learning, and collaborative problem-solving. By driving impact through these initiatives, I’ve helped lay a solid foundation for sustainable growth and enhanced client experience within our critical business programs."
+
+This version highlights your technical achievements and connects them to RBC’s leadership model, collective ambition, and the goal description while respecting your role in the workshops. Let me know if this feels on target!
+
