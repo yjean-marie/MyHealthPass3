@@ -44,5 +44,13 @@ Then the current operational status should be returned.
 
 
 
+Here's a task you could use for the MOP and change request preparation:
+
+Task: Prepare Method of Procedure (MOP) and Change Requests for Deployment
+Summary: Create a detailed Method of Procedure (MOP) for the scheduled deployment on the twenty-first of this month. This MOP should outline the step-by-step procedures, including pre-deployment checks, deployment actions, and post-deployment verification tasks. Additionally, prepare the necessary change requests, ensuring they align with the MOP steps, capturing risk assessments, rollback plans, and approval requirements. Both the MOP and change requests should be finalized and ready for review before the deployment date.
+
+
+
+
 
 
