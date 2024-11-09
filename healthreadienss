@@ -1,0 +1,93 @@
+Given this setup, you can dynamically load each API endpoint from your configuration and set up health checks accordingly. Here’s how you can implement it:
+
+Configure Services in appsettings.json
+
+Your appsettings.json might look something like this:
+
+json
+Copy code
+{
+  "ApiServices": [
+    {
+      "Service": "Service1",
+      "ServiceBaseUrl": "Service1BaseUrl",
+      "ServicePath": "/health"
+    },
+    {
+      "Service": "Service2",
+      "ServiceBaseUrl": "Service2BaseUrl",
+      "ServicePath": "/status"
+    }
+  ],
+  "Service1BaseUrl": "https://service1.example.com",
+  "Service2BaseUrl": "https://service2.example.com"
+}
+Load Configuration and Register Health Checks
+
+In Startup.cs or Program.cs, read the services from appsettings and register a health check for each one:
+
+csharp
+Copy code
+public void ConfigureServices(IServiceCollection services)
+{
+    var apiServices = Configuration.GetSection("ApiServices").Get<List<ApiService>>();
+
+    foreach (var apiService in apiServices)
+    {
+        var baseUrl = Configuration[apiService.ServiceBaseUrl];
+        var healthCheckUrl = $"{baseUrl}{apiService.ServicePath}";
+
+        services.AddHealthChecks()
+            .AddCheck(apiService.Service, new ApiDependencyHealthCheck(new HttpClient(), healthCheckUrl), tags: new[] { "readiness" });
+    }
+}
+Here, ApiService is a model class that matches your configuration structure:
+
+csharp
+Copy code
+public class ApiService
+{
+    public string Service { get; set; }
+    public string ServiceBaseUrl { get; set; }
+    public string ServicePath { get; set; }
+}
+Set Up the Readiness Endpoint
+
+Configure the readiness health check endpoint:
+
+csharp
+Copy code
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapHealthChecks("/health/readiness", new HealthCheckOptions
+    {
+        Predicate = healthCheck => healthCheck.Tags.Contains("readiness"),
+        ResponseWriter = async (context, report) =>
+        {
+            context.Response.ContentType = "application/json";
+            var result = JsonSerializer.Serialize(new
+            {
+                status = report.Status.ToString(),
+                checks = report.Entries.Select(entry => new {
+                    name = entry.Key,
+                    status = entry.Value.Status.ToString(),
+                    description = entry.Value.Description
+                })
+            });
+            await context.Response.WriteAsync(result);
+        }
+    });
+});
+Kubernetes Readiness Probe Configuration
+
+In Kubernetes, point the readiness probe to this endpoint:
+
+yaml
+Copy code
+readinessProbe:
+  httpGet:
+    path: /health/readiness
+    port: 80
+  initialDelaySeconds: 30
+  periodSeconds: 10
+This setup will dynamically register a health check for each API dependency based on your appsettings configuration, checking each API’s readiness endpoint and updating the Kubernetes readiness probe accordingly.
