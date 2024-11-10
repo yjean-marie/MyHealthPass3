@@ -91,3 +91,43 @@ readinessProbe:
   initialDelaySeconds: 30
   periodSeconds: 10
 This setup will dynamically register a health check for each API dependency based on your appsettings configuration, checking each API’s readiness endpoint and updating the Kubernetes readiness probe accordingly.
+
+
+
+
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+
+public class ApiDependencyHealthCheck : IHealthCheck
+{
+    private readonly HttpClient _httpClient;
+    private readonly string _apiUrl;
+
+    public ApiDependencyHealthCheck(HttpClient httpClient, string apiUrl)
+    {
+        _httpClient = httpClient;
+        _apiUrl = apiUrl;
+    }
+
+    public async Task<HealthCheckResult> CheckHealthAsync(
+        HealthCheckContext context,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync(_apiUrl, cancellationToken);
+            if (response.IsSuccessStatusCode)
+            {
+                return HealthCheckResult.Healthy("API is reachable");
+            }
+            return HealthCheckResult.Unhealthy("API is unreachable");
+        }
+        catch (Exception ex)
+        {
+            return HealthCheckResult.Unhealthy("API is unreachable", ex);
+        }
+    }
+}
