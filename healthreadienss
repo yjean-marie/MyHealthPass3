@@ -305,3 +305,12 @@ public class ApiDependencyHealthCheck : IHealthCheck
         }
     }
 }
+
+
+
+uilder.Services.AddHealthChecks()
+        .AddCheck(apiService.Service, sp =>
+        {
+            var httpClient = sp.GetRequiredService<HttpClient>();
+            return new ApiDependencyHealthCheck(httpClient, healthCheckUrl);
+        }, tags: new[] { "readiness" });
