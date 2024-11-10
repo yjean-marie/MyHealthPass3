@@ -4,7 +4,181 @@ Configure Services in appsettings.json
 
 Your appsettings.json might look something like this:
 
+jsonCertainly! Here’s how you can set up separate liveness and readiness endpoints in a minimal API application while avoiding the ASP0014 warning by mapping the endpoints directly on the WebApplication instance.
+
+1. Setup appsettings.json
+Configure your API dependencies in appsettings.json as before:
+
 json
+Copy code
+{
+  "ApiServices": [
+    {
+      "Service": "Service1",
+      "ServiceBaseUrl": "Service1BaseUrl",
+      "ServicePath": "/health"
+    },
+    {
+      "Service": "Service2",
+      "ServiceBaseUrl": "Service2BaseUrl",
+      "ServicePath": "/status"
+    }
+  ],
+  "Service1BaseUrl": "https://service1.example.com",
+  "Service2BaseUrl": "https://service2.example.com"
+}
+2. Define the ApiService Model
+Define a model for each API dependency:
+
+csharp
+Copy code
+public class ApiService
+{
+    public string Service { get; set; }
+    public string ServiceBaseUrl { get; set; }
+    public string ServicePath { get; set; }
+}
+3. Define the ApiDependencyHealthCheck Class
+Create a custom health check for each API dependency:
+
+csharp
+Copy code
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+
+public class ApiDependencyHealthCheck : IHealthCheck
+{
+    private readonly HttpClient _httpClient;
+    private readonly string _apiUrl;
+
+    public ApiDependencyHealthCheck(HttpClient httpClient, string apiUrl)
+    {
+        _httpClient = httpClient;
+        _apiUrl = apiUrl;
+    }
+
+    public async Task<HealthCheckResult> CheckHealthAsync(
+        HealthCheckContext context,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync(_apiUrl, cancellationToken);
+            return response.IsSuccessStatusCode
+                ? HealthCheckResult.Healthy("API is reachable")
+                : HealthCheckResult.Unhealthy("API is unreachable");
+        }
+        catch (Exception ex)
+        {
+            return HealthCheckResult.Unhealthy("API is unreachable", ex);
+        }
+    }
+}
+4. Register Health Checks in ConfigureServices
+In Program.cs, load the API dependencies from appsettings and configure both liveness and readiness checks.
+
+csharp
+Copy code
+var builder = WebApplication.CreateBuilder(args);
+
+// Register HttpClient for API dependency checks
+builder.Services.AddHttpClient();
+
+// Add liveness and readiness checks
+builder.Services.AddHealthChecks()
+    // Basic liveness check
+    .AddCheck("Liveness", () => HealthCheckResult.Healthy("Application is alive"));
+
+var apiServices = builder.Configuration.GetSection("ApiServices").Get<List<ApiService>>();
+foreach (var apiService in apiServices)
+{
+    var baseUrl = builder.Configuration[apiService.ServiceBaseUrl];
+    var healthCheckUrl = $"{baseUrl}{apiService.ServicePath}";
+
+    builder.Services.AddHealthChecks()
+        .AddCheck<ApiDependencyHealthCheck>(
+            apiService.Service,
+            tags: new[] { "readiness" }
+        );
+}
+5. Map Separate Endpoints for Liveness and Readiness
+Directly map separate health check endpoints for liveness and readiness checks:
+
+csharp
+Copy code
+var app = builder.Build();
+
+// Liveness endpoint
+app.MapHealthChecks("/health/liveness", new HealthCheckOptions
+{
+    Predicate = check => check.Name == "Liveness",
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = JsonSerializer.Serialize(new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(entry => new
+            {
+                name = entry.Key,
+                status = entry.Value.Status.ToString(),
+                description = entry.Value.Description
+            })
+        });
+        await context.Response.WriteAsync(result);
+    }
+});
+
+// Readiness endpoint, includes API dependency checks
+app.MapHealthChecks("/health/readiness", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("readiness"),
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = JsonSerializer.Serialize(new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(entry => new
+            {
+                name = entry.Key,
+                status = entry.Value.Status.ToString(),
+                description = entry.Value.Description
+            })
+        });
+        await context.Response.WriteAsync(result);
+    }
+});
+
+app.Run();
+6. Configure Kubernetes Probes
+Finally, point Kubernetes livenessProbe and readinessProbe to the respective endpoints:
+
+yaml
+Copy code
+livenessProbe:
+  httpGet:
+    path: /health/liveness
+    port: 80
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /health/readiness
+    port: 80
+  initialDelaySeconds: 30
+  periodSeconds: 10
+Final Solution Summary
+This configuration:
+
+Splits liveness and readiness checks: /health/liveness for basic health and /health/readiness for readiness and dependency checks.
+Avoids ASP0014: Directly maps endpoints on app, following minimal API conventions.
+Custom JSON Responses: Provides detailed health statuses for both endpoints, helpful for debugging and monitoring.
+This setup provides clear separation and detailed monitoring for both types of health checks.
 Copy code
 {
   "ApiServices": [
