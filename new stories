@@ -27,3 +27,134 @@ Then the deployment process is documented,
 And environment-specific configurations are applied,
 And integration with existing systems is verified through testing.
 
+
+
+
+Here's a Jira task for deploying Kibana to high environments:
+
+Title: Deploy Kibana to QA and Pre-Prod Environments
+
+Description: Prepare and execute the deployment of Kibana to the QA and Pre-Prod environments. This will include setting up the necessary infrastructure, configuring environment-specific settings, and ensuring smooth integration with existing systems.
+
+Acceptance Criteria:
+
+Given the need for Kibana in higher environments,
+When deploying to QA and Pre-Prod,
+Then the deployment process is documented,
+And environment-specific configurations are applied,
+And integration with existing systems is verified through testing.
+
+
+
+Let's outline a Jira task for integrating EYP0 services with HashiCorp Vault:
+
+Title: Integrate EYP0 Services with HashiCorp Vault for Configuration Management
+
+Description: Integrate the EYP0 services, including the Client API, Account API, KYC Communication Layer, and Originations Communication Layer, with HashiCorp Vault. This will involve securely storing app settings, passwords, and database configurations in Vault.
+
+Acceptance Criteria:
+
+Given the need for secure configuration management,
+When integrating the EYP0 services with HashiCorp Vault,
+Then all sensitive configurations are securely stored in Vault,
+And the services are configured to retrieve their settings from Vault,
+And the integration is tested to ensure proper functionality across all environments.
+
+Absolutely, here it is in Gherkin:
+
+Feature: Integrate EYP0 Services with HashiCorp Vault
+
+  Scenario: Secure configuration management for EYP0 services
+    Given the EYP0 services need secure configuration management,
+    When integrating with HashiCorp Vault,
+    Then all sensitive configurations are securely stored in Vault,
+    And the services retrieve their settings from Vault,
+    And the integration is tested to ensure functionality across all environments.
+
+
+
+
+
+Let's create a Jira task for storing MQ RIBS configuration in a database:
+
+Title: Store MQ RIBS Configuration in Database for EYP0 Communication Layer
+
+Description: Migrate the MQ RIBS configuration for the EYP0 communication layer from the codebase or HashiCorp Vault to a lightweight database, such as MongoDB. This change aims to consolidate the communication layer, making it more extensible and easier to update.
+
+Acceptance Criteria:
+
+Given the need for a consolidated communication layer in EYP0,
+When storing MQ RIBS configuration in a database,
+Then the configuration is migrated from the codebase or Vault to the chosen database,
+And the communication layer is updated to retrieve configurations from the database,
+And the support team can easily update configurations as needed.
+
+
+
+
+
+
+
+Let's outline a Jira task for creating a script to monitor and restart JBoss and JBase WAR files:
+
+Title: Develop Script for Monitoring and Restarting JBoss and JBase WAR Files
+
+Description: Develop a script that detects failures in JBoss and JBase WAR files and automatically restarts the affected services. This script should be capable of identifying when a WAR file fails and determine whether to restart just the WAR file, the JBase agent, or the JBoss server.
+
+Acceptance Criteria:
+
+Given the need to maintain uptime for JBoss and JBase services,
+When a WAR file failure is detected,
+Then the script identifies the appropriate action,
+And the affected service (WAR file, JBase agent, or JBoss) is restarted automatically,
+And logs are generated to document the failure and the action taken.
+
+
+
+
+
+
+Here's a Jira task for improving the update functionality in the Client API:
+
+Title: Refactor Client API Update Functionality for Individual Field Updates
+
+Description: Refactor the Client API to allow individual field updates without requiring the entire object. Implement logic where:
+
+Passing null retains the existing value.
+
+An empty string sets the value to empty, null, or zero based on the field type.
+
+A provided value updates the field.
+
+
+Acceptance Criteria:
+
+Given the need for more flexible updates in the Client API,
+When a client sends an update request with specific field values,
+Then the API processes the update as follows:
+  - If a field is passed as null, the existing value is retained.
+  - If a field is passed as an empty string, the field is set to empty, null, or zero based on its type.
+  - If a field is passed with a value, the field is updated with that value.
+
+
+
+
+
+
+
+Here's a Jira task for removing RestTemplate and implementing its replacement:
+
+Title: Replace RestTemplate with Recommended Alternative in EYP0 Services
+
+Description: Remove the deprecated RestTemplate from the EYP0 application across the KYC core services, Originations core services, and the Account API. Implement the recommended replacement to ensure continued functionality and compatibility with future Spring versions.
+
+Acceptance Criteria:
+
+Given the deprecation of RestTemplate,
+When updating the EYP0 application,
+Then RestTemplate is removed from the KYC core services, Originations core services, and the Account API,
+And the recommended replacement is implemented,
+And all affected services function correctly with the new implementation.
+
+
+
