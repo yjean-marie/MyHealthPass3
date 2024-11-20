@@ -1,0 +1,29 @@
+Here's a Jira task for setting up Kibana alerts:
+
+Title: Set Up Kibana Alerts for Critical API Errors in EYP0
+
+Description: Configure Kibana to monitor the EYP0 API for HTTP status codes of 500 and above. This will enable proactive alerts to be sent to both clients and developers when critical errors occur, allowing for timely response and resolution.
+
+Acceptance Criteria:
+
+Given the EYP0 API logs are being collected in Kibana,
+When an HTTP status code of 500 or above is detected,
+Then an alert is triggered and sent to the predefined list of stakeholders,
+And the alert contains details of the error, including the time of occurrence and the endpoint affected.
+
+
+
+Here's a Jira task for deploying Kibana to high environments:
+
+Title: Deploy Kibana to QA and Pre-Prod Environments
+
+Description: Prepare and execute the deployment of Kibana to the QA and Pre-Prod environments. This will include setting up the necessary infrastructure, configuring environment-specific settings, and ensuring smooth integration with existing systems.
+
+Acceptance Criteria:
+
+Given the need for Kibana in higher environments,
+When deploying to QA and Pre-Prod,
+Then the deployment process is documented,
+And environment-specific configurations are applied,
+And integration with existing systems is verified through testing.
+
