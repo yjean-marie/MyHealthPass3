@@ -1,0 +1,84 @@
+Certainly! Here's the revised Jira task with the three scenarios included:
+
+
+---
+
+Title: Update Customer Endpoint to Support Add, Leave, and Remove for Multi-Value Fields
+
+Description:
+Enhance the existing customer update endpoint to handle three scenarios—adding, leaving, and removing specific values within multi-value fields (e.g., communication types, identification documents).
+
+The following functionalities must be implemented:
+
+1. Retrieve Customer Data:
+
+Clients can retrieve customer information by ID.
+
+
+
+2. Update Multi-Value Fields:
+
+Clients will receive an array of multi-value fields from the customer record.
+
+The update endpoint must handle the following scenarios:
+
+Add: If a new value is provided in the array, it should be appended to the existing values in the backend.
+
+Leave: If no changes are made to a value, the backend retains the current value.
+
+Remove: If "remove": true is added to a specific object in the array, the corresponding value should be removed from the backend.
+
+
+
+
+3. Backend Handling:
+
+Ensure the backend processes the three scenarios correctly and applies the appropriate actions.
+
+
+
+
+Acceptance Criteria:
+
+Add Scenario:
+
+Given a multi-value field array with a new value,
+
+When the endpoint receives the update request,
+
+Then the new value should be added to the existing values in the backend.
+
+
+Leave Scenario:
+
+Given a multi-value field array with no changes to specific values,
+
+When the endpoint receives the update request,
+
+Then the unchanged values should remain intact in the backend.
+
+
+Remove Scenario:
+
+Given a multi-value field array with "remove": true for a specific value,
+
+When the endpoint receives the update request,
+
+Then the value should be removed from the backend.
+
+
+
+Technical Requirements:
+
+Ensure backward compatibility with existing functionality.
+
+Validate inputs to ensure only valid actions (add, leave, or remove) are processed.
+
+Include unit tests and integration tests to cover all three scenarios.
+
+
+
+---
+
+Let me know if this works or needs further tweaks!
+
