@@ -40,3 +40,36 @@ Backend Integration: API connectivity to bank systems for real-time processing.
 
 Does this align with what you had in mind?
 
+
+A practical use case for emotional analysis in a Secure ATM could be detecting genuine duress during high-value transactions. Here's an example:
+
+
+---
+
+Use Case: "High-Value Withdrawal Under Duress Detection"
+
+Imagine a customer initiates a large cash withdrawal, such as withdrawing $5,000. During the transaction, the ATM’s camera analyzes the customer’s facial expressions and emotional state. The system notices clear signs of distress—such as widened eyes, furrowed brows, or tense posture—combined with unusually hesitant behavior (e.g., long pauses before confirming steps or looking around nervously).
+
+At the same time, the ATM’s multi-face detection system identifies another person standing unusually close, possibly exerting pressure on the customer. These combined indicators suggest that the customer might be under coercion.
+
+In response, the ATM can:
+
+1. Delay the transaction by asking additional verification questions, such as requiring a secondary PIN.
+
+
+2. Quietly alert authorities or send a real-time notification to the bank’s security team, providing the ATM’s location and live camera feed.
+
+
+3. Offer an escape mechanism, such as asking the customer to input a code that signals duress while appearing to complete the transaction normally.
+
+
+
+
+---
+
+Why this works:
+By focusing on high-risk scenarios (like large withdrawals or unusual behavior patterns), false positives become less problematic, as emotional analysis is triggered only in specific contexts. This reduces unnecessary alerts while increasing the likelihood of catching genuine coercion cases.
+
+Would this approach help you position the emotional analysis feature more convincingly?
+
+
