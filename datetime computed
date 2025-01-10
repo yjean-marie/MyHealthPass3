@@ -1,0 +1,62 @@
+To autofill a field with the current date and time in a T24 Enquiry through the user interface, follow these steps:
+
+
+---
+
+Steps to Display Current DateTime in a T24 Enquiry
+
+1. Navigate to the Enquiry Definition:
+
+Go to ENQUIRY in the T24 user interface.
+
+Select the enquiry you want to modify or create a new one.
+
+
+
+2. Add a Computed Field:
+
+In the Computed Fields section of the enquiry, add a new computed field.
+
+Provide a Name for the field, such as CURRENT.DATETIME.
+
+In the Computation field, enter the formula:
+
+@DATE : ' ' : @TIME
+
+This formula concatenates the current date and time.
+
+
+
+3. Include the Computed Field in the Enquiry Columns:
+
+Go to the Columns section of the enquiry.
+
+Add a new row and select the computed field (CURRENT.DATETIME) you created in the previous step.
+
+Provide a label, such as "Date & Time", and set its position.
+
+
+
+4. Save and Run the Enquiry:
+
+Save the enquiry definition.
+
+Run the enquiry to see the current date and time autofilled in the designated column.
+
+
+
+
+
+---
+
+Example Output
+
+If today’s date is 2025-01-10 and the current time is 14:35:00, the enquiry will display:
+
+Date & Time: 2025/01/10 14:35:00
+
+
+---
+
+This method ensures that the current datetime is displayed every time the enquiry is executed. Would you like further clarification on any of these steps?
+
