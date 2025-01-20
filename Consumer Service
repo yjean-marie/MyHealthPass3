@@ -1,0 +1,121 @@
+Here’s the Jira story for the consumer service, which will process A2A recurring and post-dated payment instructions after they have been pushed to the Kafka queue.
+
+
+---
+
+Title:
+Consumer Service for Processing A2A Recurring and Post-Dated Transactions
+
+
+---
+
+Description:
+As a Developer,
+I want to develop a Kafka consumer service as part of the Recurrence Engine,
+which will consume messages from the Kafka queue containing A2A recurring or post-dated payment instructions,
+so that the transactions can be processed via the T24 API (a2apub) and the instruction status can be updated accordingly.
+
+Assumptions:
+
+1. The consumer will listen to specific Kafka topics related to A2A transactions and process them sequentially.
+
+
+2. The consumer must ensure idempotency to avoid processing duplicate messages.
+
+
+3. Error handling mechanisms such as retries and dead-letter queues (DLQ) will be implemented to handle failed transactions.
+
+
+4. The consumer should process messages in a timely manner to meet SLA requirements.
+
+
+5. The system should be able to scale horizontally by running multiple consumer instances.
+
+
+6. Transaction logs will be stored for audit and monitoring purposes.
+
+
+
+Technical Considerations:
+
+The Kafka consumer should use an appropriate consumer group to ensure distributed processing across instances.
+
+The service should log each transaction status (success, failure, retries) in ELK (Kibana) for observability.
+
+Error handling should include retries with exponential backoff before moving to a DLQ.
+
+The consumer should ensure that messages are processed in the correct order if required (by using partitioning or key-based processing).
+
+Monitoring alerts should be set up for failed transactions via Prometheus or ELK alerts.
+
+
+Dependencies:
+
+The Kafka cluster should be available and properly configured with relevant topics and partitions.
+
+T24 API (a2apub) should be available for processing transactions.
+
+The instruction API should be available for updating transaction statuses.
+
+The consumer should be tested for concurrency and load capacity.
+
+
+
+---
+
+Acceptance Criteria:
+
+Scenario 1 - Successful Transaction Processing
+Given a valid A2A transaction message is published to the Kafka queue,
+When the consumer picks up the message,
+Then it should call the T24 API (a2apub) to process the transaction,
+And update the instruction status via the instruction API,
+And log the successful processing details.
+
+Scenario 2 - Handling Failed Transactions with Retry
+Given an A2A transaction message is published but processing fails,
+When the consumer encounters an error while calling the T24 API,
+Then it should retry the request based on the retry policy,
+And move the message to the DLQ after exhausting retries,
+And log the failure for investigation.
+
+Scenario 3 - Idempotency Handling
+Given an A2A transaction message that has already been processed,
+When the consumer picks up the same message again,
+Then it should detect the duplicate and prevent reprocessing,
+And log the duplicate detection event.
+
+Scenario 4 - Concurrent Consumer Handling
+Given multiple instances of the consumer service running,
+When messages arrive in the Kafka topic,
+Then they should be distributed across consumers based on Kafka's partitioning,
+And processed without duplication or conflicts.
+
+Scenario 5 - Partial Processing Failure
+Given an A2A transaction where the payment succeeds but the instruction API update fails,
+When the consumer processes the message,
+Then it should log the partial failure,
+And retry updating the instruction API separately,
+And ensure reconciliation measures are in place.
+
+Scenario 6 - Monitoring and Alerts
+Given an A2A transaction processing failure,
+When the failure count exceeds a threshold,
+Then an alert should be triggered via monitoring tools,
+And logs should provide sufficient diagnostic information.
+
+
+---
+
+References:
+
+Payment API - Recurring Payments - RBCC Architecture - Enterprise Confluence
+
+Related EPIC: CADC-13347 (NetBank Decom - Recurring Payments - Enterprise Jira)
+
+
+
+---
+
+This refined story ensures that the consumer service is resilient, scalable, and fault-tolerant while providing detailed observability and error handling mechanisms. Let me know if you need any adjustments!
+
