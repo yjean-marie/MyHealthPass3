@@ -1,0 +1,120 @@
+Here's the revised Jira story considering the behavior of Quartz Scheduler, which does not rely on polling but rather on scheduled triggers:
+
+
+---
+
+Title:
+Scheduler Service for A2A Recurring and Post-Dated Transactions
+
+
+---
+
+Description:
+As a Developer,
+I want to develop a scheduler service as part of the Recurrence Engine,
+which will trigger based on a predefined schedule to check for recurring or post-dated transactions where the Next Due Date matches "today,"
+so that the T24 API (a2apub) can be called to process the transaction.
+
+Assumptions:
+
+1. The scheduler will be triggered based on a configured schedule (e.g., daily at a specific time) rather than continuous polling.
+
+
+2. The scheduler is not responsible for updating the number of times generated in the RAPD instruction table; an event will be used for this purpose.
+
+
+3. When using Kafka, two events need to be raised:
+
+A call to the T24 API to process the transaction.
+
+A call to the Instruction API to update the record.
+
+
+
+4. The system should ensure idempotency to prevent duplicate processing of transactions.
+
+
+5. Error handling and retry mechanisms will be in place to ensure resilience in case of failures.
+
+
+6. Execution logs will be maintained for audit and monitoring purposes.
+
+
+
+Technical Considerations:
+
+The Quartz scheduler will be configured to run at specific times (e.g., midnight or business hours) based on business needs.
+
+Transaction retrieval should be optimized with indexed queries on the Next Due Date column.
+
+Kafka topics will be used for asynchronous processing and event-driven architecture.
+
+Monitoring via ELK (Kibana) will capture job execution details and errors.
+
+The service should support concurrent execution without overlapping transactions.
+
+
+Dependencies:
+
+Database schema should have an indexed field on Next Due Date for efficient query execution.
+
+T24 API (a2apub) should be available for processing transactions.
+
+Instruction API should be available for updating transaction status.
+
+Quartz Scheduler should be configured and tested for optimal job execution timing.
+
+
+
+---
+
+Acceptance Criteria:
+
+Scenario 1 - A2A Recurring Payment Instruction (Using Kafka)
+Given a recurring A2A instruction exists in the Engine,
+When the scheduled Quartz job runs,
+Then the payment details are retrieved from the database,
+And pushed to the Kafka queue for processing by the consumer,
+And a successful response is returned and logged in the system.
+
+Scenario 2 - A2A Recurring Payment Instruction (Without Kafka)
+Given a recurring A2A instruction exists in the Engine,
+When the scheduled Quartz job runs,
+Then the payment instructions are directly processed to the T24 a2apub API,
+And a response is sent back to the engine,
+And transaction completion is logged.
+
+Scenario 3 - Handling Failed Transactions
+Given an A2A instruction encounters an error during processing,
+When the job runs and fails to push data to the queue or API,
+Then the scheduler should log the failure,
+And retry processing based on a configurable retry policy,
+And if all retries fail, move the transaction to a designated failure queue (DLQ).
+
+Scenario 4 - Idempotency Handling
+Given a recurring A2A instruction that has already been processed,
+When the scheduler triggers and attempts to process it again,
+Then it should detect duplicate records and prevent reprocessing,
+And log any skipped transactions.
+
+Scenario 5 - Concurrent Execution Handling
+Given multiple instances of the scheduler service,
+When the scheduled job runs concurrently,
+Then it should prevent duplicate execution using locking mechanisms,
+And ensure only one job processes the same transaction at a time.
+
+
+---
+
+References:
+
+Payment API - Recurring Payments - RBCC Architecture - Enterprise Confluence
+
+Related EPIC: CADC-13347 (NetBank Decom - Recurring Payments - Enterprise Jira)
+
+
+
+---
+
+This revised version focuses on Quartz Scheduler’s event-driven nature rather than polling, ensuring that the story aligns with the framework's best practices. Let me know if you need any further refinements!
+
