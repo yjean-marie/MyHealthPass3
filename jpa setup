@@ -1,0 +1,206 @@
+If you're using SQL Server with JPA in a Spring Boot application, follow these steps:
+
+
+---
+
+1. Add Dependencies
+
+Ensure your pom.xml (for Maven) or build.gradle (for Gradle) includes the necessary dependencies.
+
+For Maven:
+
+<dependencies>
+    <!-- Spring Boot Starter Data JPA -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
+    <!-- SQL Server JDBC Driver -->
+    <dependency>
+        <groupId>com.microsoft.sqlserver</groupId>
+        <artifactId>mssql-jdbc</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+</dependencies>
+
+For Gradle:
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc'
+}
+
+
+---
+
+2. Configure Database Connection in application.properties or application.yml
+
+Example (application.properties):
+
+spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=mydatabase;encrypt=true;trustServerCertificate=true
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+# JPA/Hibernate settings
+spring.jpa.hibernate.ddl-auto=update  # Use 'none', 'update', 'create', or 'create-drop'
+spring.jpa.show-sql=true               # Enables SQL query logging
+spring.jpa.database-platform=org.hibernate.dialect.SQLServerDialect
+spring.jpa.properties.hibernate.format_sql=true
+
+Example (application.yml):
+
+spring:
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=mydatabase;encrypt=true;trustServerCertificate=true
+    username: your_username
+    password: your_password
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # Options: none, update, create, create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database-platform: org.hibernate.dialect.SQLServerDialect
+
+
+---
+
+3. Create an Entity Class
+
+Create an entity that maps to your SQL Server table.
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+@Entity
+public class Employee {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String firstName;
+    private String lastName;
+    private String email;
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+}
+
+
+---
+
+4. Create a Repository Interface
+
+Spring Data JPA provides a default CRUD repository.
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+}
+
+
+---
+
+5. Create a Service Class (Optional but Recommended)
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.util.List;
+
+@Service
+public class EmployeeService {
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    public List<Employee> getAllEmployees() {
+        return employeeRepository.findAll();
+    }
+
+    public Employee saveEmployee(Employee employee) {
+        return employeeRepository.save(employee);
+    }
+}
+
+
+---
+
+6. Create a REST Controller
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/employees")
+public class EmployeeController {
+
+    @Autowired
+    private EmployeeService employeeService;
+
+    @GetMapping
+    public List<Employee> getAllEmployees() {
+        return employeeService.getAllEmployees();
+    }
+
+    @PostMapping
+    public Employee createEmployee(@RequestBody Employee employee) {
+        return employeeService.saveEmployee(employee);
+    }
+}
+
+
+---
+
+7. Run the Application
+
+Start the Spring Boot application and verify the endpoints:
+
+GET http://localhost:8080/employees – Fetch all employees
+
+POST http://localhost:8080/employees – Add a new employee
+
+
+
+---
+
+8. Common Issues and Troubleshooting
+
+1. Firewall and Port Issues:
+Ensure SQL Server is running on port 1433 and accessible from your application.
+
+
+2. Enable TCP/IP in SQL Server:
+
+Open SQL Server Configuration Manager → SQL Server Network Configuration → Protocols for your instance → Enable TCP/IP.
+
+
+
+3. Check SQL Authentication:
+Ensure the correct authentication mode is enabled (Windows/SQL Authentication).
+
+
+
+
+---
+
+This setup allows you to efficiently work with SQL Server using JPA in Spring Boot. Let me know if you need further details!
+
