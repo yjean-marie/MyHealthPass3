@@ -463,3 +463,40 @@ Final Thoughts
 Placing ErrorCode.java, ErrorResponse.java, and GlobalExceptionHandler.java in the exception/ package makes your project structured, clean, and easy to maintain.
 
 Would you like any additional refinements? 🚀
+
+
+@ExceptionHandler(PaymentInstructionNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentInstructionNotFound(PaymentInstructionNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(ErrorCode.RESOURCE_NOT_FOUND, Collections.singletonMap("error", e.getMessage())));
+    }
+
+    @ExceptionHandler(DatabaseException.class)
+    public ResponseEntity<ErrorResponse> handleDatabaseException(DatabaseException e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, Collections.singletonMap("error", e.getMessage())));
+    }
+
+    @ExceptionHandler(InvalidPaymentInstructionsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPaymentInstructions(InvalidPaymentInstructionsException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(ErrorCode.VALIDATION_ERROR, Collections.singletonMap("error", e.getMessage())));
+    }
+
+    @ExceptionHandler(MissingHeaderException.class)
+    public ResponseEntity<ErrorResponse> handleMissingHeaderException(MissingHeaderException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(ErrorCode.MISSING_REQUIRED_FIELDS, Collections.singletonMap("error", e.getMessage())));
+    }
+
+    @ExceptionHandler(InvalidHeaderException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidHeaderException(InvalidHeaderException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(ErrorCode.FORMAT_ERROR, Collections.singletonMap("error", e.getMessage())));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, Collections.singletonMap("error", e.getMessage())));
+    }
