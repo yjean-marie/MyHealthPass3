@@ -1,0 +1,6 @@
+@Schema(
+            description = "A dynamic key-value map containing payment details specific to the selected instruction type. " +
+                          "For example, an ACH payment may require `bankCode`, while a Wire transfer may need `swiftCode`. " +
+                          "The fields in this map vary depending on the `instruction` type.",
+            example = "{ \"fromAccount\": \"123456\", \"toAccount\": \"654321\", \"amount\": 100.00 }")
+    private Map<String, Object> paymentDetails = new HashMap<>();
