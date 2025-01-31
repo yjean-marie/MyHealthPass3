@@ -4,3 +4,19 @@
                           "The fields in this map vary depending on the `instruction` type.",
             example = "{ \"fromAccount\": \"123456\", \"toAccount\": \"654321\", \"amount\": 100.00 }")
     private Map<String, Object> paymentDetails = new HashMap<>();
+
+
+@ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<String> handleInvalidFormatException(HttpMessageNotReadableException ex) {
+        Throwable cause = ex.getCause();
+
+        if (cause instanceof InvalidFormatException || cause instanceof DateTimeParseException) {
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body("Invalid date format. Please use YYYY-MM-DD.");
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body("Invalid request format.");
+    }
