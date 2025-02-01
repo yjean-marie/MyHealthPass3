@@ -43,3 +43,92 @@ USING (VALUES
 ON target.status_name = source.status_name
 WHEN NOT MATCHED THEN INSERT (status_name) VALUES (source.status_name);
 
+
+-- Prevent duplicates in rapd_channel
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_channel] WHERE channel_name = 'OLB')
+    INSERT INTO [dbo].[rapd_channel] (channel_name) VALUES ('OLB');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_channel] WHERE channel_name = 'OLBB')
+    INSERT INTO [dbo].[rapd_channel] (channel_name) VALUES ('OLBB');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_channel] WHERE channel_name = 'ATM')
+    INSERT INTO [dbo].[rapd_channel] (channel_name) VALUES ('ATM');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_channel] WHERE channel_name = 'DIGIBANK')
+    INSERT INTO [dbo].[rapd_channel] (channel_name) VALUES ('DIGIBANK');
+
+-- Prevent duplicates in rapd_transaction_type
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_transaction_type] WHERE transaction_type_id = 'A2A')
+    INSERT INTO [dbo].[rapd_transaction_type] (transaction_type_id) VALUES ('A2A');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_transaction_type] WHERE transaction_type_id = 'C2C')
+    INSERT INTO [dbo].[rapd_transaction_type] (transaction_type_id) VALUES ('C2C');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_transaction_type] WHERE transaction_type_id = 'WIRE')
+    INSERT INTO [dbo].[rapd_transaction_type] (transaction_type_id) VALUES ('WIRE');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_transaction_type] WHERE transaction_type_id = 'ACH')
+    INSERT INTO [dbo].[rapd_transaction_type] (transaction_type_id) VALUES ('ACH');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_transaction_type] WHERE transaction_type_id = 'BILLPAY')
+    INSERT INTO [dbo].[rapd_transaction_type] (transaction_type_id) VALUES ('BILLPAY');
+
+-- Prevent duplicates in rapd_frequency
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_frequency] WHERE frequency_code = 'WEEKLY')
+    INSERT INTO [dbo].[rapd_frequency] (frequency_code, frequency_name) VALUES ('WEEKLY', 'WEEKLY');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_frequency] WHERE frequency_code = 'BI_WEEKLY')
+    INSERT INTO [dbo].[rapd_frequency] (frequency_code, frequency_name) VALUES ('BI_WEEKLY', 'BI-WEEKLY');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_frequency] WHERE frequency_code = 'TWICE_MONTHLY')
+    INSERT INTO [dbo].[rapd_frequency] (frequency_code, frequency_name) VALUES ('TWICE_MONTHLY', 'TWICE MONTHLY');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_frequency] WHERE frequency_code = 'FOUR_WEEKS')
+    INSERT INTO [dbo].[rapd_frequency] (frequency_code, frequency_name) VALUES ('FOUR_WEEKS', 'FOUR WEEKS');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_frequency] WHERE frequency_code = 'MONTHLY')
+    INSERT INTO [dbo].[rapd_frequency] (frequency_code, frequency_name) VALUES ('MONTHLY', 'MONTHLY');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_frequency] WHERE frequency_code = 'BI_MONTHLY')
+    INSERT INTO [dbo].[rapd_frequency] (frequency_code, frequency_name) VALUES ('BI_MONTHLY', 'BI-MONTHLY');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_frequency] WHERE frequency_code = 'QUARTERLY')
+    INSERT INTO [dbo].[rapd_frequency] (frequency_code, frequency_name) VALUES ('QUARTERLY', 'QUARTERLY');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_frequency] WHERE frequency_code = 'SEMI_ANNUALLY')
+    INSERT INTO [dbo].[rapd_frequency] (frequency_code, frequency_name) VALUES ('SEMI_ANNUALLY', 'SEMI-ANNUALLY');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_frequency] WHERE frequency_code = 'ANNUALLY')
+    INSERT INTO [dbo].[rapd_frequency] (frequency_code, frequency_name) VALUES ('ANNUALLY', 'ANNUALLY');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_frequency] WHERE frequency_code = 'ONCE')
+    INSERT INTO [dbo].[rapd_frequency] (frequency_code, frequency_name) VALUES ('ONCE', 'ONCE');
+
+-- Prevent duplicates in rapd_status
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_status] WHERE status_name = 'NEW')
+    INSERT INTO [dbo].[rapd_status] (status_name) VALUES ('NEW');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_status] WHERE status_name = 'CANCELLED')
+    INSERT INTO [dbo].[rapd_status] (status_name) VALUES ('CANCELLED');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_status] WHERE status_name = 'COMPLETED')
+    INSERT INTO [dbo].[rapd_status] (status_name) VALUES ('COMPLETED');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_status] WHERE status_name = 'RELEASED')
+    INSERT INTO [dbo].[rapd_status] (status_name) VALUES ('RELEASED');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_status] WHERE status_name = 'STARTED')
+    INSERT INTO [dbo].[rapd_status] (status_name) VALUES ('STARTED');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_status] WHERE status_name = 'PENDING APPROVAL')
+    INSERT INTO [dbo].[rapd_status] (status_name) VALUES ('PENDING APPROVAL');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_status] WHERE status_name = 'APPROVED')
+    INSERT INTO [dbo].[rapd_status] (status_name) VALUES ('APPROVED');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_status] WHERE status_name = 'DECLINED')
+    INSERT INTO [dbo].[rapd_status] (status_name) VALUES ('DECLINED');
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[rapd_status] WHERE status_name = 'EXPIRED')
+    INSERT INTO [dbo].[rapd_status] (status_name) VALUES ('EXPIRED');
+
