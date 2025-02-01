@@ -1,0 +1,45 @@
+-- Prevent duplicates in rapd_channel
+MERGE INTO [dbo].[rapd_channel] AS target
+USING (VALUES ('OLB'), ('OLBB'), ('ATM'), ('DIGIBANK')) AS source (channel_name)
+ON target.channel_name = source.channel_name
+WHEN NOT MATCHED THEN INSERT (channel_name) VALUES (source.channel_name);
+
+-- Prevent duplicates in rapd_transaction_type
+MERGE INTO [dbo].[rapd_transaction_type] AS target
+USING (VALUES ('A2A'), ('C2C'), ('WIRE'), ('ACH'), ('BILLPAY')) AS source (transaction_type_id)
+ON target.transaction_type_id = source.transaction_type_id
+WHEN NOT MATCHED THEN INSERT (transaction_type_id) VALUES (source.transaction_type_id);
+
+-- Prevent duplicates in rapd_frequency
+MERGE INTO [dbo].[rapd_frequency] AS target
+USING (VALUES 
+    ('WEEKLY', 'WEEKLY'),
+    ('BI_WEEKLY', 'BI-WEEKLY'),
+    ('TWICE_MONTHLY', 'TWICE MONTHLY'),
+    ('FOUR_WEEKS', 'FOUR WEEKS'),
+    ('MONTHLY', 'MONTHLY'),
+    ('BI_MONTHLY', 'BI-MONTHLY'),
+    ('QUARTERLY', 'QUARTERLY'),
+    ('SEMI_ANNUALLY', 'SEMI-ANNUALLY'),
+    ('ANNUALLY', 'ANNUALLY'),
+    ('ONCE', 'ONCE')
+) AS source (frequency_code, frequency_name)
+ON target.frequency_code = source.frequency_code
+WHEN NOT MATCHED THEN INSERT (frequency_code, frequency_name) VALUES (source.frequency_code, source.frequency_name);
+
+-- Prevent duplicates in rapd_status
+MERGE INTO [dbo].[rapd_status] AS target
+USING (VALUES 
+    ('NEW'), 
+    ('CANCELLED'), 
+    ('COMPLETED'), 
+    ('RELEASED'), 
+    ('STARTED'), 
+    ('PENDING APPROVAL'), 
+    ('APPROVED'), 
+    ('DECLINED'), 
+    ('EXPIRED')
+) AS source (status_name)
+ON target.status_name = source.status_name
+WHEN NOT MATCHED THEN INSERT (status_name) VALUES (source.status_name);
+
