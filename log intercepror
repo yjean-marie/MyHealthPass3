@@ -274,3 +274,22 @@ public class CachedBodyHttpServletResponse extends HttpServletResponseWrapper {
 
 Would you like a config switch to enable/disable body logging dynamically? 🚀
 
+
+
+private void maskFields(JsonNode node) {
+    if (node.isObject()) {
+        ObjectNode objectNode = (ObjectNode) node;  // Cast to mutable ObjectNode
+        for (String field : SENSITIVE_FIELDS) {
+            if (objectNode.has(field)) {
+                objectNode.put(field, "****"); // Mask sensitive fields
+            }
+        }
+        for (JsonNode child : objectNode) {
+            maskFields(child);  // Recursively process nested fields
+        }
+    } else if (node.isArray()) {
+        for (JsonNode child : node) {
+            maskFields(child);  // Handle arrays recursively
+        }
+    }
+}
