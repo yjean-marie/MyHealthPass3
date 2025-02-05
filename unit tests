@@ -174,3 +174,187 @@ public class InstructionControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("INTERNAL_SERVER_ERROR"));
     }
 }
+
+
+
+
+package com.rbc.rapd.processing.service;
+
+import com.rbc.rapd.processing.service.dto.InstructionDto;
+import com.rbc.rapd.processing.service.entity.Channel;
+import com.rbc.rapd.processing.service.entity.Frequency;
+import com.rbc.rapd.processing.service.entity.Instruction;
+import com.rbc.rapd.processing.service.entity.TransactionType;
+import com.rbc.rapd.processing.service.exception.ResourceNotFoundException;
+import com.rbc.rapd.processing.service.repository.ChannelRepository;
+import com.rbc.rapd.processing.service.repository.FrequencyRepository;
+import com.rbc.rapd.processing.service.repository.InstructionRepository;
+import com.rbc.rapd.processing.service.repository.TransactionTypeRepository;
+import com.rbc.rapd.processing.service.service.implementation.InstructionServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class InstructionServiceImplTest {
+
+    @Mock
+    private InstructionRepository instructionRepository;
+
+    @Mock
+    private ChannelRepository channelRepository;
+
+    @Mock
+    private FrequencyRepository frequencyRepository;
+
+    @Mock
+    private TransactionTypeRepository transactionTypeRepository;
+
+    @InjectMocks
+    private InstructionServiceImpl instructionService;
+
+    private InstructionDto validDto;
+    private Channel mockChannel;
+    private Frequency mockFrequency;
+    private TransactionType mockTransactionType;
+    private Instruction savedInstruction;
+
+    @BeforeEach
+    void setUp() {
+        validDto = new InstructionDto();
+        validDto.setLeadBranch("TT0010001");
+        validDto.setChannel("OLB");
+        validDto.setRecName("Monthly");
+        validDto.setTransactionType("A2A");
+        validDto.setFrequency("WEEKLY");
+        validDto.setTotalNumber(20);
+        validDto.setFirstDueDate(LocalDate.now());
+        validDto.setAccountNumber("12345678");
+        validDto.setAmount(new BigDecimal("400.50"));
+        validDto.setOwnerClientId("1234123123");
+        validDto.setOwnerCompanyId("123213123");
+        validDto.setClientType("R");
+
+        mockChannel = new Channel();
+        mockChannel.setChannelName("OLB");
+
+        mockFrequency = new Frequency();
+        mockFrequency.setFrequencyCode("WEEKLY");
+
+        mockTransactionType = new TransactionType();
+        mockTransactionType.setTransactionTypeId("A2A");
+
+        savedInstruction = new Instruction();
+        savedInstruction.setLeadBranch(validDto.getLeadBranch());
+        savedInstruction.setChannel(mockChannel);
+        savedInstruction.setRecName(validDto.getRecName());
+        savedInstruction.setTransactionType(mockTransactionType);
+        savedInstruction.setFrequency(mockFrequency);
+        savedInstruction.setTotalNumber(validDto.getTotalNumber());
+        savedInstruction.setFirstDueDate(validDto.getFirstDueDate());
+        savedInstruction.setAccountNumber(validDto.getAccountNumber());
+        savedInstruction.setAmount(validDto.getAmount());
+    }
+
+    /**
+     * Happy Path: Should successfully create and return an Instruction
+     */
+    @Test
+    void shouldCreateInstructionSuccessfully() {
+        when(channelRepository.findByChannelName(validDto.getChannel())).thenReturn(Optional.of(mockChannel));
+        when(frequencyRepository.findByFrequencyCode(validDto.getFrequency())).thenReturn(Optional.of(mockFrequency));
+        when(transactionTypeRepository.findByTransactionTypeId(validDto.getTransactionType())).thenReturn(Optional.of(mockTransactionType));
+        when(instructionRepository.save(any(Instruction.class))).thenReturn(savedInstruction);
+
+        Instruction result = instructionService.CreateInstruction(validDto);
+
+        assertNotNull(result);
+        assertEquals(validDto.getLeadBranch(), result.getLeadBranch());
+        assertEquals(mockChannel, result.getChannel());
+        assertEquals(mockFrequency, result.getFrequency());
+        assertEquals(mockTransactionType, result.getTransactionType());
+        assertEquals(validDto.getAmount(), result.getAmount());
+
+        verify(instructionRepository, times(1)).save(any(Instruction.class));
+    }
+
+    /**
+     * Test that the service throws ResourceNotFoundException when the channel is not found
+     */
+    @Test
+    void shouldThrowExceptionWhenChannelNotFound() {
+        when(channelRepository.findByChannelName(validDto.getChannel())).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(ResourceNotFoundException.class, () ->
+                instructionService.CreateInstruction(validDto));
+
+        assertEquals("Channel with name 'OLB' not found", exception.getMessage());
+    }
+
+    /**
+     * Test that the service throws ResourceNotFoundException when the frequency is not found
+     */
+    @Test
+    void shouldThrowExceptionWhenFrequencyNotFound() {
+        when(channelRepository.findByChannelName(validDto.getChannel())).thenReturn(Optional.of(mockChannel));
+        when(frequencyRepository.findByFrequencyCode(validDto.getFrequency())).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(ResourceNotFoundException.class, () ->
+                instructionService.CreateInstruction(validDto));
+
+        assertEquals("Frequency with name 'WEEKLY' not found", exception.getMessage());
+    }
+
+    /**
+     * Test that the service throws ResourceNotFoundException when the transaction type is not found
+     */
+    @Test
+    void shouldThrowExceptionWhenTransactionTypeNotFound() {
+        when(channelRepository.findByChannelName(validDto.getChannel())).thenReturn(Optional.of(mockChannel));
+        when(frequencyRepository.findByFrequencyCode(validDto.getFrequency())).thenReturn(Optional.of(mockFrequency));
+        when(transactionTypeRepository.findByTransactionTypeId(validDto.getTransactionType())).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(ResourceNotFoundException.class, () ->
+                instructionService.CreateInstruction(validDto));
+
+        assertEquals("Transaction Type with name 'A2A' not found", exception.getMessage());
+    }
+
+    /**
+     * Test that the repository `save()` method is called once
+     */
+    @Test
+    void shouldCallSaveMethodOnce() {
+        when(channelRepository.findByChannelName(validDto.getChannel())).thenReturn(Optional.of(mockChannel));
+        when(frequencyRepository.findByFrequencyCode(validDto.getFrequency())).thenReturn(Optional.of(mockFrequency));
+        when(transactionTypeRepository.findByTransactionTypeId(validDto.getTransactionType())).thenReturn(Optional.of(mockTransactionType));
+        when(instructionRepository.save(any(Instruction.class))).thenReturn(savedInstruction);
+
+        instructionService.CreateInstruction(validDto);
+
+        verify(instructionRepository, times(1)).save(any(Instruction.class));
+    }
+
+    /**
+     * Test that `save()` is never called when validation fails
+     */
+    @Test
+    void shouldNotCallSaveWhenValidationFails() {
+        when(channelRepository.findByChannelName(validDto.getChannel())).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () ->
+                instructionService.CreateInstruction(validDto));
+
+        verify(instructionRepository, never()).save(any(Instruction.class));
+    }
+}
