@@ -1,0 +1,251 @@
+No, the HandlerInterceptor example I provided does not log the request or response body, only the method, URI, and status code. Logging the body requires wrapping the HttpServletRequest and HttpServletResponse because they are one-time readable streams.
+
+Enhanced LoggingInterceptor with Request and Response Body
+To capture request bodies and response bodies, we need to wrap the request and response objects.
+
+1. Create a Request Wrapper to Read the Body
+Since HttpServletRequest cannot be read multiple times, we must create a wrapper that caches the body.
+
+java
+Copy
+Edit
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
+
+public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
+
+    private final String cachedBody;
+
+    public CachedBodyHttpServletRequest(HttpServletRequest request) throws IOException {
+        super(request);
+        this.cachedBody = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+    }
+
+    @Override
+    public ServletInputStream getInputStream() {
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(cachedBody.getBytes(StandardCharsets.UTF_8));
+        return new ServletInputStream() {
+            @Override
+            public int read() {
+                return byteArrayInputStream.read();
+            }
+            @Override
+            public boolean isFinished() {
+                return byteArrayInputStream.available() == 0;
+            }
+            @Override
+            public boolean isReady() {
+                return true;
+            }
+            @Override
+            public void setReadListener(ReadListener listener) {
+                // Not implemented
+            }
+        };
+    }
+
+    @Override
+    public BufferedReader getReader() {
+        return new BufferedReader(new InputStreamReader(getInputStream(), StandardCharsets.UTF_8));
+    }
+
+    public String getBody() {
+        return cachedBody;
+    }
+}
+✔ Caches the request body
+✔ Allows the body to be read multiple times
+
+2. Create a Response Wrapper to Read the Body
+Like the request, HttpServletResponse cannot be read twice, so we need a wrapper.
+
+java
+Copy
+Edit
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.WriteListener;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponseWrapper;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+
+public class CachedBodyHttpServletResponse extends HttpServletResponseWrapper {
+
+    private final ByteArrayOutputStream cachedBody = new ByteArrayOutputStream();
+    private final PrintWriter writer = new PrintWriter(cachedBody, true, StandardCharsets.UTF_8);
+
+    public CachedBodyHttpServletResponse(HttpServletResponse response) {
+        super(response);
+    }
+
+    @Override
+    public ServletOutputStream getOutputStream() {
+        return new ServletOutputStream() {
+            @Override
+            public void write(int b) {
+                cachedBody.write(b);
+            }
+            @Override
+            public boolean isReady() {
+                return true;
+            }
+            @Override
+            public void setReadListener(ReadListener listener) {
+                // Not implemented
+            }
+        };
+    }
+
+    @Override
+    public PrintWriter getWriter() {
+        return writer;
+    }
+
+    public String getBody() {
+        return cachedBody.toString(StandardCharsets.UTF_8);
+    }
+}
+✔ Stores response body
+✔ Allows it to be logged after it's written
+
+3. Modify the LoggingInterceptor to Capture Request & Response Bodies
+Now, update the LoggingInterceptor to use the wrappers.
+
+java
+Copy
+Edit
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@Component
+public class LoggingInterceptor implements HandlerInterceptor {
+
+    private static final Logger logger = LoggerFactory.getLogger(LoggingInterceptor.class);
+
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
+        CachedBodyHttpServletRequest wrappedRequest = new CachedBodyHttpServletRequest(request);
+        String requestBody = wrappedRequest.getBody();
+
+        logger.info("Incoming Request: {} {} | Body: {}", request.getMethod(), request.getRequestURI(), requestBody);
+
+        return true;
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws IOException {
+        CachedBodyHttpServletResponse wrappedResponse = new CachedBodyHttpServletResponse((HttpServletResponse) response);
+        String responseBody = wrappedResponse.getBody();
+
+        logger.info("Outgoing Response: Status {} | Body: {}", response.getStatus(), responseBody);
+    }
+}
+4. Register the Interceptor
+java
+Copy
+Edit
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+
+    @Autowired
+    private LoggingInterceptor loggingInterceptor;
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(loggingInterceptor);
+    }
+}
+How This Works?
+Feature	How It Works
+Logs request method & URI	✅ GET /api/test
+Logs request body	✅ Reads & caches request body
+Logs response body	✅ Stores response before sending it
+No impact on performance	✅ Uses stream caching
+
+
+package com.example.api.interceptor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Component
+public class LoggingInterceptor implements HandlerInterceptor {
+
+    private static final Logger logger = LoggerFactory.getLogger(LoggingInterceptor.class);
+
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
+        CachedBodyHttpServletRequest wrappedRequest = new CachedBodyHttpServletRequest(request);
+        String requestBody = wrappedRequest.getBody();
+        Map<String, String> headers = getHeaders(request);
+
+        logger.info("Incoming Request: {} {} | Headers: {} | Body: {}",
+                request.getMethod(), request.getRequestURI(), headers, requestBody);
+
+        return true;
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws IOException {
+        CachedBodyHttpServletResponse wrappedResponse = new CachedBodyHttpServletResponse((HttpServletResponse) response);
+        String responseBody = wrappedResponse.getBody();
+        Map<String, String> headers = getHeaders(response);
+
+        logger.info("Outgoing Response: Status {} | Headers: {} | Body: {}",
+                response.getStatus(), headers, responseBody);
+    }
+
+    /**
+     * Extract headers from HttpServletRequest.
+     */
+    private Map<String, String> getHeaders(HttpServletRequest request) {
+        Map<String, String> headers = new HashMap<>();
+        Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            headers.put(headerName, request.getHeader(headerName));
+        }
+        return headers;
+    }
+
+    /**
+     * Extract headers from HttpServletResponse.
+     */
+    private Map<String, String> getHeaders(HttpServletResponse response) {
+        Map<String, String> headers = response.getHeaderNames()
+                .stream()
+                .collect(Collectors.toMap(header -> header, response::getHeader));
+        return headers;
+    }
+}
