@@ -1,0 +1,176 @@
+package com.rbc.rapd.processing.service.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rbc.rapd.processing.service.dto.InstructionDto;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(InstructionController.class)
+public class InstructionControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private InstructionDto validDto;
+
+    @BeforeEach
+    void setUp() {
+        validDto = new InstructionDto();
+        validDto.setLeadBranch("TT0010001");
+        validDto.setChannel("OLB");
+        validDto.setRecName("Monthly");
+        validDto.setTransactionType("A2A");
+        validDto.setFrequency("WEEKLY");
+        validDto.setTotalNumber(20);
+        validDto.setFirstDueDate(LocalDate.now());
+        validDto.setAccountNumber("12345678");
+        validDto.setAmount(new BigDecimal("400.50"));
+        validDto.setOwnerClientId("1234123123");
+        validDto.setOwnerCompanyId("123213123");
+        validDto.setClientType("R");
+    }
+
+    /**
+     * Test that blank strings for required fields cause validation errors
+     */
+    @Test
+    void shouldReturnBadRequestWhenLeadBranchIsBlank() throws Exception {
+        validDto.setLeadBranch("");
+
+        mockMvc.perform(post("/recurring/v1/instructions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.leadBranch").value("LeadBranch cannot be empty"));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenChannelIsWhitespace() throws Exception {
+        validDto.setChannel("   ");
+
+        mockMvc.perform(post("/recurring/v1/instructions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.channel").value("channel cannot not be empty"));
+    }
+
+    /**
+     * Test boundary conditions for numeric values
+     */
+    @Test
+    void shouldReturnBadRequestWhenTotalNumberIsNegative() throws Exception {
+        validDto.setTotalNumber(-5);
+
+        mockMvc.perform(post("/recurring/v1/instructions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.totalNumber").value("must be greater than or equal to -1"));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenTotalNumberIsAboveMax() throws Exception {
+        validDto.setTotalNumber(10000); // Exceeding @Max(9999)
+
+        mockMvc.perform(post("/recurring/v1/instructions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.totalNumber").value("must be less than or equal to 9999"));
+    }
+
+    /**
+     * Test multiple field validation errors in one request
+     */
+    @Test
+    void shouldReturnBadRequestWithMultipleValidationErrors() throws Exception {
+        validDto.setLeadBranch(null);
+        validDto.setAccountNumber(null);
+        validDto.setAmount(null);
+
+        mockMvc.perform(post("/recurring/v1/instructions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.leadBranch").value("LeadBranch cannot be empty"))
+                .andExpect(jsonPath("$.errors.accountNumber").value("accountNumber cannot be empty"))
+                .andExpect(jsonPath("$.errors.amount").value("amount is required"));
+    }
+
+    /**
+     * Test unsupported content type
+     */
+    @Test
+    void shouldReturnUnsupportedMediaTypeWhenInvalidContentTypeIsUsed() throws Exception {
+        mockMvc.perform(post("/recurring/v1/instructions")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content("Invalid content"))
+                .andExpect(status().isUnsupportedMediaType());
+    }
+
+    /**
+     * Test missing required headers
+     */
+    @Test
+    void shouldReturnBadRequestWhenHeadersAreMissing() throws Exception {
+        mockMvc.perform(post("/recurring/v1/instructions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validDto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    /**
+     * Test when an empty request body is sent
+     */
+    @Test
+    void shouldReturnBadRequestWhenRequestBodyIsEmpty() throws Exception {
+        mockMvc.perform(post("/recurring/v1/instructions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors").exists());
+    }
+
+    /**
+     * Test handling an invalid JSON format
+     */
+    @Test
+    void shouldReturnBadRequestForMalformedJson() throws Exception {
+        String malformedJson = "{ \"leadBranch\": \"TT0010001\", \"totalNumber\": }"; // Broken JSON
+
+        mockMvc.perform(post("/recurring/v1/instructions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(malformedJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors").exists());
+    }
+
+    /**
+     * Test that an internal server error is handled properly
+     */
+    @Test
+    void shouldReturnInternalServerErrorOnUnexpectedException() throws Exception {
+        mockMvc.perform(post("/recurring/v1/instructions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer invalid-token") // Simulating an issue
+                        .content(objectMapper.writeValueAsString(validDto)))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("INTERNAL_SERVER_ERROR"));
+    }
+}
