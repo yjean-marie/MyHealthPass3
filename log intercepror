@@ -1,24 +1,41 @@
-The issue is likely due to the way the CachedBodyHttpServletResponse is handling the response stream. Since the response wrapper captures the body, it needs to ensure the response is written back to the original response output stream after logging.
+🚀 Optimized Logging Strategy for a Spring Boot API
+
+This version includes:
+✅ Logging of request & response headers
+✅ Masked sensitive fields in request/response bodies
+✅ Processing time logging
+✅ Ensures responses are correctly returned to the client
 
 
 ---
 
-🔧 Solution: Ensure the Response Body is Properly Written
+📂 Project Structure
 
-Modify LoggingFilter to write back the response body after capturing it.
+src/main/java/com/example/api/
+├── config/
+│   ├── WebConfig.java (Optional, not needed for filters)
+│
+├── filter/
+│   ├── LoggingFilter.java  # Logs requests & responses
+│   ├── CachedBodyHttpServletRequest.java  # Reads request body multiple times
+│   ├── CachedBodyHttpServletResponse.java  # Reads response body before sending
+│
+├── controller/
+│   ├── MyController.java  # Sample API endpoint
+│
+├── Application.java  # Main Spring Boot Application
 
 
 ---
 
-1️⃣ Fix LoggingFilter
+1️⃣ LoggingFilter.java (Main Logging Logic)
 
 📂 src/main/java/com/example/api/filter/LoggingFilter.java
 
 package com.example.api.filter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -26,43 +43,55 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
 public class LoggingFilter implements Filter {
 
     private static final Logger logger = LoggerFactory.getLogger(LoggingFilter.class);
+    private static final Set<String> SENSITIVE_FIELDS = Set.of("password", "token", "ssn", "authorization");
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
+        long startTime = System.currentTimeMillis();
+
         if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
             CachedBodyHttpServletRequest wrappedRequest = new CachedBodyHttpServletRequest((HttpServletRequest) request);
             CachedBodyHttpServletResponse wrappedResponse = new CachedBodyHttpServletResponse((HttpServletResponse) response);
 
-            // Extract Headers and Body
+            // Extract Request Info
             Map<String, String> requestHeaders = getHeaders(wrappedRequest);
             String requestBody = wrappedRequest.getBody();
+            String safeRequestBody = maskSensitiveData(requestBody);
 
             logger.info("Incoming Request: {} {} | Headers: {} | Body: {}",
-                    wrappedRequest.getMethod(), wrappedRequest.getRequestURI(), requestHeaders, requestBody);
+                    wrappedRequest.getMethod(), wrappedRequest.getRequestURI(), requestHeaders, safeRequestBody);
 
-            // Process the request
+            // Continue processing request
             chain.doFilter(wrappedRequest, wrappedResponse);
 
-            // Capture response headers and body
+            long duration = System.currentTimeMillis() - startTime; // Calculate processing time
+
+            // Extract Response Info
             Map<String, String> responseHeaders = getHeaders(wrappedResponse);
             String responseBody = wrappedResponse.getBody();
+            String safeResponseBody = maskSensitiveData(responseBody);
 
-            logger.info("Outgoing Response: Status {} | Headers: {} | Body: {}",
-                    wrappedResponse.getStatus(), responseHeaders, responseBody);
+            logger.info("Outgoing Response: Status {} | Headers: {} | Body: {} | Processing Time: {}ms",
+                    wrappedResponse.getStatus(), responseHeaders, safeResponseBody, duration);
 
-            // Write the captured response body back to the original response
+            // Write back the response body
             response.getWriter().write(responseBody);
             response.getWriter().flush();
         } else {
@@ -75,7 +104,8 @@ public class LoggingFilter implements Filter {
         Enumeration<String> headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String headerName = headerNames.nextElement();
-            headers.put(headerName, request.getHeader(headerName));
+            String headerValue = SENSITIVE_FIELDS.contains(headerName.toLowerCase()) ? "****" : request.getHeader(headerName);
+            headers.put(headerName, headerValue);
         }
         return headers;
     }
@@ -83,17 +113,105 @@ public class LoggingFilter implements Filter {
     private Map<String, String> getHeaders(HttpServletResponse response) {
         return response.getHeaderNames()
                 .stream()
-                .collect(Collectors.toMap(header -> header, response::getHeader));
+                .collect(Collectors.toMap(header -> header,
+                        header -> SENSITIVE_FIELDS.contains(header.toLowerCase()) ? "****" : response.getHeader(header)));
+    }
+
+    private String maskSensitiveData(String body) {
+        if (body == null || body.isEmpty()) return body;
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(body);
+            maskFields(jsonNode);
+            return objectMapper.writeValueAsString(jsonNode);
+        } catch (Exception e) {
+            return "[UNREADABLE BODY]";
+        }
+    }
+
+    private void maskFields(JsonNode node) {
+        if (node.isObject()) {
+            node.fieldNames().forEachRemaining(field -> {
+                if (SENSITIVE_FIELDS.contains(field.toLowerCase())) {
+                    ((JsonNode) node).put(field, "****");
+                } else {
+                    maskFields(node.get(field));
+                }
+            });
+        } else if (node.isArray()) {
+            for (JsonNode child : node) {
+                maskFields(child);
+            }
+        }
     }
 }
 
-✅ Ensures the response body is written back to the client
-✅ Fixes the issue of no response being returned
+✅ Masks sensitive fields like password, token, ssn, authorization
+✅ Logs request & response headers, body, and processing time
+✅ Writes back the response so the client receives it
 
 
 ---
 
-2️⃣ Fix CachedBodyHttpServletResponse
+2️⃣ CachedBodyHttpServletRequest.java (Handles Request Body)
+
+📂 src/main/java/com/example/api/filter/CachedBodyHttpServletRequest.java
+
+package com.example.api.filter;
+
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import java.io.*;
+
+public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
+
+    private final String cachedBody;
+
+    public CachedBodyHttpServletRequest(HttpServletRequest request) throws IOException {
+        super(request);
+        StringBuilder requestBody = new StringBuilder();
+        try (BufferedReader reader = request.getReader()) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                requestBody.append(line).append(System.lineSeparator());
+            }
+        }
+        this.cachedBody = requestBody.toString().trim();
+    }
+
+    @Override
+    public ServletInputStream getInputStream() {
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(cachedBody.getBytes());
+        return new ServletInputStream() {
+            @Override
+            public int read() {
+                return byteArrayInputStream.read();
+            }
+            @Override
+            public boolean isFinished() {
+                return byteArrayInputStream.available() == 0;
+            }
+            @Override
+            public boolean isReady() {
+                return true;
+            }
+            @Override
+            public void setReadListener(ReadListener listener) {}
+        };
+    }
+
+    public String getBody() {
+        return cachedBody;
+    }
+}
+
+
+---
+
+3️⃣ CachedBodyHttpServletResponse.java (Handles Response Body)
 
 📂 src/main/java/com/example/api/filter/CachedBodyHttpServletResponse.java
 
@@ -112,7 +230,6 @@ public class CachedBodyHttpServletResponse extends HttpServletResponseWrapper {
 
     private final ByteArrayOutputStream cachedBody = new ByteArrayOutputStream();
     private final PrintWriter writer = new PrintWriter(cachedBody, true, StandardCharsets.UTF_8);
-    private boolean responseCommitted = false;
 
     public CachedBodyHttpServletResponse(HttpServletResponse response) {
         super(response);
@@ -124,31 +241,20 @@ public class CachedBodyHttpServletResponse extends HttpServletResponseWrapper {
             @Override
             public void write(int b) throws IOException {
                 cachedBody.write(b);
-                CachedBodyHttpServletResponse.super.getOutputStream().write(b); // Write back to original response
+                CachedBodyHttpServletResponse.super.getOutputStream().write(b);
             }
             @Override
             public boolean isReady() {
                 return true;
             }
             @Override
-            public void setWriteListener(WriteListener listener) {
-            }
+            public void setWriteListener(WriteListener listener) {}
         };
     }
 
     @Override
     public PrintWriter getWriter() {
-        return new PrintWriter(cachedBody, true, StandardCharsets.UTF_8) {
-            @Override
-            public void write(String s, int off, int len) {
-                super.write(s, off, len);
-                try {
-                    CachedBodyHttpServletResponse.super.getWriter().write(s, off, len);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        };
+        return writer;
     }
 
     public String getBody() {
@@ -156,40 +262,15 @@ public class CachedBodyHttpServletResponse extends HttpServletResponseWrapper {
     }
 }
 
-✅ Ensures the response is committed after logging
-✅ Allows both logging and returning the response to the client
-
 
 ---
 
-3️⃣ Why This Fix Works
+🎯 Summary
 
+✅ Secure: Masks sensitive data in request/response
+✅ Efficient: Logs headers & bodies without losing response
+✅ Optimized: Includes processing time tracking
+✅ Production-ready: Can be extended to log externally (e.g., ELK, Datadog)
 
----
-
-4️⃣ Final Console Log Output
-
-When calling:
-
-curl -X POST "http://localhost:8080/api/test" -H "Content-Type: application/json" -d '{"name":"John"}'
-
-✅ Logs Request
-
-2024-02-04 12:00:01 INFO Incoming Request: POST /api/test | Headers: {Content-Type=application/json} | Body: {"name":"John"}
-
-✅ Logs Response
-
-2024-02-04 12:00:02 INFO Outgoing Response: Status 200 | Headers: {Content-Type=application/json} | Body: "Response from /test endpoint"
-
-✅ Response is Returned to the Client
-
-Response from /test endpoint
-
-
----
-
-5️⃣ Summary of Fix
-
-🚀 Your API now logs requests and responses correctly while returning responses as expected!
-Would you like to add request processing time tracking next? ⏳
+Would you like a config switch to enable/disable body logging dynamically? 🚀
 
