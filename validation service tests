@@ -1,0 +1,239 @@
+Sure! Below are comprehensive unit tests for the PaymentValidationServiceImpl class using JUnit 5 and Mockito. These tests cover:
+
+1. Validation for missing required fields
+
+
+2. Validation for incorrect field types
+
+
+3. Validation for correct payment details
+
+
+4. Handling missing transaction types
+
+
+5. Handling missing field configurations
+
+
+
+
+---
+
+1️⃣ Setup Test Class
+
+PaymentValidationServiceImplTest.java
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import com.rbc.rapd.processing.service.entity.PaymentFieldConfiguration;
+import com.rbc.rapd.processing.service.entity.TransactionType;
+import com.rbc.rapd.processing.service.repositories.PaymentFieldConfigurationRepository;
+import com.rbc.rapd.processing.service.repositories.TransactionTypeRepository;
+import com.rbc.rapd.processing.service.validation.PaymentValidationServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.util.*;
+
+class PaymentValidationServiceImplTest {
+
+    @Mock
+    private PaymentFieldConfigurationRepository fieldConfigRepository;
+
+    @Mock
+    private TransactionTypeRepository transactionTypeRepository;
+
+    @InjectMocks
+    private PaymentValidationServiceImpl paymentValidationService;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
+
+
+---
+
+2️⃣ Test: Transaction Type Not Found
+
+@Test
+    void shouldThrowExceptionWhenTransactionTypeNotFound() {
+        String instruction = "ACH";
+
+        when(transactionTypeRepository.findByTransactionTypeId(instruction)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            paymentValidationService.validatePaymentDetails(instruction, new HashMap<>());
+        });
+
+        assertTrue(exception.getMessage().contains("Transaction Type with name 'ACH' not found"));
+    }
+
+
+---
+
+3️⃣ Test: Field Configuration Not Found
+
+@Test
+    void shouldThrowExceptionWhenFieldConfigNotFound() {
+        String instruction = "ACH";
+        TransactionType transactionType = new TransactionType();
+        transactionType.setId(1);
+
+        when(transactionTypeRepository.findByTransactionTypeId(instruction))
+                .thenReturn(Optional.of(transactionType));
+        when(fieldConfigRepository.findByTransactionTypeId(transactionType.getId()))
+                .thenReturn(Collections.emptyList());
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            paymentValidationService.validatePaymentDetails(instruction, new HashMap<>());
+        });
+
+        assertTrue(exception.getMessage().contains("No Payment Field Configuration found"));
+    }
+
+
+---
+
+4️⃣ Test: Missing Required Fields
+
+@Test
+    void shouldThrowExceptionWhenRequiredFieldIsMissing() {
+        String instruction = "ACH";
+        TransactionType transactionType = new TransactionType();
+        transactionType.setId(1);
+
+        List<PaymentFieldConfiguration> fieldConfigs = Arrays.asList(
+                createFieldConfig("fromAccount", true, "String"),
+                createFieldConfig("toAccount", true, "String"),
+                createFieldConfig("amount", true, "Double")
+        );
+
+        when(transactionTypeRepository.findByTransactionTypeId(instruction))
+                .thenReturn(Optional.of(transactionType));
+        when(fieldConfigRepository.findByTransactionTypeId(transactionType.getId()))
+                .thenReturn(fieldConfigs);
+
+        Map<String, Object> paymentDetails = new HashMap<>();
+        paymentDetails.put("fromAccount", "123456");
+        paymentDetails.put("amount", 100.00); // Missing "toAccount"
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            paymentValidationService.validatePaymentDetails(instruction, paymentDetails);
+        });
+
+        assertTrue(exception.getMessage().contains("Missing required field: toAccount"));
+    }
+
+
+---
+
+5️⃣ Test: Invalid Field Type
+
+@Test
+    void shouldThrowExceptionForInvalidFieldType() {
+        String instruction = "ACH";
+        TransactionType transactionType = new TransactionType();
+        transactionType.setId(1);
+
+        List<PaymentFieldConfiguration> fieldConfigs = Arrays.asList(
+                createFieldConfig("fromAccount", true, "String"),
+                createFieldConfig("amount", true, "Double")
+        );
+
+        when(transactionTypeRepository.findByTransactionTypeId(instruction))
+                .thenReturn(Optional.of(transactionType));
+        when(fieldConfigRepository.findByTransactionTypeId(transactionType.getId()))
+                .thenReturn(fieldConfigs);
+
+        Map<String, Object> paymentDetails = new HashMap<>();
+        paymentDetails.put("fromAccount", "123456");
+        paymentDetails.put("amount", "INVALID_NUMBER"); // Wrong type
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            paymentValidationService.validatePaymentDetails(instruction, paymentDetails);
+        });
+
+        assertTrue(exception.getMessage().contains("amount must be a numeric value"));
+    }
+
+
+---
+
+6️⃣ Test: Valid Payment Details Pass Validation
+
+@Test
+    void shouldPassValidationForCorrectPaymentDetails() {
+        String instruction = "ACH";
+        TransactionType transactionType = new TransactionType();
+        transactionType.setId(1);
+
+        List<PaymentFieldConfiguration> fieldConfigs = Arrays.asList(
+                createFieldConfig("fromAccount", true, "String"),
+                createFieldConfig("toAccount", true, "String"),
+                createFieldConfig("amount", true, "Double")
+        );
+
+        when(transactionTypeRepository.findByTransactionTypeId(instruction))
+                .thenReturn(Optional.of(transactionType));
+        when(fieldConfigRepository.findByTransactionTypeId(transactionType.getId()))
+                .thenReturn(fieldConfigs);
+
+        Map<String, Object> paymentDetails = new HashMap<>();
+        paymentDetails.put("fromAccount", "123456");
+        paymentDetails.put("toAccount", "654321");
+        paymentDetails.put("amount", 100.00);
+
+        assertDoesNotThrow(() -> paymentValidationService.validatePaymentDetails(instruction, paymentDetails));
+    }
+
+
+---
+
+7️⃣ Helper Method to Create Mock Field Configurations
+
+private PaymentFieldConfiguration createFieldConfig(String fieldName, boolean isRequired, String dataType) {
+        PaymentFieldConfiguration config = new PaymentFieldConfiguration();
+        config.setFieldName(fieldName);
+        config.setIsRequired(isRequired);
+        config.setFieldType(dataType);
+        return config;
+    }
+}
+
+
+---
+
+Final Summary
+
+✅ Mocks Dependencies: Uses Mockito to mock TransactionTypeRepository and PaymentFieldConfigurationRepository.
+✅ Covers Edge Cases:
+
+✅ Transaction type missing
+
+✅ Field configuration missing
+
+✅ Missing required fields
+
+✅ Wrong field types
+
+✅ Successful validation
+
+
+
+---
+
+Run the Tests
+
+Use Maven or Gradle:
+
+mvn test
+# OR
+gradle test
+
+Let me know if you need modifications! 🚀
+
