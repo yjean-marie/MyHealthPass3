@@ -1,0 +1,216 @@
+Sure! Here's the complete Java implementation for your Payment API, ensuring nothing is cut off.
+
+
+---
+
+1. T24Service (Calls T24 API)
+
+This service makes a GET request to fetch the list of lead branches from T24.
+
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import java.util.List;
+
+@Service
+public class T24Service {
+
+    private final WebClient webClient;
+
+    public T24Service(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.baseUrl("https://t24-api-url.com").build();
+    }
+
+    public List<String> getLeadBranches() {
+        return webClient.get()
+                .uri("/lead-branches") // Adjust URI based on T24 API
+                .retrieve()
+                .bodyToMono(T24BranchResponse.class)
+                .block() // Blocking for simplicity, use reactive if needed
+                .getBranches();
+    }
+}
+
+
+---
+
+2. PaymentService (Handles Verification & Payment Creation)
+
+Before creating a payment, this service verifies if the provided lead branch exists in the response from T24.
+
+import org.springframework.stereotype.Service;
+import java.util.List;
+
+@Service
+public class PaymentService {
+
+    private final T24Service t24Service;
+
+    public PaymentService(T24Service t24Service) {
+        this.t24Service = t24Service;
+    }
+
+    public PaymentResponse processPayment(PaymentRequest request) {
+        List<String> leadBranches = t24Service.getLeadBranches();
+
+        if (!leadBranches.contains(request.getLeadBranch())) {
+            throw new IllegalArgumentException("Invalid Lead Branch: " + request.getLeadBranch());
+        }
+
+        // Stubbed payment creation logic
+        return new PaymentResponse("Success", "Payment created successfully.");
+    }
+}
+
+
+---
+
+3. PaymentController (Exposes API Endpoint)
+
+This controller exposes the POST endpoint for creating a payment.
+
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/payments")
+public class PaymentController {
+
+    private final PaymentService paymentService;
+
+    public PaymentController(PaymentService paymentService) {
+        this.paymentService = paymentService;
+    }
+
+    @PostMapping("/create")
+    public PaymentResponse createPayment(@RequestBody PaymentRequest request) {
+        return paymentService.processPayment(request);
+    }
+}
+
+
+---
+
+4. Model Classes
+
+PaymentRequest (Request Body for Payment Creation)
+
+public class PaymentRequest {
+    private String leadBranch;
+
+    public String getLeadBranch() {
+        return leadBranch;
+    }
+
+    public void setLeadBranch(String leadBranch) {
+        this.leadBranch = leadBranch;
+    }
+}
+
+
+---
+
+PaymentResponse (Response After Processing)
+
+public class PaymentResponse {
+    private String status;
+    private String message;
+
+    public PaymentResponse(String status, String message) {
+        this.status = status;
+        this.message = message;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+}
+
+
+---
+
+T24BranchResponse (Model for T24 API Response)
+
+This class models the response from the T24 API.
+
+import java.util.List;
+
+public class T24BranchResponse {
+    private List<String> branches;
+
+    public List<String> getBranches() {
+        return branches;
+    }
+
+    public void setBranches(List<String> branches) {
+        this.branches = branches;
+    }
+}
+
+
+---
+
+How It Works
+
+1. T24Service.getLeadBranches() fetches the list of lead branches from the T24 API.
+
+
+2. PaymentService.processPayment(request) checks if the provided lead branch exists in that list.
+
+
+3. If valid, the payment is processed (stubbed for now).
+
+
+4. If invalid, an IllegalArgumentException is thrown.
+
+
+
+
+---
+
+How to Run
+
+1. Ensure you have Spring Boot set up.
+
+
+2. Update the T24 API URL in T24Service.
+
+
+3. Run the Spring Boot application.
+
+
+4. Use a tool like Postman to send a POST request to:
+
+http://localhost:8080/api/payments/create
+
+With a JSON body:
+
+{
+    "leadBranch": "XYZ123"
+}
+
+
+
+Expected Responses
+
+Valid Lead Branch:
+
+{
+    "status": "Success",
+    "message": "Payment created successfully."
+}
+
+Invalid Lead Branch:
+
+{
+    "error": "Invalid Lead Branch: XYZ123"
+}
+
+
+
+---
+
+This is the complete and clean implementation. Let me know if you need any refinements!
+
