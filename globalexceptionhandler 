@@ -1,0 +1,178 @@
+Got it! Since you already have a global exception handler that standardizes errors, you just need to make sure that when the lead branch is invalid, your code throws a specific exception that maps correctly to your existing error format.
+
+
+---
+
+✅ Steps to Integrate With Your Existing Global Error Handling
+
+1️⃣ Modify T24Service to Throw a Specific Exception With an Error Code
+
+Instead of throwing a generic LeadBranchNotFoundException, modify it to use an existing structured exception that your global handler can catch.
+
+📌 T24Service.java (Updated)
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
+
+@Service
+public class T24Service {
+
+    private final WebClient webClient;
+
+    public T24Service(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder
+                .baseUrl("https://u1vvar0d02.devg.rbc.com:9193")
+                .build();
+    }
+
+    public boolean isValidLeadBranch(String companyId) {
+        try {
+            T24BranchResponse response = webClient.get()
+                    .uri("/rbccdtgiapis/api/v1.0.0/party/company/v1/getCompanyDetails")
+                    .header("companyId", companyId)
+                    .retrieve()
+                    .onStatus(HttpStatus::is4xxClientError, response ->
+                        Mono.error(new CustomApiException("ERROR-LEAD-BRANCH-NOT-FOUND", 
+                            "Lead branch '" + companyId + "' could not be found."))
+                    )
+                    .onStatus(HttpStatus::is5xxServerError, response ->
+                        Mono.error(new CustomApiException("ERROR-T24-UNAVAILABLE", 
+                            "T24 API is currently unavailable."))
+                    )
+                    .bodyToMono(T24BranchResponse.class)
+                    .block();
+
+            return response != null && response.getBody() != null &&
+                   response.getBody().stream().anyMatch(branch -> branch.getCompanyId().equals(companyId));
+
+        } catch (WebClientResponseException e) {
+            throw new CustomApiException("ERROR-LEAD-BRANCH-NOT-FOUND", 
+                "Lead branch '" + companyId + "' could not be found.");
+        } catch (Exception e) {
+            throw new CustomApiException("ERROR-T24-UNKNOWN", 
+                "An unexpected error occurred while calling T24: " + e.getMessage());
+        }
+    }
+}
+
+✅ What Changed?
+
+Instead of throwing a generic exception, we now throw CustomApiException with a specific error code.
+
+ERROR-LEAD-BRANCH-NOT-FOUND will now trigger your global exception handler correctly.
+
+Handles API failures (5XX) separately so that you can return a different message.
+
+
+
+---
+
+2️⃣ Create CustomApiException (If You Don’t Have One)
+
+This should match the structure your global handler expects.
+
+📌 CustomApiException.java
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ResponseStatus(HttpStatus.BAD_REQUEST)
+public class CustomApiException extends RuntimeException {
+    private final String errorCode;
+
+    public CustomApiException(String errorCode, String message) {
+        super(message);
+        this.errorCode = errorCode;
+    }
+
+    public String getErrorCode() {
+        return errorCode;
+    }
+}
+
+✅ What This Does?
+
+This exception class includes an errorCode.
+
+Your global exception handler can now catch this and format the response accordingly.
+
+
+
+---
+
+3️⃣ Modify Your Global Exception Handler to Handle CustomApiException
+
+If your global exception handler is already handling structured errors, just add a case for CustomApiException.
+
+📌 GlobalExceptionHandler.java (Updated)
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(CustomApiException.class)
+    public ResponseEntity<ErrorResponse> handleCustomApiException(CustomApiException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(ex.getErrorCode(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGeneralError(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse("ERROR-UNKNOWN", "An internal error occurred."));
+    }
+}
+
+✅ Now, ERROR-LEAD-BRANCH-NOT-FOUND is handled properly by your global exception handler!
+
+
+---
+
+4️⃣ Expected API Responses After These Changes
+
+✅ If Lead Branch Exists
+
+{
+    "status": "Success",
+    "message": "Payment created successfully."
+}
+
+❌ If Lead Branch Is Invalid
+
+{
+    "errorCode": "ERROR-LEAD-BRANCH-NOT-FOUND",
+    "message": "Lead branch 'TT0010001' could not be found."
+}
+
+❌ If T24 API Is Down
+
+{
+    "errorCode": "ERROR-T24-UNAVAILABLE",
+    "message": "T24 API is currently unavailable."
+}
+
+
+---
+
+🔥 Why This Is Better
+
+✅ No more generic 400 errors – Now it says "Lead branch could not be found"
+✅ No extra modifications to your global handler – Just a new exception case
+✅ More Maintainable – If you add more error codes later, it's easy to extend
+
+
+---
+
+💡 Final Steps
+
+1️⃣ Refactor T24Service to throw CustomApiException with proper error codes.
+2️⃣ Ensure GlobalExceptionHandler handles CustomApiException correctly.
+3️⃣ Test with invalid branches & API failures to verify the structured error responses.
+
+🚀 Now your error handling is fully integrated and scalable! Let me know if you need refinements. 🎯
+
