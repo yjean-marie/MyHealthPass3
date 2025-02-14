@@ -1,0 +1,143 @@
+Yes! The best approach is to centralize the HTTP client setup so that you don't have to repeat the SSL configuration for every T24 service. Below is a cleaner, reusable approach that keeps your code maintainable.
+
+
+---
+
+✅ Centralizing the HTTP Client Setup
+
+1️⃣ Create a WebClientConfig Class
+
+Move all WebClient configuration (including the keystore setup) into a Spring Boot configuration class.
+
+📌 WebClientConfig.java
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+
+import javax.net.ssl.TrustManagerFactory;
+import java.io.InputStream;
+import java.security.KeyStore;
+
+@Configuration
+public class WebClientConfig {
+
+    @Bean
+    public WebClient.Builder webClientBuilder() {
+        return WebClient.builder().clientConnector(new ReactorClientHttpConnector(createHttpClient()));
+    }
+
+    private HttpClient createHttpClient() {
+        try {
+            // Load the keystore
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            InputStream keystoreStream = new ClassPathResource("KeyStore.jks").getInputStream();
+            keyStore.load(keystoreStream, "changeit".toCharArray());  // Update with the actual password
+
+            // Initialize TrustManagerFactory
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(keyStore);
+
+            // Create SSL context
+            SslContext sslContext = SslContextBuilder.forClient()
+                    .trustManager(trustManagerFactory)
+                    .build();
+
+            // Return HTTP client with SSL
+            return HttpClient.create().secure(sslContextSpec -> sslContextSpec.sslContext(sslContext));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize HTTP client with keystore", e);
+        }
+    }
+}
+
+
+---
+
+2️⃣ Update T24Service to Use the Centralized WebClient
+
+Now, instead of handling the HTTP client setup in every T24 service, just inject the WebClient.Builder and build it.
+
+📌 T24Service.java
+
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@Service
+public class T24Service {
+
+    private final WebClient webClient;
+
+    public T24Service(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder
+                .baseUrl("https://u1vvar0d02.devg.rbc.com:9193")
+                .build();
+    }
+
+    public boolean isValidLeadBranch(String companyId) {
+        try {
+            T24BranchResponse response = webClient.get()
+                    .uri("/rbccdtgiapis/api/v1.0.0/party/company/v1/getCompanyDetails")
+                    .header("companyId", companyId)
+                    .retrieve()
+                    .bodyToMono(T24BranchResponse.class)
+                    .block();
+
+            return response != null && response.getBody() != null &&
+                   response.getBody().stream().anyMatch(branch -> branch.getCompanyId().equals(companyId));
+
+        } catch (Exception e) {
+            System.err.println("Error calling T24 API: " + e.getMessage());
+            return false;
+        }
+    }
+}
+
+
+---
+
+3️⃣ Add Configuration in application.properties
+
+t24.api.base-url=https://u1vvar0d02.devg.rbc.com:9193
+t24.api.endpoint=/rbccdtgiapis/api/v1.0.0/party/company/v1/getCompanyDetails
+
+This allows flexibility in case the base URL changes in different environments (DEV, QA, PROD).
+
+
+---
+
+🚀 Why This is Better?
+
+✅ Reusability – All WebClient instances share the same SSL settings
+✅ Less Boilerplate Code – No need to repeat keystore logic in every service
+✅ Centralized SSL Configuration – If the keystore path or password changes, update only one file
+✅ Spring Boot Standard Approach – Uses @Bean WebClient.Builder, allowing dependency injection
+
+
+---
+
+Final Thoughts
+
+Now, every T24-related service can simply inject WebClient.Builder instead of handling SSL manually.
+
+If you need another T24 API service (T24CustomerService, T24AccountService), just reuse the WebClient instance.
+
+Future changes to SSL, authentication, or logging can be done in one place (WebClientConfig).
+
+
+
+---
+
+Next Steps
+
+🔥 Refactor your project using this approach
+🔥 Remove duplicated SSL handling from all services
+🔥 Test to confirm it still works!
+
+Let me know if you need any refinements! 🚀
+
