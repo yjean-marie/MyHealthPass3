@@ -273,3 +273,50 @@ Does this version align with what you need?
 
 
 
+8. Validate User Token for API Access
+
+Story Points: 2
+Title: Validate User Token for API Access
+Description: As a developer, I want the API to validate the user's token and verify their permissions before granting access to ensure that only authorized users can interact with the system.
+
+Acceptance Criteria (Gherkin Format):
+
+Scenario: Access granted for a valid token
+  Given a user submits an API request with a valid token
+  When the API verifies the token with the authentication service
+  Then the request is processed successfully
+
+Scenario: Access denied for an expired or invalid token
+  Given a user submits an API request with an expired or malformed token
+  When the API verifies the token with the authentication service
+  Then the system should return an "Unauthorized" error
+
+Scenario: Access denied for a user without proper permissions
+  Given a user submits an API request with a valid token
+  When the token is valid but lacks the required permissions
+  Then the system should return a "Forbidden" error
+
+Scenario: Token validation failure due to authentication service unavailability
+  Given the authentication service is down
+  When the API tries to validate the token
+  Then the system should return a "Service Unavailable" error and log the failure
+
+
+---
+
+Updated Story Point Summary:
+
+Backend Stories Total: 11 points
+
+Frontend Stories Total: 4 points
+
+Overall Total Estimate: 15 points
+
+
+This updated version more accurately reflects the actual process, where the API receives a token, verifies it against an authentication service, and checks permissions before granting access.
+
+Does this sound more like what’s happening in your implementation?
+
+
+
+
