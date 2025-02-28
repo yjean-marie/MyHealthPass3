@@ -1,0 +1,140 @@
+Ah, gotcha! If the Datahub team is presenting their document (presumably outlining the new GraphQL endpoint for client data), here’s a list of things you should expect, ask about, and be prepared to discuss in that meeting — especially from the perspective of the lead developer who will be consuming it.
+
+
+---
+
+What to Expect in Their Document (and What You Should Look For)
+
+1. High-Level Purpose
+
+Why did they choose GraphQL for this?
+
+Is this just a "get client by ID" or will it support search, filtering, and nested data retrieval?
+
+
+2. Schema Overview
+
+Expect to see the GraphQL schema or at least a high-level breakdown of:
+
+Client Type (fields, data types)
+
+Query examples
+
+Relationships (does client link to accounts, addresses, etc.?)
+
+
+Ask if they have a sandbox URL where you can run queries in something like GraphiQL.
+
+
+3. Supported Queries
+
+Example: getClient(clientId: String) or searchClients(name: String)
+
+Ask if they support exact match vs partial match.
+
+Will the query support filter combinations like client type, country, etc.?
+
+
+4. Pagination/Batch Support
+
+If you need to retrieve many clients, do they support paginated queries?
+
+What’s the default page size and can you control it?
+
+
+5. Performance & SLAs
+
+What are the expected response times for:
+
+Simple queries (just client basic info)?
+
+More complex/nested queries (client + accounts + transactions)?
+
+
+Ask if they have any query depth or complexity limits.
+
+
+6. Error Handling
+
+Will they follow standard GraphQL error structure?
+
+How will they handle partial data scenarios (some fields resolve, some fail)?
+
+Ask for error examples, especially for auth failures, bad input, or system errors.
+
+
+7. Authorization & Security
+
+How will your team’s credentials be passed? Header token?
+
+Will there be field-level security? (Can all consumers see all fields, or is some data restricted?)
+
+Will they audit who queries what? (Some orgs track client data access heavily.)
+
+
+8. Data Freshness
+
+Is this real-time data directly from the source?
+
+Or is it cached data from a downstream system?
+
+How often is data refreshed if cached?
+
+
+9. Versioning & Deprecation Plan
+
+How do they handle breaking changes?
+
+Will fields be deprecated before removal?
+
+How will you be notified of schema changes?
+
+
+10. Testing & Environments
+
+When will you have access to a dev or test environment?
+
+Will they provide mock responses or sample queries for early testing?
+
+Is there a Postman collection or GraphiQL endpoint for you to try?
+
+
+
+---
+
+What You Should Ask in the Meeting
+
+What’s the main driver for moving to GraphQL for client data? (This gives you insight into their design goals.)
+
+What scenarios did they design for — real-time client lookup, bulk retrieval, KYC workflows? (This helps you understand performance expectations.)
+
+How flexible is the schema? Can we request additional fields if needed? (This is key if you expect evolving requirements.)
+
+Are there any fields with special handling (PII masking, auditing, etc.)?
+
+What happens if we query too much data — will the query fail, or do they have safety limits?
+
+How will they support consumers like your team? (Documentation updates, change notifications, Slack channel?)
+
+
+
+---
+
+What You Should Consider (Your Team’s Internal Prep)
+
+Does your team need to start learning GraphQL query syntax?
+
+Will you need to build a client library (like using Apollo Client), or will you just do raw HTTP requests?
+
+How will you manage breaking schema changes?
+
+Do you need to align your own internal data models to match the GraphQL types from Datahub?
+
+Will your service consume GraphQL directly, or will you wrap it in your own internal service layer?
+
+
+
+---
+
+Want me to help draft a few sample questions you can ask during the meeting to sound prepared and sharp?
+
