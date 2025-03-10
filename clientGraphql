@@ -138,3 +138,364 @@ Summary of Changes
 
 Let me know if you'd like enhancements like logging, error handling, or optimizations!
 
+
+Now that the GraphQL response is structured into logical sections like CUSTOMER_DETAILS, ADDRESS_DETAILS, TRANSIT_DETAILS, etc., we should update the GraphQL query and Java classes to reflect this structure.
+
+
+---
+
+1. Update the GraphQL Query to Match the New Structure
+
+Since the response groups fields into sections, we update the query accordingly.
+
+Updated ClientGraphQLRepository.java
+
+import org.springframework.stereotype.Repository;
+import org.springframework.web.reactive.function.client.WebClient;
+import java.util.Map;
+
+@Repository
+public class ClientGraphQLRepository {
+
+    private final WebClient webClient;
+
+    public ClientGraphQLRepository(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.baseUrl("https://your-graphql-api.com/graphql").build();
+    }
+
+    public Map<String, Object> fetchClients(String country, String runDate, int page, int size) {
+        String query = """
+            query {
+                clientProfileResponse(
+                    filter: {
+                        kycRefreshStatus_in: [
+                            "Out Of Order", 
+                            "Refresh Coming Due", 
+                            "Restrained", 
+                            "Restrain Lifted", 
+                            "Exception Granted", 
+                            "Due For Restrain"
+                        ],
+                        country: "%s",
+                        runDate: "%s"
+                    },
+                    pagination: {
+                        page: %d,
+                        size: %d
+                    }
+                ) {
+                    totalCount
+                    totalPages
+                    page
+                    size
+                    hasNextPage
+                    hasPreviousPage
+                    clientProfiles {
+                        customerDetails {
+                            cif
+                            customerName1
+                            customerName2
+                            customerTypeCode
+                            customerTypeCodeDescription
+                            customerType
+                            customerEmailAddress
+                            customerPhoneHome
+                            customerPhoneMobile
+                            customerPhoneBusiness
+                        }
+                        addressDetails {
+                            address1
+                            address2
+                            address3
+                            address4
+                            postalCode
+                        }
+                        transitDetails {
+                            customerTransit
+                            customerTransitName
+                            respTransit
+                            respTransitName
+                        }
+                        countryDetails {
+                            countryCode
+                            country
+                        }
+                        customerStatus {
+                            customerAmlRiskRating
+                            customerStatusCode
+                            customerStatus
+                            kycLastRefreshDate
+                            kycNextRefreshDate
+                        }
+                        escalationDetails {
+                            escgContactEmail
+                            escgCustomer
+                            escgLeadInd
+                            escgHouseholdName
+                        }
+                        products {
+                            rbcProductsDda
+                            rbcProductsTd
+                            rbcProductsLoan
+                            rbcProductsMortgage
+                            rbcProducts
+                        }
+                        systemMetadata {
+                            sourceSystem
+                            snapshotDt
+                            loadDatetime
+                            runDate
+                        }
+                        kycPortal {
+                            uid
+                            kycRefreshStatus
+                            kycDueForRestraintInd
+                            kycRestrainInd
+                            kycEmailConfInd
+                        }
+                    }
+                }
+            }
+        """.formatted(country, runDate, page, size);
+
+        return webClient.post()
+                .bodyValue(Map.of("query", query))
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block(); // Blocking for simplicity
+    }
+}
+
+
+---
+
+2. Update the Java DTOs to Reflect the GraphQL Response
+
+Now we need to create Java DTOs that map to the GraphQL response.
+
+GraphQL Response Wrapper
+
+import lombok.Data;
+import java.util.List;
+
+@Data
+public class ClientProfileResponse {
+    private int totalCount;
+    private int totalPages;
+    private int page;
+    private int size;
+    private boolean hasNextPage;
+    private boolean hasPreviousPage;
+    private List<ClientProfile> clientProfiles;
+}
+
+Client Profile DTO
+
+import lombok.Data;
+
+@Data
+public class ClientProfile {
+    private CustomerDetails customerDetails;
+    private AddressDetails addressDetails;
+    private TransitDetails transitDetails;
+    private CountryDetails countryDetails;
+    private CustomerStatus customerStatus;
+    private EscalationDetails escalationDetails;
+    private Products products;
+    private SystemMetadata systemMetadata;
+    private KycPortal kycPortal;
+}
+
+Nested DTOs for Logical Split
+
+import lombok.Data;
+
+@Data
+public class CustomerDetails {
+    private String cif;
+    private String customerName1;
+    private String customerName2;
+    private String customerTypeCode;
+    private String customerTypeCodeDescription;
+    private String customerType;
+    private String customerEmailAddress;
+    private String customerPhoneHome;
+    private String customerPhoneMobile;
+    private String customerPhoneBusiness;
+}
+
+import lombok.Data;
+
+@Data
+public class AddressDetails {
+    private String address1;
+    private String address2;
+    private String address3;
+    private String address4;
+    private String postalCode;
+}
+
+import lombok.Data;
+
+@Data
+public class TransitDetails {
+    private String customerTransit;
+    private String customerTransitName;
+    private String respTransit;
+    private String respTransitName;
+}
+
+import lombok.Data;
+
+@Data
+public class CountryDetails {
+    private String countryCode;
+    private String country;
+}
+
+import lombok.Data;
+
+@Data
+public class CustomerStatus {
+    private String customerAmlRiskRating;
+    private String customerStatusCode;
+    private String customerStatus;
+    private String kycLastRefreshDate;
+    private String kycNextRefreshDate;
+}
+
+import lombok.Data;
+
+@Data
+public class EscalationDetails {
+    private String escgContactEmail;
+    private String escgCustomer;
+    private String escgLeadInd;
+    private String escgHouseholdName;
+}
+
+import lombok.Data;
+
+@Data
+public class Products {
+    private String rbcProductsDda;
+    private String rbcProductsTd;
+    private String rbcProductsLoan;
+    private String rbcProductsMortgage;
+    private String rbcProducts;
+}
+
+import lombok.Data;
+
+@Data
+public class SystemMetadata {
+    private String sourceSystem;
+    private String snapshotDt;
+    private String loadDatetime;
+    private String runDate;
+}
+
+import lombok.Data;
+
+@Data
+public class KycPortal {
+    private String uid;
+    private String kycRefreshStatus;
+    private String kycDueForRestraintInd;
+    private String kycRestrainInd;
+    private String kycEmailConfInd;
+}
+
+
+---
+
+3. Update Service to Process the New Response Structure
+
+import org.springframework.stereotype.Service;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class ClientService {
+
+    private final ClientGraphQLRepository clientGraphQLRepository;
+
+    public ClientService(ClientGraphQLRepository clientGraphQLRepository) {
+        this.clientGraphQLRepository = clientGraphQLRepository;
+    }
+
+    public List<ClientProfile> getAllFilteredClients(String country, String runDate) {
+        List<ClientProfile> allClients = new ArrayList<>();
+        int page = 1;
+        int size = 50; // Adjust size as needed
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            Map<String, Object> response = clientGraphQLRepository.fetchClients(country, runDate, page, size);
+
+            if (response.containsKey("data")) {
+                Map<String, Object> data = (Map<String, Object>) response.get("data");
+
+                if (data.containsKey("clientProfileResponse")) {
+                    Map<String, Object> clientProfileResponse = (Map<String, Object>) data.get("clientProfileResponse");
+
+                    if (clientProfileResponse.containsKey("clientProfiles")) {
+                        List<ClientProfile> clients = (List<ClientProfile>) clientProfileResponse.get("clientProfiles");
+                        allClients.addAll(clients);
+                    }
+
+                    hasNextPage = (boolean) clientProfileResponse.get("hasNextPage");
+                    page++; // Move to the next page
+                }
+            } else {
+                break; // Exit if no valid response
+            }
+        }
+        return allClients;
+    }
+}
+
+
+---
+
+4. Update Notification Job to Handle the New DTOs
+
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import java.util.List;
+
+@Component
+public class NotificationJob {
+
+    private final ClientService clientService;
+
+    public NotificationJob(ClientService clientService) {
+        this.clientService = clientService;
+    }
+
+    @Scheduled(fixedRate = 60000) // Run every minute (adjust as needed)
+    public void processNotifications() {
+        String country = "Aruba";
+        String runDate = "2025-03-05";
+
+        List<ClientProfile> clients = clientService.getAllFilteredClients(country, runDate);
+
+        for (ClientProfile client : clients) {
+            System.out.println("Client Data: " + client);
+        }
+    }
+}
+
+
+---
+
+Summary of Changes
+
+✔ Updated GraphQL query to match the new structured format
+✔ Refactored Java DTOs to represent the new response
+✔ Modified service layer to handle pagination and new DTOs
+✔ Updated notification job to process the refined data model
+
+Would you like any refinements, such as error handling or logging?
+
