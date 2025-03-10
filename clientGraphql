@@ -499,3 +499,271 @@ Summary of Changes
 
 Would you like any refinements, such as error handling or logging?
 
+
+
+Thanks for sharing the pagination structure! Based on this, I will update the GraphQL query to:
+
+1. Use OR conditions instead of _in.
+
+
+2. Apply pagination properly using the format from the screenshot.
+
+
+3. Ensure correct filtering for kycRefreshStatus, country, and runDate.
+
+
+
+
+---
+
+1. Corrected GraphQL Query Using OR Conditions
+
+Since the API does not support _in, we use multiple OR conditions.
+
+Updated ClientGraphQLRepository.java
+
+import org.springframework.stereotype.Repository;
+import org.springframework.web.reactive.function.client.WebClient;
+import java.util.Map;
+
+@Repository
+public class ClientGraphQLRepository {
+
+    private final WebClient webClient;
+
+    public ClientGraphQLRepository(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.baseUrl("https://your-graphql-api.com/graphql").build();
+    }
+
+    public Map<String, Object> fetchClients(String country, String runDate, int page, int size) {
+        String query = """
+            query {
+                clientProfiles(page: %d, size: %d, filter: {
+                    OR: [
+                        { kycPortal: { kycRefreshStatus: "Out Of Order" } },
+                        { kycPortal: { kycRefreshStatus: "Refresh Coming Due" } },
+                        { kycPortal: { kycRefreshStatus: "Restrained" } },
+                        { kycPortal: { kycRefreshStatus: "Restrain Lifted" } },
+                        { kycPortal: { kycRefreshStatus: "Exception Granted" } },
+                        { kycPortal: { kycRefreshStatus: "Due For Restrain" } }
+                    ],
+                    countryDetails: { country: "%s" },
+                    systemMetadata: { runDate: "%s" }
+                }) {
+                    totalCount
+                    totalPages
+                    page
+                    size
+                    hasNextPage
+                    hasPreviousPage
+                    clientProfiles {
+                        customerDetails {
+                            cif
+                            customerName1
+                            customerName2
+                            customerType
+                            customerEmailAddress
+                        }
+                        addressDetails {
+                            address1
+                            address2
+                            address3
+                            address4
+                            postalCode
+                        }
+                        transitDetails {
+                            customerTransit
+                            customerTransitName
+                        }
+                        countryDetails {
+                            country
+                        }
+                        customerStatus {
+                            customerAmlRiskRating
+                            customerStatus
+                            kycLastRefreshDate
+                        }
+                        kycPortal {
+                            uid
+                            kycRefreshStatus
+                            kycDueForRestraintInd
+                            kycRestrainInd
+                            kycEmailConfInd
+                        }
+                        systemMetadata {
+                            runDate
+                        }
+                    }
+                }
+            }
+        """.formatted(page, size, country, runDate);
+
+        return webClient.post()
+                .bodyValue(Map.of("query", query))
+                .retrieve()
+                .bodyToMono(Map.class)
+                .block(); // Blocking for simplicity
+    }
+}
+
+
+---
+
+2. How This Fix Works
+
+✔ Uses OR conditions for kycRefreshStatus instead of _in.
+✔ Follows the pagination format from your screenshot (clientProfiles(page, size)).
+✔ Filters properly by countryDetails.country and systemMetadata.runDate.
+✔ Returns pagination metadata (totalCount, totalPages, hasNextPage, etc.).
+
+
+---
+
+3. Updating the Service Layer to Handle Pagination
+
+Now, we fetch all pages dynamically until hasNextPage = false.
+
+Updated ClientService.java
+
+import org.springframework.stereotype.Service;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class ClientService {
+
+    private final ClientGraphQLRepository clientGraphQLRepository;
+
+    public ClientService(ClientGraphQLRepository clientGraphQLRepository) {
+        this.clientGraphQLRepository = clientGraphQLRepository;
+    }
+
+    public List<OpsDBClientKYCData> getAllFilteredClients(String country, String runDate) {
+        List<OpsDBClientKYCData> allClients = new ArrayList<>();
+        int page = 0;
+        int size = 50; // Adjust size based on API limits
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            Map<String, Object> response = clientGraphQLRepository.fetchClients(country, runDate, page, size);
+
+            if (response.containsKey("data")) {
+                Map<String, Object> data = (Map<String, Object>) response.get("data");
+
+                if (data.containsKey("clientProfiles")) {
+                    Map<String, Object> clientProfileResponse = (Map<String, Object>) data.get("clientProfiles");
+
+                    if (clientProfileResponse.containsKey("clientProfiles")) {
+                        List<Map<String, Object>> clients = (List<Map<String, Object>>) clientProfileResponse.get("clientProfiles");
+
+                        for (Map<String, Object> client : clients) {
+                            allClients.add(mapToFlatEntity(client));
+                        }
+                    }
+
+                    hasNextPage = (boolean) clientProfileResponse.get("hasNextPage");
+                    page++;
+                }
+            } else {
+                break;
+            }
+        }
+        return allClients;
+    }
+
+    private OpsDBClientKYCData mapToFlatEntity(Map<String, Object> client) {
+        OpsDBClientKYCData entity = new OpsDBClientKYCData();
+
+        Map<String, Object> customerDetails = (Map<String, Object>) client.get("customerDetails");
+        entity.setClientID((String) customerDetails.get("cif"));
+        entity.setClientName1((String) customerDetails.get("customerName1"));
+        entity.setClientName2((String) customerDetails.get("customerName2"));
+        entity.setCustType((String) customerDetails.get("customerType"));
+
+        Map<String, Object> addressDetails = (Map<String, Object>) client.get("addressDetails");
+        entity.setClientAddress1((String) addressDetails.get("address1"));
+        entity.setClientAddress2((String) addressDetails.get("address2"));
+        entity.setClientAddress3((String) addressDetails.get("address3"));
+        entity.setClientAddress4((String) addressDetails.get("address4"));
+        entity.setPostalCode((String) addressDetails.get("postalCode"));
+
+        Map<String, Object> transitDetails = (Map<String, Object>) client.get("transitDetails");
+        entity.setTransit((String) transitDetails.get("customerTransit"));
+        entity.setTransitName((String) transitDetails.get("customerTransitName"));
+
+        Map<String, Object> countryDetails = (Map<String, Object>) client.get("countryDetails");
+        entity.setJurisdiction((String) countryDetails.get("country"));
+
+        Map<String, Object> customerStatus = (Map<String, Object>) client.get("customerStatus");
+        entity.setRiskRating((String) customerStatus.get("customerAmlRiskRating"));
+        entity.setLastKYCRefreshDate((String) customerStatus.get("kycLastRefreshDate"));
+
+        Map<String, Object> kycPortal = (Map<String, Object>) client.get("kycPortal");
+        entity.setStatus((String) kycPortal.get("kycRefreshStatus"));
+        entity.setEmailValid((String) kycPortal.get("kycEmailConfInd"));
+
+        Map<String, Object> systemMetadata = (Map<String, Object>) client.get("systemMetadata");
+        entity.setSource((String) systemMetadata.get("runDate"));
+
+        return entity;
+    }
+}
+
+
+---
+
+4. Updating Notification Job to Process All Paginated Data
+
+Now, we fetch all paginated results and process them.
+
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import java.util.List;
+
+@Component
+public class NotificationJob {
+
+    private final ClientService clientService;
+
+    public NotificationJob(ClientService clientService) {
+        this.clientService = clientService;
+    }
+
+    @Scheduled(fixedRate = 60000) // Runs every minute (adjust as needed)
+    public void processNotifications() {
+        String country = "Aruba";
+        String runDate = "2025-03-05";
+
+        List<OpsDBClientKYCData> clients = clientService.getAllFilteredClients(country, runDate);
+
+        for (OpsDBClientKYCData client : clients) {
+            System.out.println("Client Data: " + client);
+        }
+    }
+}
+
+
+---
+
+5. Summary of Fixes
+
+✔ Uses OR conditions for kycRefreshStatus filtering.
+✔ Applies correct pagination structure (clientProfiles(page, size)).
+✔ Fetches all pages dynamically until hasNextPage = false.
+✔ Maps nested GraphQL response into a flat entity (OpsDBClientKYCData).
+✔ Processes paginated data efficiently in the notification job.
+
+
+---
+
+Next Steps
+
+Would you like logging added to track each page request?
+
+Do you need error handling if the GraphQL API fails?
+
+
+Let me know how I can refine this further!
+
+
