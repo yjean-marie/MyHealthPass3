@@ -1,0 +1,140 @@
+Got it! Since the GraphQL response follows a nested structure, but your existing database entity (OpsDBClientKYCData) is flat, we need to map the nested GraphQL data into this flat entity.
+
+
+---
+
+1. Update ClientService.java
+
+We now map the structured GraphQL response into the flat entity before returning it.
+
+import org.springframework.stereotype.Service;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class ClientService {
+
+    private final ClientGraphQLRepository clientGraphQLRepository;
+
+    public ClientService(ClientGraphQLRepository clientGraphQLRepository) {
+        this.clientGraphQLRepository = clientGraphQLRepository;
+    }
+
+    public List<OpsDBClientKYCData> getAllFilteredClients(String country, String runDate) {
+        List<OpsDBClientKYCData> allClients = new ArrayList<>();
+        int page = 1;
+        int size = 50;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            Map<String, Object> response = clientGraphQLRepository.fetchClients(country, runDate, page, size);
+
+            if (response.containsKey("data")) {
+                Map<String, Object> data = (Map<String, Object>) response.get("data");
+
+                if (data.containsKey("clientProfileResponse")) {
+                    Map<String, Object> clientProfileResponse = (Map<String, Object>) data.get("clientProfileResponse");
+
+                    if (clientProfileResponse.containsKey("clientProfiles")) {
+                        List<Map<String, Object>> clients = (List<Map<String, Object>>) clientProfileResponse.get("clientProfiles");
+
+                        for (Map<String, Object> client : clients) {
+                            allClients.add(mapToFlatEntity(client));
+                        }
+                    }
+
+                    hasNextPage = (boolean) clientProfileResponse.get("hasNextPage");
+                    page++;
+                }
+            } else {
+                break;
+            }
+        }
+        return allClients;
+    }
+
+    private OpsDBClientKYCData mapToFlatEntity(Map<String, Object> client) {
+        OpsDBClientKYCData entity = new OpsDBClientKYCData();
+
+        Map<String, Object> customerDetails = (Map<String, Object>) client.get("customerDetails");
+        entity.setClientID((String) customerDetails.get("cif"));
+        entity.setClientName1((String) customerDetails.get("customerName1"));
+        entity.setClientName2((String) customerDetails.get("customerName2"));
+        entity.setCustType((String) customerDetails.get("customerType"));
+
+        Map<String, Object> addressDetails = (Map<String, Object>) client.get("addressDetails");
+        entity.setClientAddress1((String) addressDetails.get("address1"));
+        entity.setClientAddress2((String) addressDetails.get("address2"));
+        entity.setClientAddress3((String) addressDetails.get("address3"));
+        entity.setClientAddress4((String) addressDetails.get("address4"));
+        entity.setPostalCode((String) addressDetails.get("postalCode"));
+
+        Map<String, Object> transitDetails = (Map<String, Object>) client.get("transitDetails");
+        entity.setTransit((String) transitDetails.get("customerTransit"));
+        entity.setTransitName((String) transitDetails.get("customerTransitName"));
+
+        Map<String, Object> countryDetails = (Map<String, Object>) client.get("countryDetails");
+        entity.setJurisdiction((String) countryDetails.get("country"));
+
+        Map<String, Object> customerStatus = (Map<String, Object>) client.get("customerStatus");
+        entity.setRiskRating((String) customerStatus.get("customerAmlRiskRating"));
+        entity.setLastKYCRefreshDate((String) customerStatus.get("kycLastRefreshDate"));
+        entity.setNextKYCRefreshDate((String) customerStatus.get("kycNextRefreshDate"));
+
+        Map<String, Object> kycPortal = (Map<String, Object>) client.get("kycPortal");
+        entity.setStatus((String) kycPortal.get("kycRefreshStatus"));
+        entity.setEmailValid((String) kycPortal.get("kycEmailConfInd"));
+
+        Map<String, Object> systemMetadata = (Map<String, Object>) client.get("systemMetadata");
+        entity.setSource((String) systemMetadata.get("sourceSystem"));
+
+        return entity;
+    }
+}
+
+
+---
+
+2. Update NotificationJob.java
+
+Now the job processes the mapped flat entity.
+
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import java.util.List;
+
+@Component
+public class NotificationJob {
+
+    private final ClientService clientService;
+
+    public NotificationJob(ClientService clientService) {
+        this.clientService = clientService;
+    }
+
+    @Scheduled(fixedRate = 60000) // Runs every minute (adjust as needed)
+    public void processNotifications() {
+        String country = "Aruba";
+        String runDate = "2025-03-05";
+
+        List<OpsDBClientKYCData> clients = clientService.getAllFilteredClients(country, runDate);
+
+        for (OpsDBClientKYCData client : clients) {
+            System.out.println("Client Data: " + client);
+        }
+    }
+}
+
+
+---
+
+Summary of Changes
+
+✔ GraphQL query structure matches the new logical split.
+✔ Mapped nested GraphQL response into the existing flat entity.
+✔ Updated service to fetch all pages and flatten data.
+✔ Notification job now processes flat entity instead of raw GraphQL response.
+
+Let me know if you'd like enhancements like logging, error handling, or optimizations!
+
