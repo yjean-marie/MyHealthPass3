@@ -357,3 +357,82 @@ Iterates through all pages and returns all client profiles.
 Would you like me to add error handling (e.g., if the mock API fails or if the pagination gets stuck)? 🚀
 
 
+
+Good catch! The issue occurs when the total records are less than the page size because the pagination logic isn't correctly handling cases where start exceeds the number of records. I'll fix the issue by ensuring that start is never out of bounds.
+
+
+---
+
+🔹 Updated JobController (Fixes Pagination Logic)
+
+@RestController
+@RequestMapping("/job")
+public class JobController extends UServiceController {
+
+    private final ClientDataService clientDataService;
+
+    @Autowired
+    public JobController(ClientDataService clientDataService) {
+        this.clientDataService = clientDataService;
+    }
+
+    @PostMapping(path = "/clientDataSimulator", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<ClientInfoSample>> getClientData() {
+        List<ClientInfoSample> clientData = clientDataService.fetchClientDataSample();
+        return ResponseEntity.ok(clientData);
+    }
+
+    @GetMapping("/clientDataGraphQLMock")
+    public ResponseEntity<ClientProfileResponse> getClientDataGraphQLMock(
+            @RequestParam(required = false) List<String> kycRefreshStatus,
+            @RequestParam(required = false) List<String> country,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+
+        List<ClientInfoSample> allClientData = clientDataService.fetchClientDataSample();
+
+        // Apply filtering
+        List<ClientInfoSample> filteredClients = allClientData.stream()
+                .filter(client -> (kycRefreshStatus == null || kycRefreshStatus.contains(client.getStatus())))
+                .filter(client -> (country == null || country.contains(client.getCountry())))
+                .collect(Collectors.toList());
+
+        int totalRecords = filteredClients.size();
+        int totalPages = (int) Math.ceil((double) totalRecords / size);
+        
+        // Ensure the page index is within bounds
+        if (page >= totalPages) {
+            return ResponseEntity.ok(new ClientProfileResponse(totalRecords, totalPages, page, size, false, page > 0, Collections.emptyList()));
+        }
+
+        int start = Math.min(page * size, totalRecords);  // Avoid out-of-bounds index
+        int end = Math.min(start + size, totalRecords);  // Ensure we do not exceed total records
+        List<ClientInfoSample> paginatedClients = filteredClients.subList(start, end);
+
+        boolean hasNextPage = (page + 1) < totalPages;
+        boolean hasPreviousPage = page > 0;
+
+        ClientProfileResponse response = new ClientProfileResponse(
+                totalRecords,
+                totalPages,
+                page,
+                size,
+                hasNextPage,
+                hasPreviousPage,
+                paginatedClients
+        );
+
+        return ResponseEntity.ok(response);
+    }
+}
+
+
+---
+
+📌 Fixes Implemented
+
+✔ If totalRecords < pageSize, it correctly returns all records on page 0.
+✔ **If page exceeds the number of pages, it returns an empty list instead of an error.
+
+
+
