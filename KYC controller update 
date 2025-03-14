@@ -1,0 +1,359 @@
+Got it! The GraphQL API returns a response in the format of ClientProfileResponse, which contains:
+
+totalCount (total records)
+
+totalPages (number of pages)
+
+page (current page)
+
+size (number of records per page)
+
+hasNextPage (boolean flag)
+
+hasPreviousPage (boolean flag)
+
+clientProfiles (list of ClientProfile objects)
+
+
+🔹 Updating the JobController to Match GraphQL Format
+
+I'll modify the mock GraphQL API response in clientDataGraphQLMock to match the ClientProfileResponse format.
+
+
+---
+
+📌 Updated JobController
+
+@RestController
+@RequestMapping("/job")
+public class JobController extends UServiceController {
+
+    private final ClientDataService clientDataService;
+
+    @Autowired
+    public JobController(ClientDataService clientDataService) {
+        this.clientDataService = clientDataService;
+    }
+
+    /**
+     * Existing simulator endpoint (unchanged)
+     */
+    @PostMapping(path = "/clientDataSimulator", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<ClientInfoSample>> getClientData() {
+        List<ClientInfoSample> clientData = clientDataService.fetchClientDataSample();
+        return ResponseEntity.ok(clientData);
+    }
+
+    /**
+     * New GraphQL-like endpoint returning data in `ClientProfileResponse` format
+     */
+    @GetMapping("/clientDataGraphQLMock")
+    public ResponseEntity<Map<String, Object>> getClientDataGraphQLMock(
+            @RequestParam(required = false) List<String> kycRefreshStatus,
+            @RequestParam(required = false) List<String> country,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+
+        // Get all data from the service
+        List<ClientInfoSample> allClientData = clientDataService.fetchClientDataSample();
+
+        // Apply filtering based on parameters
+        List<ClientInfoSample> filteredClients = allClientData.stream()
+                .filter(client -> (kycRefreshStatus == null || kycRefreshStatus.contains(client.getStatus())))
+                .filter(client -> (country == null || country.contains(client.getCountry())))
+                .collect(Collectors.toList());
+
+        // Apply pagination
+        int start = page * size;
+        int end = Math.min(start + size, filteredClients.size());
+        List<ClientInfoSample> paginatedClients = (start < filteredClients.size()) 
+            ? filteredClients.subList(start, end) 
+            : Collections.emptyList();
+
+        // Create response format matching `ClientProfileResponse`
+        Map<String, Object> response = new HashMap<>();
+        response.put("totalCount", filteredClients.size());
+        response.put("totalPages", (int) Math.ceil((double) filteredClients.size() / size));
+        response.put("page", page);
+        response.put("size", size);
+        response.put("hasNextPage", end < filteredClients.size());
+        response.put("hasPreviousPage", page > 0);
+        response.put("clientProfiles", paginatedClients);
+
+        return ResponseEntity.ok(response);
+    }
+}
+
+
+---
+
+📌 Expected API Response Format
+
+✅ Request
+
+GET /job/clientDataGraphQLMock?kycRefreshStatus=Out Of Order,Refresh Coming Due&country=Aruba&page=1&size=20
+
+✅ Response
+
+{
+  "totalCount": 95,
+  "totalPages": 5,
+  "page": 1,
+  "size": 20,
+  "hasNextPage": true,
+  "hasPreviousPage": true,
+  "clientProfiles": [
+    {
+      "clientId": "C001",
+      "clientName1": "John",
+      "clientName2": "Doe",
+      "status": "Out Of Order",
+      "country": "Aruba",
+      "transit": "AW1234",
+      "clientEmail": "john.doe@example.com"
+    }
+  ]
+}
+
+
+---
+
+✅ Why This is Now Correct
+
+✔ Matches ClientProfileResponse from GraphQL API
+✔ Returns clientProfiles instead of clients
+✔ Includes pagination fields (totalPages, page, size, hasNextPage, hasPreviousPage)
+✔ Maintains the structure expected by your repository
+
+Would you like to add sorting or additional field mapping adjustments? 🚀
+
+
+Got it! You want to:
+
+1. Keep the existing repository functions for the real GraphQL API.
+
+
+2. Add new functions for the mock GraphQL API.
+
+
+3. Ensure that if multiple pages of data exist, the mock service retrieves them all (like how GraphQL’s pagination works).
+
+
+
+
+---
+
+📌 Updated GraphQL Client Repository (ClientGraphQLRepository)
+
+This version keeps the real GraphQL functions but adds separate functions for the mock API.
+
+@Repository
+public class ClientGraphQLRepository {
+
+    private final WebClient webClient;
+
+    @Autowired
+    public ClientGraphQLRepository(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.baseUrl("http://localhost:8080/job").build(); // Mock API URL
+    }
+
+    /**
+     * Calls the real GraphQL API.
+     */
+    public ClientProfileResponse fetchClientsFromGraphQL(List<String> kycRefreshStatus, List<String> country, int page, int size) {
+        String query = """
+            {
+                clientProfiles(page: %d, size: %d, kycRefreshStatus: %s, country: %s) {
+                    totalCount
+                    totalPages
+                    page
+                    size
+                    hasNextPage
+                    hasPreviousPage
+                    clientProfiles {
+                        clientId
+                        clientName1
+                        clientName2
+                        status
+                        country
+                        transit
+                        clientEmail
+                    }
+                }
+            }
+        """.formatted(page, size, kycRefreshStatus, country);
+
+        return webClient.post()
+                .bodyValue(Map.of("query", query))
+                .retrieve()
+                .bodyToMono(ClientProfileResponse.class)
+                .block();
+    }
+
+    /**
+     * Calls the mock GraphQL-like API.
+     */
+    public ClientProfileResponse fetchClientsFromMockAPI(List<String> kycRefreshStatus, List<String> country, int page, int size) {
+
+        // Build the query parameters
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromPath("/clientDataGraphQLMock")
+                .queryParamIfPresent("kycRefreshStatus", Optional.ofNullable(kycRefreshStatus))
+                .queryParamIfPresent("country", Optional.ofNullable(country))
+                .queryParam("page", page)
+                .queryParam("size", size);
+
+        // Call the mock API and return response
+        return webClient.get()
+                .uri(uriBuilder.toUriString())
+                .retrieve()
+                .bodyToMono(ClientProfileResponse.class)
+                .block();
+    }
+
+    /**
+     * Fetches all pages of client data from the mock API.
+     */
+    public List<ClientProfile> fetchAllClientsFromMockAPI(List<String> kycRefreshStatus, List<String> country, int size) {
+        List<ClientProfile> allClients = new ArrayList<>();
+        int page = 0;
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            ClientProfileResponse response = fetchClientsFromMockAPI(kycRefreshStatus, country, page, size);
+            if (response != null && response.getClientProfiles() != null) {
+                allClients.addAll(response.getClientProfiles());
+                hasNextPage = response.isHasNextPage();
+                page++;
+            } else {
+                hasNextPage = false;
+            }
+        }
+        return allClients;
+    }
+}
+
+
+---
+
+📌 Changes & Additions
+
+✔ Keeps fetchClientsFromGraphQL() for the real API.
+✔ Adds fetchClientsFromMockAPI() to call the mock GraphQL-like API.
+✔ Adds fetchAllClientsFromMockAPI() to fetch all pages of data from the mock API until no more pages exist.
+
+
+---
+
+📌 Updated JobController (Supports Multiple Pages)
+
+We also need to modify our mock API controller to handle paginated requests correctly.
+
+@RestController
+@RequestMapping("/job")
+public class JobController extends UServiceController {
+
+    private final ClientDataService clientDataService;
+
+    @Autowired
+    public JobController(ClientDataService clientDataService) {
+        this.clientDataService = clientDataService;
+    }
+
+    @PostMapping(path = "/clientDataSimulator", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<ClientInfoSample>> getClientData() {
+        List<ClientInfoSample> clientData = clientDataService.fetchClientDataSample();
+        return ResponseEntity.ok(clientData);
+    }
+
+    @GetMapping("/clientDataGraphQLMock")
+    public ResponseEntity<ClientProfileResponse> getClientDataGraphQLMock(
+            @RequestParam(required = false) List<String> kycRefreshStatus,
+            @RequestParam(required = false) List<String> country,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+
+        List<ClientInfoSample> allClientData = clientDataService.fetchClientDataSample();
+
+        List<ClientInfoSample> filteredClients = allClientData.stream()
+                .filter(client -> (kycRefreshStatus == null || kycRefreshStatus.contains(client.getStatus())))
+                .filter(client -> (country == null || country.contains(client.getCountry())))
+                .collect(Collectors.toList());
+
+        int start = page * size;
+        int end = Math.min(start + size, filteredClients.size());
+        List<ClientInfoSample> paginatedClients = (start < filteredClients.size()) 
+            ? filteredClients.subList(start, end) 
+            : Collections.emptyList();
+
+        boolean hasNextPage = end < filteredClients.size();
+        boolean hasPreviousPage = page > 0;
+
+        ClientProfileResponse response = new ClientProfileResponse(
+                filteredClients.size(),
+                (int) Math.ceil((double) filteredClients.size() / size),
+                page,
+                size,
+                hasNextPage,
+                hasPreviousPage,
+                paginatedClients
+        );
+
+        return ResponseEntity.ok(response);
+    }
+}
+
+
+---
+
+📌 Expected Behavior
+
+1️⃣ Calling fetchClientsFromMockAPI() fetches a single page.
+2️⃣ Calling fetchAllClientsFromMockAPI() fetches all pages until hasNextPage = false.
+3️⃣ The mock API (/clientDataGraphQLMock) correctly paginates and provides hasNextPage and hasPreviousPage.
+
+
+---
+
+📌 Example Usage
+
+✅ Fetching One Page from Mock API
+
+ClientProfileResponse response = clientGraphQLRepository.fetchClientsFromMockAPI(
+        List.of("Out Of Order", "Refresh Coming Due"),
+        List.of("Aruba"),
+        0, 50);
+
+Returns:
+
+{
+  "totalCount": 150,
+  "totalPages": 3,
+  "page": 0,
+  "size": 50,
+  "hasNextPage": true,
+  "hasPreviousPage": false,
+  "clientProfiles": [ ... ]
+}
+
+✅ Fetching All Clients from Mock API
+
+List<ClientProfile> allClients = clientGraphQLRepository.fetchAllClientsFromMockAPI(
+        List.of("Out Of Order", "Refresh Coming Due"),
+        List.of("Aruba"),
+        50);
+
+Iterates through all pages and returns all client profiles.
+
+
+---
+
+✅ Why This is Now Correct
+
+✔ Maintains existing GraphQL API functions
+✔ Adds new mock API functions without breaking anything
+✔ Handles multiple pages properly
+✔ Supports easy swapping between mock and real API
+
+Would you like me to add error handling (e.g., if the mock API fails or if the pagination gets stuck)? 🚀
+
+
