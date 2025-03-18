@@ -1,0 +1,43 @@
+# Use RBC Gold OpenJDK 17 Base Image
+FROM zephyr.artifactory.fg.rbc.com/base/openjdk:17
+
+# Set working directory
+WORKDIR /app
+
+# Copy application JAR/WAR file (created by the build step)
+COPY target/*.jar /app/app.jar
+
+# Copy entrypoint script that starts the application in a container
+COPY docker-entrypoint.sh /app/
+
+# Set user to root for package installation
+USER root
+
+# Print OS release details (debugging)
+RUN cat /etc/os-release
+
+# Update and clean packages (ensures latest security updates)
+RUN yum clean all && yum -y update && yum -y autoremove
+
+# Force remove libxml2 without dependencies (if needed)
+RUN rpm -e --nodeps libxml2 || echo "libxml2 not installed"
+
+# Debugging: Check if spring-boot-admin exists inside the image
+RUN find / -name "*spring-boot-admin*" || echo "Spring Boot Admin NOT found"
+
+# Debugging: Check installed packages for unexpected dependencies
+RUN yum list installed > /installed-packages.txt
+RUN cat /installed-packages.txt | grep "spring" || echo "No Spring-related packages installed"
+
+# Ensure proper execution permissions for entrypoint script
+RUN chmod +x /app/docker-entrypoint.sh
+RUN chown -R 1001:0 /app/docker-entrypoint.sh
+
+# Switch to non-root user for security
+USER 1001
+
+# Expose application port
+EXPOSE 8080
+
+# Set entrypoint script
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
