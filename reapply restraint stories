@@ -1,0 +1,308 @@
+Finalized User Stories with Full Breakdown
+
+
+---
+
+Story 1: Modify RestrainsSchedulerService.restrainClientsAtEod to Include Additional Clients
+
+Description:
+
+Modify the existing restrainClientsAtEod function in RestrainsSchedulerService to:
+
+1. Call a new function in RstDetailV1Repository that retrieves additional clients meeting the new re-restraint criteria.
+
+
+2. Join these additional clients with the existing results from the current restrain query.
+
+
+3. Ensure the combined result set is processed for restraint reapplication.
+
+
+
+Acceptance Criteria:
+
+Given the restrainClientsAtEod function in RestrainsSchedulerService
+
+When it executes at EOD
+
+Then it calls a new RstDetailV1Repository function to retrieve additional clients
+
+And joins these results with the existing restrain query
+
+And all applicable clients are processed for re-restraint
+
+
+Technical Details:
+
+1. Modify restrainClientsAtEod to include new logic:
+
+Call RstDetailV1Repository.findAdditionalClientsForRestraint()
+
+Merge the additional clients with the existing list.
+
+Deduplicate results if a client appears in both queries.
+
+
+
+2. Ensure Logging:
+
+Log when additional clients are retrieved and merged.
+
+Log how many new clients were added for restraint.
+
+
+
+3. Performance Considerations:
+
+If the dataset is large, consider batch processing for efficiency.
+
+
+
+
+
+---
+
+Story 2: Modify RstDetailV1Repository to Add a New Query Function
+
+Description:
+
+Modify RstDetailV1Repository to include a new function that retrieves additional clients meeting the re-restraint criteria. This function will be used in RestrainsSchedulerService.restrainClientsAtEod to supplement the existing restraint batch.
+
+Criteria for New Query Function:
+
+Retrieve clients from rst_detail_v1 where:
+
+1. Refresh Status = "Restrain Lifted"
+
+
+2. Next KYC Date < Current Date (from cz_ntft_v1 via JOIN)
+
+
+3. Current Date = Lift Restraint Action Date + X days
+
+
+
+Acceptance Criteria:
+
+Given RstDetailV1Repository
+
+When the new query function is called
+
+Then it retrieves all clients where:
+
+Refresh Status = "Restrain Lifted"
+
+Next KYC Date < Current Date (via JOIN with cz_ntft_v1)
+
+Current Date = Lift Restraint Action Date + X
+
+
+And returns the result set efficiently
+
+
+Technical Details:
+
+1. New Function in RstDetailV1Repository:
+
+@Query("SELECT r FROM RstDetailV1 r JOIN cz_ntft_v1 c ON r.clientId = c.clientId " +
+       "WHERE r.refreshStatus = 'Restrain Lifted' " +
+       "AND c.nextKycDate < CURRENT_DATE " +
+       "AND CURRENT_DATE = r.liftRestraintActionDate + :X")
+List<ClientRestraintDTO> findAdditionalClientsForRestraint(@Param("X") int days);
+
+
+2. Optimization Considerations:
+
+Ensure indexes exist on clientId in both tables.
+
+Test query performance for large datasets.
+
+
+
+
+
+---
+
+Story 3: Store Configurable Restraint Period in Vault (RESTRAIN_SETTINGS Secret)
+
+Description:
+
+Store the configurable restraint reapplication period (X days) in Vault under the RESTRAIN_SETTINGS secret. The value will be retrieved on application startup and loaded into application properties for dynamic configuration.
+
+Key Name in Vault:
+
+RESTRAIN_LIFT_REAPPLY_DAYS
+
+
+Acceptance Criteria:
+
+Given the application starts
+
+When it retrieves secrets from Vault (RESTRAIN_SETTINGS)
+
+Then it loads the RESTRAIN_LIFT_REAPPLY_DAYS value into application properties
+
+And the batch job correctly applies this dynamic value
+
+
+Technical Details:
+
+1. Vault Storage:
+
+Store RESTRAIN_LIFT_REAPPLY_DAYS under the RESTRAIN_SETTINGS secret in Vault.
+
+
+
+2. Application Startup Behavior:
+
+Fetch RESTRAIN_LIFT_REAPPLY_DAYS from Vault on startup.
+
+Load into Spring Boot application properties:
+
+restrain:
+  lift-reapply-days: ${vault.restrain_lift_reapply_days}
+
+Use @Value("${restrain.lift-reapply-days}") in batch processing.
+
+
+
+3. Failure Handling:
+
+If Vault retrieval fails, log an error and use a default value (e.g., 30).
+
+
+
+
+
+---
+
+Story 4: Log Restraint Reapplication Events for Auditing
+
+Description:
+
+Ensure that all restraint reapplications are logged with relevant details, including CIF ID, previous status, new status, timestamp, and reason.
+
+Acceptance Criteria:
+
+Given a client’s status is updated to "Restrained"
+
+When the update is applied
+
+Then a log entry is recorded for tracking
+
+
+Technical Details:
+
+1. Log Fields:
+
+Client ID
+
+Previous Status → "Restrain Lifted"
+
+New Status → "Restrained"
+
+Timestamp
+
+Reason → "Not refreshed within X days"
+
+
+
+2. Integration with Logging System:
+
+Ensure logs are structured for Kibana if applicable.
+
+Example Log Entry:
+
+{
+  "clientId": "12345",
+  "previousStatus": "Restrain Lifted",
+  "newStatus": "Restrained",
+  "timestamp": "2025-03-19T23:45:00Z",
+  "reason": "Not refreshed within 30 days"
+}
+
+
+
+
+
+---
+
+Story 5: Store Count of Restraints Lifted in KYC Portal (Optional)
+
+Description:
+
+Maintain a count of the Restraint Lifted actions within the KYC portal without impacting extracts or API calls.
+
+Acceptance Criteria:
+
+Given a restraint is lifted
+
+When the system updates the status
+
+Then a counter is incremented and stored in the KYC portal
+
+
+Technical Details:
+
+1. Add a Counter Field in KYC Portal:
+
+Store total "Restrain Lifted" occurrences per refresh cycle.
+
+Does not trigger API calls or external extracts.
+
+
+
+2. Ensure Data Persistence:
+
+If data resets on each refresh cycle, persist counts for auditing.
+
+
+
+
+
+---
+
+Story 6: Add Error Handling for Missing Data in cz_ntft_v1
+
+Description:
+
+Handle cases where the Next KYC Refresh Date is missing in cz_ntft_v1, ensuring that the batch job does not fail.
+
+Acceptance Criteria:
+
+Given a CIF in rst_detail_v1
+
+When the batch job executes
+
+Then if Next KYC Refresh Date is missing in cz_ntft_v1, log the issue and continue processing other records
+
+
+Technical Details:
+
+1. Handle Missing Next KYC Refresh Date:
+
+If NULL, log a warning:
+
+{
+  "clientId": "12345",
+  "warning": "Next KYC Refresh Date missing",
+  "timestamp": "2025-03-19T23:45:00Z"
+}
+
+Skip processing that client instead of failing the job.
+
+
+
+
+
+---
+
+Final Check:
+
+Does this breakdown fully align with your plan?
+
+Any refinements needed in queries, logging, or error handling?
+
+
+Let me know if anything needs tweaking!
+
