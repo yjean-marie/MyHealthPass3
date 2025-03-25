@@ -1,0 +1,219 @@
+Perfect — here’s the complete set of all 5 stories, now with:
+
+Title
+
+Description
+
+Acceptance Criteria (Gherkin-style)
+
+Implementation Details
+
+Story Points (based on effort in ideal days)
+
+You can directly paste this into Jira fields.
+
+Story 2.1: Create database tables for document profile configuration
+Description: As a developer, I want to create normalized database tables to store countries, document categories, document types, and their associations, so the system can retrieve KYC document requirements dynamically.
+Acceptance Criteria:
+
+Scenario: Create dp_countries table
+When the migration script is executed
+Then a table named dp_countries should be created
+And it must contain columns: country_id (PK), country_name (NOT NULL)
+
+Scenario: Create dp_document_categories table
+When the migration script is executed
+Then a table named dp_document_categories should be created
+And it must contain columns: category_id (PK), category_name (NOT NULL)
+
+Scenario: Create dp_document_types table
+When the migration script is executed
+Then a table named dp_document_types should be created
+And it must contain columns: document_id (PK), document_name (NOT NULL)
+
+Scenario: Create dp_document_country_categories_types mapping table
+When the migration script is executed
+Then a table named dp_document_country_categories_types should be created
+And it must contain columns: id (PK), country_id (FK), category_id (FK), document_id (FK)
+Implementation Details:
+
+Use Flyway, Liquibase, or another migration tool
+
+Add proper foreign key constraints
+
+Include indexing on foreign keys for performance
+
+Follow naming conventions and constraints per internal DB standards
+Story Points: 2
+
+Story 2.2: Seed sample data for document profile configuration
+Description: As a developer, I want to populate the document profile tables with sample countries, categories, document types, and mappings, so that the API can return actual data in test and development environments.
+Acceptance Criteria:
+
+Scenario: Populate dp_countries
+Given the dp_countries table exists
+When the seed script runs
+Then at least 3 countries should be inserted (e.g. TT, BB, JM)
+
+Scenario: Populate dp_document_categories
+Given the table exists
+Then categories like "identity", "address", "income" must be inserted
+
+Scenario: Populate dp_document_types
+Given the table exists
+Then documents like "ID Card", "Passport", "Utility Bill" must be inserted
+
+Scenario: Populate dp_document_country_categories_types
+Given all 3 reference tables exist
+Then valid mappings should be created
+And each mapping must link a country, category, and document
+Implementation Details:
+
+Create SQL seed scripts or Java-based bootstrapping (e.g. data.sql)
+
+Validate referential integrity across inserts
+
+Insert mappings to reflect realistic KYC document profiles
+Story Points: 1
+
+Story 2.3: Implement repository and service to retrieve document categories and document types by country
+Description: As a developer, I want to implement a JPA repository and service that retrieves document categories and their associated document types based on country, so KYC users can be presented with document upload options before selecting a category or type.
+Acceptance Criteria:
+
+Scenario: Valid country with mappings
+Given a valid country code "TT"
+When the service method is called
+Then it must return a list of categories
+And each category should include its associated document types
+
+Scenario: Country exists but has no mappings
+Given the country exists
+And has no mappings
+When the service is called
+Then an empty list should be returned
+
+Scenario: Invalid country
+Given a country not found in dp_countries
+When the service is called
+Then an empty list or "no data found" exception should be returned
+
+Scenario: Internal exception
+Given a DB error occurs
+When the service is called
+Then a runtime exception should be raised for the controller to handle
+Implementation Details:
+
+Repository: Create DocumentProfileRepository
+
+Join dp_countries, dp_document_categories, dp_document_types, dp_document_country_categories_types
+
+Filter by country name or code
+
+Service: DocumentProfileService
+
+Method: getProfileByCountry(String countryCode)
+
+Group document types under categories
+
+Return List of DocumentCategoryResponse with nested DocumentTypeResponse
+Story Points: 3
+
+Story 2.4: Expose API endpoint to return document categories and types by country
+Description: As a developer, I want to expose an API under the Client Orchestration API that returns the document categories and their associated document types for a given country, so that KYC users can select the correct documents.
+Acceptance Criteria:
+
+Scenario: Valid country with data
+Given the clientId and country were validated earlier
+When a GET request is made to /document-profiles?country=TT
+Then the response should be 200 OK
+And include grouped categories with document types
+
+Scenario: Valid country with no data
+Given the country is valid but has no mappings
+When the request is made
+Then the response should be 404
+And the body should include "No Data Found"
+
+Scenario: Missing country parameter
+When the request does not include the country param
+Then return 400 with message "Country is required"
+
+Scenario: Internal error
+Given an unexpected exception
+Then return HTTP 500 with message "Internal Server Error"
+Implementation Details:
+
+Controller: DocumentProfileController
+
+Endpoint: GET /document-profiles?country=XX
+
+Parameter validation for required country
+
+Delegates to DocumentProfileService#getProfileByCountry()
+
+Uses DTOs defined in the service layer
+
+Returns a structured JSON response with nested document types
+Story Points: 2
+
+Story 2.5: Implement structured logging and observability for the Document Profile resource
+Description: As a developer, I want to implement structured JSON logging for the Document Profile resource under the Client Orchestration API, so that logs are searchable, traceable, and compatible with Elastic/Kibana dashboards.
+Acceptance Criteria:
+
+Scenario: Successful request logging
+Given a request to /document-profiles returns 200
+Then the log should include:
+log_type = "response",
+component = "ClientOrchestration",
+resource = "DocumentProfile",
+operation = "getProfileByCountry",
+status = 200,
+trt_ms,
+timestamp,
+traceId
+
+Scenario: Outgoing API call
+Given the service makes a call to ClientValidationAPI
+Then the log should include:
+log_type = "external",
+external_service = "ClientValidationAPI",
+status = response status,
+response_time_ms,
+operation = "callClientValidationAPI"
+
+Scenario: Error response logging
+Given the API returns 500
+Then the log should include:
+log_type = "error",
+status = 500,
+error_message,
+exception_type,
+traceId,
+trt_ms
+Implementation Details:
+
+Use SLF4J with JSON encoder or centralized logging library
+
+Ensure logs are structured and compatible with Elastic/Kibana
+
+Include consistent fields: component, resource, operation, status, trt_ms, timestamp, traceId, log_type
+
+Log all outbound calls with external_service, status, and latency
+Story Points: 2
+
+Let me know if you want the corresponding subtasks or epics to wrap this all up.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ChatGPT can make mistakes. C
