@@ -1,0 +1,146 @@
+Perfect — let’s shift focus to the CIF and Country Validation feature.
+
+Here’s a clean, Jira-ready set of technical user stories for this feature, structured exactly like we did for Document Profile:
+
+Each story includes:
+
+Title
+
+Description
+
+Acceptance Criteria (Given–When–Then)
+
+Implementation Details
+
+Story Points (ideal days)
+
+✅ Story 1.1: Validate presence of clientId and country in request
+Description:
+As a developer, I want to validate that both clientId (CIF) and country are provided in the request before proceeding to any client lookup or document profile logic, so the system avoids unnecessary downstream calls and provides clear feedback to the caller.
+
+Acceptance Criteria:
+
+Scenario: Missing clientId
+Given a request is received
+And the clientId field is missing
+When validation occurs
+Then return HTTP 400 with message "clientId is required"
+
+Scenario: Missing country
+Given a request is received
+And the country field is missing
+When validation occurs
+Then return HTTP 400 with message "country is required"
+
+Scenario: Both fields present
+Given a request includes both clientId and country
+When validation occurs
+Then allow the request to proceed to the next step
+
+Implementation Details:
+
+Validation handled in controller or request interceptor
+
+Use annotations or manual logic in the controller layer
+
+Ensure null/blank check for both fields
+
+Optional: create reusable validation utility for other endpoints
+Story Points: 1
+
+✅ Story 1.2: Call client API to validate client existence by clientId and country
+Description:
+As a developer, I want to call the client API using the provided clientId and country to confirm that the client exists, so that only valid clients can proceed to document profile generation.
+
+Acceptance Criteria:
+
+Scenario: Valid client exists
+Given a valid clientId and country
+And the client API returns 200 OK
+When the call is made
+Then the service should proceed to fetch the document profile
+
+Scenario: Client not found
+Given a valid clientId and country
+And the client API returns 404
+When the call is made
+Then return HTTP 404 with message "Client not found for given clientId and country"
+
+Scenario: Client API returns 401 or 403
+Given invalid credentials or permissions
+When the client API returns 401 or 403
+Then return HTTP 401 with message "Unauthorized to call client API"
+
+Scenario: Client API is unavailable
+Given a valid request
+And the client API times out or returns 5xx
+When the call is made
+Then return HTTP 502 with message "Client validation service unavailable"
+
+Implementation Details:
+
+Create ClientValidationService with method validateClient(String clientId, String country)
+
+Use WebClient or RestTemplate to call the external API (based on stack)
+
+Map and bubble up relevant error codes (401, 403, 404, 500)
+
+Add retry and timeout config if necessary
+
+Add tracing headers (e.g., traceId) for observability
+Story Points: 2
+
+✅ Story 1.3: Implement logging and observability for client validation
+Description:
+As a developer, I want to log all outcomes of clientId and country validation calls (success and failure), so that the team can monitor performance and troubleshoot failures via Elastic or Kibana.
+
+Acceptance Criteria:
+
+Scenario: Log successful validation
+Given a request is successfully validated via the client API
+Then log:
+
+component = "ClientOrchestration"
+
+resource = "ClientValidation"
+
+operation = "validateClient"
+
+status = 200
+
+clientId (masked if needed)
+
+country
+
+trt_ms
+
+traceId
+
+Scenario: Log client not found
+Given the client API returns 404
+Then log the above fields with status = 404 and outcome = "client_not_found"
+
+Scenario: Log external API failure
+Given the client API returns 500 or times out
+Then log:
+
+status = 502
+
+log_type = "external_error"
+
+external_service = "ClientAPI"
+
+response_time_ms
+
+traceId
+
+Implementation Details:
+
+Use structured JSON logging
+
+Fields: component, resource, operation, status, clientId, country, trt_ms, traceId, log_type
+
+Ensure logs are Elastic/Kibana-friendly (flat key-value structure)
+
+Use logging utility or interceptor for consistency
+Story Points: 2
