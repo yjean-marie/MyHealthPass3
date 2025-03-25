@@ -1,0 +1,38 @@
+Sure thing! Here's the full email with detailed points:
+
+
+---
+
+Subject: Meeting Summary - KYC Verification Solutions
+
+Hi [Team/Name],
+
+Please find a summary of today's discussion on possible solutions for our KYC verification challenge:
+
+1. First and Last Name Verification: This approach uses the client's first and last names along with their client number and jurisdiction. Challenges include potential mismatches due to unsynchronized data between Digital and T24.
+
+2. Account Number Selection: Clients select their primary account number from those linked to their Digital profile. Challenges include:
+
+Primary Account Identification: Clients may have multiple accounts, including personal, joint, or company accounts, making it challenging to determine the primary one.
+
+Company Account Complication: If a company account is the only one mapped, it could lead to a mismatch if the client needs to refresh a personal account.
+
+Third-Party Account Management: If the account belongs to someone else, the account number may not match the client's profile.
+
+Joint Account Ambiguity: Joint accounts can map to multiple client IDs, complicating verification.
+
+
+3. Service Delivery Validation: The Service Delivery team will manually review uploaded documents, cross-referencing account numbers and names from Digital and the documents. This ensures thorough validation but may require additional steps for mismatches.
+
+4. OTP Verification: By leveraging Digital's OTP service, we can send a one-time password to the client's registered email. This adds an extra layer of security, ensuring only the legitimate client can proceed. The main challenge is ensuring the client has access to their registered email.
+
+Please review and let me know if any changes are needed.
+
+Best regards,
+[Sherrell]
+
+
+---
+
+Feel free to make any final adjustments!
+
