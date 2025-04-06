@@ -1,18 +1,9 @@
 // ================================
-// CONFIG SERVER
+// CONFIG SERVER (GIT-BASED)
 // ================================
 
 // pom.xml
 <dependencies>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-data-jpa</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>com.h2database</groupId>
-        <artifactId>h2</artifactId>
-        <scope>runtime</scope>
-    </dependency>
     <dependency>
         <groupId>org.springframework.cloud</groupId>
         <artifactId>spring-cloud-config-server</artifactId>
@@ -26,15 +17,13 @@ server:
 spring:
   application:
     name: config-server
-  datasource:
-    url: jdbc:h2:mem:configdb
-    driverClassName: org.h2.Driver
-    username: sa
-    password:
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/your-org/config-repo
+          clone-on-start: true
+          search-paths: error-configs
 
 // Main Application Class
 @SpringBootApplication
@@ -45,70 +34,40 @@ public class ConfigServerApplication {
     }
 }
 
-// ErrorConfig Entity
-@Entity
-public class ErrorConfig {
-    @Id
-    private String id;
-
-    private String application;
-    private String profile;
-    private String label;
-    private String errorCode;
-    private int httpStatus;
-    private String message;
-
-    // Getters and setters
-}
-
-// ErrorConfigRepository
-public interface ErrorConfigRepository extends JpaRepository<ErrorConfig, String> {
-    List<ErrorConfig> findByApplicationAndProfileAndLabel(String application, String profile, String label);
-}
-
-// DatabaseEnvironmentRepository
-@Component
-public class DatabaseEnvironmentRepository implements EnvironmentRepository {
-
-    @Autowired
-    private ErrorConfigRepository repo;
-
-    @Override
-    public Environment findOne(String application, String profile, String label) {
-        List<ErrorConfig> list = repo.findByApplicationAndProfileAndLabel(application, profile, label);
-
-        Map<String, Object> props = new HashMap<>();
-        for (ErrorConfig cfg : list) {
-            props.put("error.messages." + cfg.getErrorCode() + ".code", cfg.getErrorCode());
-            props.put("error.messages." + cfg.getErrorCode() + ".httpStatus", cfg.getHttpStatus());
-            props.put("error.messages." + cfg.getErrorCode() + ".message", cfg.getMessage());
-        }
-
-        Environment env = new Environment(application, new String[]{profile}, label, null, null);
-        env.add(new PropertySource("database", props));
-        return env;
-    }
-}
-
 /*
 USAGE:
-This Config Server will serve error configurations to microservices. 
-Each microservice (client) fetches its config based on:
+Store error configurations in Git as YAML files under a folder like `error-configs/`
+
+Example file: `error-configs/error-service-dev.yml`
+
+Contents:
+error:
+  messages:
+    USER_NOT_FOUND:
+      code: 1001
+      httpStatus: 404
+      message: "User not found"
+    INTERNAL_ERROR:
+      code: 1002
+      httpStatus: 500
+      message: "Unexpected server error"
+
+Microservices will fetch configs by:
 - spring.application.name (e.g., error-service)
 - profile (e.g., dev)
 - label (e.g., main)
 
-When the client starts, it will request:
+Request:
 GET http://localhost:8888/error-service/dev/main
 
-The Config Server will respond with configuration in the format:
+Response (example):
 {
   "name": "error-service",
   "profiles": ["dev"],
   "label": "main",
   "propertySources": [
     {
-      "name": "database",
+      "name": "https://github.com/your-org/config-repo/error-service-dev.yml",
       "source": {
         "error.messages.USER_NOT_FOUND.code": "1001",
         "error.messages.USER_NOT_FOUND.httpStatus": 404,
