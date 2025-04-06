@@ -1,0 +1,201 @@
+// ================================
+// CONFIG SERVER
+// ================================
+
+// pom.xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-config-server</artifactId>
+    </dependency>
+</dependencies>
+
+// application.yml
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  datasource:
+    url: jdbc:h2:mem:configdb
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+// Main Application Class
+@SpringBootApplication
+@EnableConfigServer
+public class ConfigServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ConfigServerApplication.class, args);
+    }
+}
+
+// ErrorConfig Entity
+@Entity
+public class ErrorConfig {
+    @Id
+    private String id;
+
+    private String application;
+    private String profile;
+    private String label;
+    private String errorCode;
+    private int httpStatus;
+    private String message;
+
+    // Getters and setters
+}
+
+// ErrorConfigRepository
+public interface ErrorConfigRepository extends JpaRepository<ErrorConfig, String> {
+    List<ErrorConfig> findByApplicationAndProfileAndLabel(String application, String profile, String label);
+}
+
+// DatabaseEnvironmentRepository
+@Component
+public class DatabaseEnvironmentRepository implements EnvironmentRepository {
+
+    @Autowired
+    private ErrorConfigRepository repo;
+
+    @Override
+    public Environment findOne(String application, String profile, String label) {
+        List<ErrorConfig> list = repo.findByApplicationAndProfileAndLabel(application, profile, label);
+
+        Map<String, Object> props = new HashMap<>();
+        for (ErrorConfig cfg : list) {
+            props.put("error.messages." + cfg.getErrorCode() + ".code", cfg.getErrorCode());
+            props.put("error.messages." + cfg.getErrorCode() + ".httpStatus", cfg.getHttpStatus());
+            props.put("error.messages." + cfg.getErrorCode() + ".message", cfg.getMessage());
+        }
+
+        Environment env = new Environment(application, new String[]{profile}, label, null, null);
+        env.add(new PropertySource("database", props));
+        return env;
+    }
+}
+
+/*
+USAGE:
+This Config Server will serve error configurations to microservices. 
+Each microservice (client) fetches its config based on:
+- spring.application.name (e.g., error-service)
+- profile (e.g., dev)
+- label (e.g., main)
+
+When the client starts, it will request:
+GET http://localhost:8888/error-service/dev/main
+
+The Config Server will respond with configuration in the format:
+{
+  "name": "error-service",
+  "profiles": ["dev"],
+  "label": "main",
+  "propertySources": [
+    {
+      "name": "database",
+      "source": {
+        "error.messages.USER_NOT_FOUND.code": "1001",
+        "error.messages.USER_NOT_FOUND.httpStatus": 404,
+        "error.messages.USER_NOT_FOUND.message": "User not found"
+      }
+    }
+  ]
+}
+*/
+
+// ================================
+// CLIENT SERVICE (MICROSERVICE)
+// ================================
+
+// pom.xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-config</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+</dependencies>
+
+// bootstrap.yml
+spring:
+  application:
+    name: error-service
+  cloud:
+    config:
+      uri: http://localhost:8888
+      profile: dev
+      label: main
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh
+
+// ErrorProperties.java
+@Component
+@ConfigurationProperties(prefix = "error.messages")
+public class ErrorProperties {
+    private Map<String, ErrorDetail> messages = new HashMap<>();
+
+    public Map<String, ErrorDetail> getMessages() {
+        return messages;
+    }
+
+    public void setMessages(Map<String, ErrorDetail> messages) {
+        this.messages = messages;
+    }
+
+    public ErrorDetail getError(String key) {
+        return messages.get(key);
+    }
+
+    public static class ErrorDetail {
+        private String code;
+        private int httpStatus;
+        private String message;
+
+        // Getters and setters
+    }
+}
+
+// ErrorController.java
+@RestController
+@RequestMapping("/errors")
+public class ErrorController {
+
+    @Autowired
+    private ErrorProperties errorProperties;
+
+    @GetMapping("/{key}")
+    public ResponseEntity<Object> getError(@PathVariable String key) {
+        ErrorProperties.ErrorDetail detail = errorProperties.getError(key);
+        if (detail == null) {
+            return ResponseEntity.status(404).body("Error code not found");
+        }
+        return ResponseEntity.status(detail.getHttpStatus()).body(detail);
+    }
+}
