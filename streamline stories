@@ -1,0 +1,231 @@
+✅ Story 1: API to Trigger Streamline Extract Job
+Title: Create REST API to Trigger Streamline Extract Job and Return Tracking Info
+
+As a backend developer,
+I want an API that triggers the Streamline Extract process and returns its tracking metadata,
+So that I (or Stonebranch) can initiate and monitor the job without relying on manual tracking or guesswork.
+
+Acceptance Criteria:
+
+gherkin
+Copy
+Edit
+Feature: Trigger Streamline Extract Job via API
+
+  Scenario: Endpoint is reachable
+    When a POST request is made to /create-streamline-extract
+    Then the API should return status 200 or 500
+    And the response body should contain:
+      | jobId            |
+      | jobType          |
+      | jobStatus        |
+      | jobName          |
+      | created_datetime |
+      | updated_datetime |
+
+  Scenario: Successful trigger
+    Given the API returns 200
+    Then the response should contain jobStatus = COMPLETED
+    And a matching row should exist in the schedule_job table
+
+  Scenario: Job failure
+    Given the job fails internally
+    Then the response should be 500
+    And jobStatus = FAILED should be recorded in the response and DB
+Implementation Notes:
+
+Method: POST
+
+URL: /create-streamline-extract
+
+Response: JSON body with the full schedule_job row (success or failure)
+
+Return ResponseEntity<ScheduleJob>
+
+Testing Notes:
+
+Verify HTTP status and full response body
+
+Match response to DB values (jobId, jobStatus, timestamps)
+
+✅ Story 2: Track Job Start in schedule_job Table
+Title: Insert Job Tracking Row in schedule_job Table When Streamline Job Starts
+
+As a system developer,
+I want the system to insert a row in the schedule_job table when the job starts,
+So that we can track when it ran and begin auditing immediately.
+
+Acceptance Criteria:
+
+gherkin
+Copy
+Edit
+Feature: Job tracking on start
+
+  Scenario: Record created when job begins
+    When the job starts
+    Then a new row should be inserted in schedule_job with:
+      | jobType          | STREAMLINE_EXTRACT                    |
+      | jobStatus        | STARTED                               |
+      | jobName          | Send Client Notification - Streamline |
+      | created_datetime | now                                   |
+      | updated_datetime | now                                   |
+Implementation Notes:
+
+Save a ScheduleJob object at the start of createStreamlineExtractData()
+
+Return this same object at the end of job (whether success or failure)
+
+Testing Notes:
+
+Verify DB entry exists immediately after job starts
+
+Check timestamp alignment with call time
+
+✅ Story 3: Update Job Completion in schedule_job Table
+Title: Update schedule_job Row with Final Status and Comments
+
+As a developer,
+I want to update the job tracking row after the Streamline Extract completes or fails,
+So that the final outcome and summary are recorded in one place.
+
+Acceptance Criteria:
+
+gherkin
+Copy
+Edit
+Feature: Update job tracking after job ends
+
+  Scenario: Job completed successfully
+    Then the job row should be updated with:
+      | jobStatus        | COMPLETED                             |
+      | comment          | Successfully generated files for X jurisdictions |
+      | updated_datetime | > created_datetime                    |
+
+  Scenario: Job failed
+    Then the job row should be updated with:
+      | jobStatus        | FAILED                                |
+      | comment          | Contains exception message            |
+      | updated_datetime | > created_datetime                    |
+
+  Scenario: Logs reflect job execution
+    When the job runs
+    Then logs should include:
+      | Entry Create Streamline Extract Data CSV API Trigger |
+      | Exit Create Streamline Extract Data CSV API Trigger  |
+Implementation Notes:
+
+Update jobStatus and comment fields at the end of the job
+
+Always update updated_datetime
+
+Log entry and exit with identifiable markers
+
+Testing Notes:
+
+Use DB and logs to verify status, comment, and timestamps
+
+Trigger both successful and failed runs
+
+✅ Story 4: Configure Stonebranch to Trigger Streamline Job
+Title: Integrate Stonebranch to Automatically Trigger Streamline Extract
+
+As a DevOps engineer,
+I want to configure a scheduled job in Stonebranch that calls the Streamline Extract API,
+So that the process runs automatically at defined intervals without manual action.
+
+Acceptance Criteria:
+
+gherkin
+Copy
+Edit
+Feature: Stonebranch triggers the API
+
+  Scenario: Job is configured in Stonebranch
+    Given a Universal Task exists
+    When the task runs
+    Then it should POST to /create-streamline-extract
+    And log the response in its execution log
+
+  Scenario: Successful job call
+    When the job completes
+    Then Stonebranch logs should contain:
+      | jobStatus = COMPLETED |
+      | jobType = STREAMLINE_EXTRACT |
+
+  Scenario: Failed job call
+    When the job fails
+    Then logs should contain jobStatus = FAILED
+    And HTTP 500 as the response code
+
+  Scenario: Scheduled execution
+    Given a daily or hourly schedule is set
+    Then the job should appear in the execution history after its next run time
+Implementation Notes:
+
+Task Type: HTTP or Universal Task
+
+Method: POST
+
+Headers: Content-Type: application/json, optionally Authorization: Bearer <token>
+
+Parse and log full API response
+
+Testing Notes:
+
+Validate Stonebranch logs and response capture
+
+Run on-demand and on-schedule
+
+✅ Story 5: Secure Streamline API with Bearer Token
+Title: Protect Streamline Extract API with Bearer Token Authorization
+
+As a developer,
+I want to secure the Streamline Extract API with a Bearer token,
+So that only trusted systems like Stonebranch can trigger the job.
+
+Acceptance Criteria:
+
+gherkin
+Copy
+Edit
+Feature: API secured with Bearer Token
+
+  Scenario: Missing token
+    When a request is made without the Authorization header
+    Then the API should return 401 Unauthorized
+    And no job should be triggered or recorded
+
+  Scenario: Invalid token
+    When the token does not match the configured value
+    Then the API should return 401 Unauthorized
+    And no job should be triggered or recorded
+
+  Scenario: Valid token
+    When a valid Bearer token is provided
+    Then the API should return 200
+    And the job should run as normal
+Implementation Notes:
+
+Inject token via config:
+
+java
+Copy
+Edit
+@Value("${streamline.token}")
+private String expectedToken;
+Validate Authorization header: must equal Bearer <token>
+
+Return 401 without body on unauthorized attempts
+
+Testing Notes:
+
+Use Postman or curl to test:
+
+With valid token
+
+With invalid token
+
+With no token
+
+Confirm no DB row is inserted when unauthorized
