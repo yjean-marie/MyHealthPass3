@@ -1,0 +1,130 @@
+Summary,Description,Story Points,Acceptance Criteria,Implementation Notes,Issue Type,Epic Link
+Trigger Streamline Extract Job via API,"As a backend developer, I want to expose an API endpoint that triggers the Streamline Extract job and returns tracking information, so that I (or Stonebranch) can initiate and monitor job execution.",2,"Feature: Trigger Streamline Extract Job via API
+
+Scenario: Endpoint is reachable
+  When a POST request is made to /create-streamline-extract
+  Then the API should return status 200 or 500
+  And the response should contain:
+    | id                |
+    | jobType           |
+    | status            |
+    | comment           |
+    | retryCount        |
+    | created_datetime  |
+    | updated_datetime  |
+    | scheduler_name    |
+    | scheduler_starttime |
+    | scheduler_endtime   |
+
+Scenario: Successful trigger
+  Then status = COMPLETED
+  And a row is inserted in schedule_job with correct timestamps
+
+Scenario: Job fails
+  Then status = FAILED
+  And the comment includes the error message","Endpoint: POST /create-streamline-extract
+Return type: ResponseEntity<ScheduleJob>
+Return full row after insert/update.
+Log outcome and status transitions.",Story,STREAMLINE-EPIC
+Insert Job Start Record in schedule_job Table,"As a system developer, I want to create a new schedule_job row when the job starts, so that we can track job initiations in the database.",1,"Feature: Record job start
+
+Scenario: New job inserted
+  When the job begins
+  Then schedule_job should include:
+    | id                | Generated UUID                      |
+    | jobType           | STREAMLINE_EXTRACT                  |
+    | status            | STARTED                             |
+    | comment           | (null or ""Started"")                 |
+    | retryCount        | 0                                   |
+    | created_datetime  | now                                 |
+    | updated_datetime  | now                                 |
+    | scheduler_name    | Stonebranch or Manual               |
+    | scheduler_starttime | now                               |
+    | scheduler_endtime   | null","Insert schedule_job row at start of job logic.
+Set jobType = STREAMLINE_EXTRACT, status = STARTED.
+Initialize timestamps and scheduler_name.",Story,STREAMLINE-EPIC
+"Update Job Completion, Retry Count, and Comments","As a developer or operator, I want to update the schedule_job row with the job status, retry count, outcome summary, and scheduler end time, so that we have complete tracking of the execution.",2,"Feature: Job completion, retry tracking, and metadata
+
+Scenario: Job completed
+  Then status = COMPLETED
+  And comment = summary (e.g., ""Generated 5 jurisdiction files"")
+  And updated_datetime is current time
+  And scheduler_endtime = current time
+
+Scenario: Job failed
+  Then status = FAILED
+  And comment contains root cause
+  And scheduler_endtime = current time
+
+Scenario: Job retried
+  When a job fails and is retried
+  Then retryCount += 1
+
+Scenario: Logging
+  When job status changes
+  Then console logs include jobId, status, and timestamps","Update status to COMPLETED or FAILED.
+Update retryCount, updated_datetime, comment, and scheduler_endtime.
+Log transition details.",Story,STREAMLINE-EPIC
+Configure Stonebranch to Trigger Streamline Job,"As a DevOps engineer, I want to configure Stonebranch to call the API on a schedule, so that the job runs automatically without manual action.",2,"Feature: Stonebranch triggers the job
+
+Scenario: Scheduled task runs
+  When a Stonebranch job runs
+  Then it POSTs to /create-streamline-extract
+  And passes scheduler_name = Stonebranch
+
+Scenario: Logs show job output
+  Then Stonebranch logs should include the full API response
+
+Scenario: Job success
+  Then status = COMPLETED appears in logs
+
+Scenario: Job failure
+  Then status = FAILED and comment is visible in logs
+
+Scenario: scheduler_starttime and endtime are accurate
+  Then start and end timestamps reflect actual job runtime","Use Stonebranch HTTP or Universal Task.
+Send POST request to /create-streamline-extract.
+Pass scheduler_name = Stonebranch.
+Capture and log API response.",Story,STREAMLINE-EPIC
+Secure Streamline API with Bearer Token,"As a developer, I want to secure the Streamline Extract API with a Bearer token, so that only authorized systems like Stonebranch can access it.",1,"Feature: Bearer token enforcement
+
+Scenario: No Authorization header
+  Then return 401 Unauthorized
+
+Scenario: Invalid token
+  Then return 401 Unauthorized
+
+Scenario: Valid token
+  Then proceed with job execution
+  And log the source of the token via scheduler_name if possible","Use @Value(""${streamline.token}"") to inject expected token.
+Validate Authorization header format.
+Return 401 Unauthorized if missing or invalid.",Story,STREAMLINE-EPIC
+Ensure Concurrency and Data Integrity for Job Tracking,"As a backend engineer, I want to ensure job insert/update operations are concurrency-safe and isolated, so that parallel jobs don’t overwrite or corrupt tracking data.",2,"Feature: Safe concurrent tracking
+
+Scenario: Multiple jobs run
+  Then each writes its own row with unique id
+
+Scenario: Updates are atomic
+  Then retryCount, status, and timestamps are updated without race conditions
+
+Scenario: scheduler_name and timestamps remain accurate
+  Then each job tracks its own lifecycle independently","Use @Transactional for update methods.
+Ensure each job uses a unique UUID.
+Track timestamps accurately.
+Avoid race conditions on retryCount and comment.",Story,STREAMLINE-EPIC
+Load Bearer Token from Vault for Streamline API,"As a developer, I want the Bearer token for API security to be stored and loaded from Vault, so that we avoid exposing secrets in code or config files.",1,"Feature: Load token securely from Vault
+
+Scenario: Token is loaded on app start
+  Then the application retrieves the token from Vault path `secret/streamline`
+
+Scenario: Token used in API validation
+  Then the value from Vault is used to check Authorization headers
+
+Scenario: Token rotated in Vault
+  Then the updated token is used without code change
+
+Scenario: Vault unavailable
+  Then the app logs the error and fails gracefully","Store token in Vault under path: secret/streamline.
+Use Spring Cloud Vault to inject token.
+Use @Value(""${token}"") to bind value.
+Handle fallback if Vault is unavailable.",Story,STREAMLINE-EPIC
