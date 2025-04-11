@@ -1,0 +1,118 @@
+Summary,Description,Story Points,Acceptance Criteria,Implementation Notes,Issue Type,Epic Link
+Trigger Streamline Extract Job via API,"As a backend developer, I want to expose an API endpoint that triggers the Streamline Extract job and returns tracking information, so that I (or Stonebranch) can initiate and monitor job execution.",2,"Feature: Trigger Streamline Extract Job via API
+
+Scenario: Endpoint is reachable
+  When a POST request is made to /create-streamline-extract
+  Then the API should return status 200 or 500
+  And the response should contain:
+    | id                |
+    | jobType           |
+    | status            |
+    | comment           |
+    | retryCount        |
+    | created_datetime  |
+    | updated_datetime  |
+    | scheduler_name    |
+    | scheduler_starttime |
+    | scheduler_endtime   |
+
+Scenario: Successful trigger
+  Then status = COMPLETED
+  And a row is inserted in schedule_job with correct timestamps
+
+Scenario: Job fails
+  Then status = FAILED
+  And the comment includes the error message","**Objective**  
+Create an API endpoint to trigger the Streamline Extract process and return job tracking data.
+
+**Location in Codebase**  
+- controller/StreamlineExtractController.java  
+- service/StreamlineExtractService.java  
+- service/JobTrackingService.java  
+
+**Technical Approach**  
+- Expose POST endpoint  
+- Validate Bearer token  
+- Call service layer to execute job  
+- Persist job status to DB  
+- Return `ScheduleJob` object
+
+**Code Snippet**  
+```java
+@PostMapping(""/create-streamline-extract"")
+public ResponseEntity<ScheduleJob> trigger(@RequestHeader(""Authorization"") String authHeader) {
+    if (!authHeader.equals(""Bearer "" + expectedToken)) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    ScheduleJob job = jobTrackingService.startStreamlineJob();
+    return ResponseEntity.ok(job);
+}
+```
+
+**Dependencies**  
+- schedule_job table  
+- Vault for token  
+- Spring Boot Web
+
+**Failure Handling**  
+- Return 500 on internal failure  
+- Log exception with context
+
+**Security Considerations**  
+- Requires Authorization header with Bearer token  
+- Token is injected securely from Vault",Story,STREAMLINE-EPIC
+Expose API to Retrieve Job Status by ID,"As a backend user or system integrator, I want to retrieve the status and metadata of a previously triggered job using its ID, so that I can check job progress or outcome asynchronously.",1,"Feature: Get job status by job ID
+
+Scenario: Valid job ID provided
+  Given a valid jobId exists in the schedule_job table
+  When a GET request is made to /job-status/{jobId}
+  Then the API should return 200 OK
+  And the response should include:
+    | id                  |
+    | jobType             |
+    | status              |
+    | comment             |
+    | retryCount          |
+    | created_datetime    |
+    | updated_datetime    |
+    | scheduler_name      |
+    | scheduler_starttime |
+    | scheduler_endtime   |
+
+Scenario: Invalid or unknown job ID
+  When a GET request is made to /job-status/{jobId}
+  And the ID does not exist
+  Then the API should return 404 Not Found
+","**Objective**  
+Expose a lightweight GET API to return job metadata using a job ID.
+
+**Location in Codebase**  
+- controller/JobTrackingController.java  
+- repository/ScheduleJobRepository.java  
+
+**Technical Approach**  
+- Expose GET /job-status/{jobId}
+- Query the job record using JPA
+- Return job data or 404 if not found
+
+**Code Snippet**  
+```java
+@GetMapping(""/job-status/{jobId}"")
+public ResponseEntity<ScheduleJob> getJobStatus(@PathVariable UUID jobId) {
+    return scheduleJobRepository.findById(jobId)
+        .map(ResponseEntity::ok)
+        .orElse(ResponseEntity.notFound().build());
+}
+```
+
+**Dependencies**  
+- schedule_job table  
+- ScheduleJobRepository
+
+**Failure Handling**  
+- Logs errors for missing/invalid IDs  
+- Returns proper HTTP status codes
+
+**Security Considerations**  
+- Can be secured via Bearer token or internal-only route
+",Story,STREAMLINE-EPIC
