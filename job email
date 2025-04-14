@@ -1,0 +1,46 @@
+Here's an improved and more professional version of the message, incorporating relevant computer science terminology and making it more polished:
+
+
+---
+
+Hi team,
+
+I'm setting up a follow-up call for tomorrow and hope everyone can join. Below is a brief summary of the key decisions and action points discussed:
+
+
+---
+
+1. Lightweight API for Job Table Interaction
+
+We will implement a lightweight and efficient API to facilitate interactions with the Job table. The goal is to optimize common operations such as job creation, status retrieval, and result access, while ensuring low latency and minimal system overhead.
+
+
+---
+
+2. Job Status API – Performance Considerations
+
+a. Job Status Polling Optimization
+
+To improve the efficiency of job status tracking and reduce unnecessary load on the system:
+i. For each job, determine the average execution time and use it to inform an intelligent polling start time.
+ii. Allow average execution time to be configurable per job, enabling fine-tuning based on historical trends.
+iii. Define a dynamic polling interval per job, tailored to the job’s expected duration and criticality.
+iv. The polling interval should be externally configurable to support flexible tuning without redeployment.
+
+b. Job Table Size Management
+
+i. To prevent performance degradation due to unbounded table growth, we propose introducing a background archival process. This asynchronous job will periodically move completed job records to a secondary archive, keeping the primary job table lean and optimized for real-time operations.
+
+
+---
+
+Let me know if you have any suggestions before the call. Looking forward to aligning tomorrow.
+
+Best,
+[JY]
+
+
+---
+
+Would you like a shorter version for quick notes or a slide?
+
