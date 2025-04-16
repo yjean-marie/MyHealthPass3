@@ -1,0 +1,68 @@
+Absolutely! Below are all the CSVs in one message:
+
+
+---
+
+1. Job Tracking Table Fields
+
+Field,Section,Description,Justification
+job_id,Identification,Unique ID (UUID or int),Primary key for tracking the job
+job_name,Identification,Name of job (e.g., kyc_batch_submit),Used for filtering, alerting
+job_type,Identification,e.g., KYC, SYNC, BATCH,Groups jobs logically
+section,Identification,e.g., RIBS, T24, ORIGINATIONS,Defines which business/technical area owns the job
+environment,Identification,e.g., DEV, UAT, PROD,Critical for debugging, alerting
+status,Lifecycle,Current state of job,Drives business logic and alerting
+created_datetime,Lifecycle,When Stonebranch called Job Tracking API,Used to detect missing runs
+actual_job_run_datetime,Lifecycle,When execution API began,Measures startup delay
+updated_datetime,Lifecycle,When job last updated,For sorting and staleness
+scheduler_start_time,Optional,When job was scheduled to run,Helps with SLA validation
+scheduler_end_time,Optional,When job was scheduled to end,Used for runtime checks
+retry_count,Retry,# of attempts for this job run,Used for retry logic and analysis
+failure_code,Failure,Classifier for failure cause,Used for reports, alert routing
+failure_error_message,Failure,Description of what failed,Helps triage and debug
+failure_datetime,Failure,Timestamp of failure,Useful for analytics
+comment,Ops,Free text from service or operator,Adds diagnostics or instructions
+last_updated_by,Audit,Who or what system last updated the job,Optional for manual overrides
+parent_job_id,Retry,Job ID of the previous attempt,Needed only if using new-row-per-retry strategy
+
+
+---
+
+2. Status Transitions
+
+Current Status,Next Status,Trigger/Event,Notes
+CREATED,RUNNING,Job Execution API starts,Service reports start of work
+CREATED,CANCELLED,Manually or system aborted,Execution API was never called
+CREATED,FAILED,Job Execution API never starts,Detected via monitoring or fallback logic
+RUNNING,SUCCESS,Job completes successfully,Execution API sets status
+RUNNING,FAILED,Job encounters error,Includes failure code/message
+RUNNING,CANCELLED,Manually or system aborted,Timeout or user kill
+FAILED,CREATED,Retry via new job record,Use parent_job_id to link
+FAILED,RUNNING,Retry within same row (not preferred),retry_count increments
+
+
+---
+
+3. Use Cases That Informed Design
+
+Use Case,Description,Related Fields
+Track end-to-end lifecycle,Log from trigger to success/failure,status,created_datetime,actual_job_run_datetime
+Audit and trace failures,Retain codes and error messages for failed runs,failure_code,failure_error_message
+Retry tracking,Track how many times a job retried,retry_count,parent_job_id
+Environment-specific debugging,Filter issues by environment,environment
+SLA compliance,Compare expected vs actual times,scheduler_start_time,actual_job_run_datetime
+Detect unstarted jobs,Find jobs stuck in CREATED,status,created_datetime
+Monitor long-running jobs,Alert if job is RUNNING too long,updated_datetime,status
+Ownership visibility,Group and filter jobs by team or business area,section,job_type
+
+
+---
+
+4. Retry Strategy Comparison
+
+Strategy,Description,Pros,Cons
+New Row per Retry,Create a new row each time with a link to previous attempt,"Full history, easy to audit","More rows, slightly more complex logic"
+Same Row with Retry Count,Update the same row and increment retry_count,"Simple to implement, less storage","Overwrites history, hard to audit/debug"
+
+Let me know if you want these exported to .csv files or formatted as documentation.
+
