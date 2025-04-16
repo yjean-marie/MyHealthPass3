@@ -1,0 +1,138 @@
+Perfect — here's the fully integrated solution considering:
+
+Two separate APIs:
+
+1. Job Tracking API – for logging job status
+
+
+2. Actual Job Execution API – where the real business work happens
+
+
+
+All status flows, including:
+
+Success paths
+
+Retry logic
+
+API failures (tracking, execution, or both)
+
+
+Fields and justifications (as before)
+
+Clear transition logic and alert opportunities
+
+
+
+---
+
+1. Job Tracking Table – Final Fields with Justifications
+
+
+---
+
+2. Complete Status Flows
+
+### I. Standard Path (Happy Flow)
+
+1. CREATED         – Job Tracking API hit by Stonebranch
+2. RUNNING         – Actual Job API starts, updates status
+3. SUCCESS         – Actual Job API completes successfully
+
+
+---
+
+II. Job Fails During Execution
+
+1. CREATED
+2. RUNNING
+3. FAILED          – Service updates with error details
+→ Optional Retry (handled by Stonebranch or service)
+→ New row (preferred) or retry_count incremented (single-row model)
+
+
+---
+
+III. Job Cancelled During Execution
+
+1. CREATED
+2. RUNNING
+3. CANCELLED       – Manual/system-triggered cancellation
+
+
+---
+
+IV. Job Execution Never Starts (Execution API Fails)
+
+1. CREATED
+× RUNNING never triggered
+→ Stuck in CREATED → alert if >X mins
+→ Eventually mark as FAILED with message "Job execution never started"
+
+
+---
+
+V. Job Tracking API Fails (first API call fails)
+
+× No record created
+→ Stonebranch retries hitting Job Tracking API
+→ If all retries fail, no visibility at all unless external monitoring exists
+
+→ Solution: Stonebranch retries OR another process monitors expected jobs and inserts a `FAILED` row with reason = "Could not register job"
+
+
+---
+
+VI. Both APIs Fail
+
+× Job Tracking API fails → No job row
+× Job Execution API fails → No execution, no logs
+
+→ System sees a completely "invisible" failure
+
+→ Solution: Monitor via Stonebranch or scheduler logs. Optional: send back status to Job Tracking API upon final failure via webhook or external failover script
+
+
+---
+
+3. Additional Considerations
+
+Alerting Based on Status
+
+
+---
+
+Suggested Flow Summary
+
+Stonebranch triggers job:
+   |
+   |--> Job Tracking API --> sets CREATED
+   |
+   |--> Actual Job API --> service begins work, sets RUNNING
+                              |
+                              |--> SUCCESS / FAILED / CANCELLED
+
+If either API fails:
+
+Status updates never happen → system must detect and handle via retries or monitoring
+
+
+
+---
+
+4. Retry Strategy (Summary)
+
+
+---
+
+Would you like me to now:
+
+Generate sample payloads for each API call?
+
+Draft error handling logic in pseudocode?
+
+Suggest retry config values (e.g., retry count, delay)?
+
+
+Let me know how you'd like to proceed.
+
