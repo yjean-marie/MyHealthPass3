@@ -1,0 +1,327 @@
+Story 1: Trigger Streamline Extract Job via API
+Description:
+As a backend developer, I want to expose an API endpoint that triggers the Streamline Extract job and immediately returns a jobId, so that I (or Stonebranch) can track the job’s progress asynchronously.
+
+Story Points: 2
+
+Acceptance Criteria:
+
+gherkin
+Copy
+Edit
+Feature: Trigger Streamline Extract Job via API
+
+Scenario: Job initiation successful
+  Given the schedule-job API is accessible
+  When a POST request is made to /create-streamline-extract with a valid token
+  Then the service should call the schedule-job API to create a new job row with status = STARTED
+  And return 200 OK with the jobId and tracking metadata
+
+Scenario: Job initiation fails
+  Given the job row cannot be created via the API
+  When the request is made
+  Then the API should return 500 Internal Server Error
+  And no jobId should be returned
+Implementation Notes:
+
+Delegates job creation to schedule-job API
+
+Returns jobId and timestamps
+
+Logs errors if API fails
+
+Subtasks:
+
+ Define response format from schedule-job API (jobId, timestamps)
+
+ Implement call to POST /jobs from Streamline trigger endpoint
+
+ Handle API errors and log critical failures
+
+ Return structured response to caller (e.g., Stonebranch)
+
+✅ Story 2: Insert Job Start Record in schedule_job Table
+Description:
+As a system developer, I want to create a new schedule_job row when the job starts, so that we can track job initiations in the database.
+
+Story Points: 1
+
+Acceptance Criteria:
+
+gherkin
+Copy
+Edit
+Feature: Insert job row via job tracking API
+
+Scenario: New job begins
+  Given a backend job is triggered
+  When execution begins
+  Then a POST request should be made to schedule-job API to insert a new job row with:
+    | jobId            |
+    | jobType          |
+    | status = STARTED |
+    | created_datetime |
+    | scheduler_name   |
+Implementation Notes:
+
+schedule-job API responsible for persisting job
+
+jobId is UUID
+
+Subtasks:
+
+ Design schedule-job API contract for POST /jobs
+
+ Implement controller + service to persist job row
+
+ Ensure jobId uniqueness, auto-capture timestamps
+
+ Unit test job insertion (success + failure)
+
+✅ Story 4: Configure Stonebranch to Trigger Streamline Job
+Description:
+As a DevOps engineer, I want to configure Stonebranch to call the job trigger API on a schedule, so that the job runs automatically without manual intervention.
+
+Story Points: 2
+
+Acceptance Criteria:
+
+gherkin
+Copy
+Edit
+Feature: Stonebranch triggers Streamline job
+
+Scenario: Job runs on schedule
+  Given a scheduled time is reached
+  When Stonebranch makes a POST request to /create-streamline-extract
+  Then the API should respond with 200 OK and a jobId
+  And a new job row should be created in the schedule-job table
+
+Scenario: API is unreachable
+  Given the job trigger API is down
+  When Stonebranch runs the scheduled task
+  Then Stonebranch should raise an alert or retry
+Implementation Notes:
+
+Uses cron 0 58 1 * * *
+
+Relies on response from Story 1’s endpoint
+
+Subtasks:
+
+ Define HTTP call logic in Stonebranch
+
+ Configure retry or alert logic on failure
+
+ Capture jobId returned for tracking
+
+ Test Stonebranch integration in DEV
+
+✅ Story 5: Secure Streamline API with Bearer Token
+Description:
+As a developer, I want to secure the Streamline Extract API with a Bearer token, so that only authorized systems like Stonebranch can access it.
+
+Story Points: 1
+
+Acceptance Criteria:
+
+gherkin
+Copy
+Edit
+Feature: API authentication via Bearer token
+
+Scenario: Token is present and valid
+  Given a valid token is sent in the Authorization header
+  When a request is made to /create-streamline-extract
+  Then the API should accept the request and process the job
+
+Scenario: Token is missing or invalid
+  Given no token or an incorrect token is provided
+  When a request is made
+  Then the API should respond with 401 Unauthorized
+Implementation Notes:
+
+Token loaded from Vault
+
+Must validate before any processing
+
+Subtasks:
+
+ Inject token into app config from Vault
+
+ Add security filter for Bearer validation
+
+ Return 401 for unauthorized access
+
+ Test with valid and invalid tokens
+
+✅ Story 6: Ensure Concurrency and Data Integrity for Job Tracking
+Description:
+As a backend engineer, I want to ensure job insert and update operations are concurrency-safe, so that multiple jobs don’t interfere with each other or cause data inconsistencies.
+
+Story Points: 2
+
+Acceptance Criteria:
+
+gherkin
+Copy
+Edit
+Feature: Concurrency-safe job table writes
+
+Scenario: Multiple jobs trigger at the same time
+  Given two or more jobs are initiated concurrently
+  When they write to the schedule-job API
+  Then each should result in a distinct row with no conflicts
+
+Scenario: Job is updated while another is running
+  Given multiple jobs are running
+  When their statuses are updated via API
+  Then each update should apply only to the correct jobId
+Implementation Notes:
+
+jobId must be unique
+
+schedule-job API must use atomic updates
+
+Subtasks:
+
+ Enforce UUID uniqueness for jobId
+
+ Use DB-level locking or optimistic concurrency
+
+ Write integration test for high-volume job triggers
+
+✅ Story 7: Load Bearer Token from Vault for Streamline API
+Description:
+As a developer, I want the Bearer token for securing the Streamline API to be stored and loaded from Vault, so that secrets are not exposed in configuration files.
+
+Story Points: 1
+
+Acceptance Criteria:
+
+gherkin
+Copy
+Edit
+Feature: Vault-based token management
+
+Scenario: Token is successfully loaded
+  Given the application starts
+  When it initializes its security context
+  Then it should retrieve the Bearer token from Vault
+
+Scenario: Vault is unavailable
+  Given the application cannot connect to Vault
+  When startup is attempted
+  Then it should log a clear error and fail to start securely
+Implementation Notes:
+
+Spring Vault recommended
+
+Token pulled during app startup
+
+Subtasks:
+
+ Add Vault config and dependency
+
+ Secure token access path
+
+ Log errors gracefully on failure
+
+ Verify token never logged or exposed
+
+✅ Story 8: Expose API to Retrieve Job Status by ID
+Description:
+As a system integrator, I want to retrieve the status and metadata of a job using its ID, so that I can track its progress or final outcome without polling logs.
+
+Story Points: 1
+
+Acceptance Criteria:
+
+gherkin
+Copy
+Edit
+Feature: Get job status by jobId
+
+Scenario: Job exists
+  Given a valid jobId exists
+  When a GET request is made to schedule-job API at /job-status/{jobId}
+  Then the API should return 200 OK
+  And the response should include:
+    | jobId             |
+    | jobType           |
+    | status            |
+    | comment           |
+    | retryCount        |
+    | created_datetime  |
+    | updated_datetime  |
+    | scheduler_starttime |
+    | scheduler_endtime   |
+
+Scenario: Job does not exist
+  Given an unknown jobId is provided
+  When the request is made
+  Then the API should return 404 Not Found
+Implementation Notes:
+
+Exposed by schedule-job API
+
+Used by Stonebranch or UI to check progress
+
+Subtasks:
+
+ Define controller for GET /job-status/{jobId}
+
+ Validate jobId (UUID format)
+
+ Return metadata or 404 if not found
+
+ Write unit tests for found and not found scenarios
+
+✅ Story 9: Mark Job as Complete or Failed via schedule-job API
+Description:
+As a backend service, I want to explicitly mark a job as completed or failed in the schedule_job table, so that its lifecycle can be tracked accurately.
+
+Story Points: 1
+
+Acceptance Criteria:
+
+gherkin
+Copy
+Edit
+Feature: Finalize job status using schedule-job API
+
+Scenario: Mark job as completed
+  Given a job has finished successfully
+  When the service completes its logic
+  Then it should call PUT /jobs/{jobId} on the schedule-job API with:
+    | status = COMPLETED       |
+    | scheduler_endtime        |
+    | updated_datetime         |
+    | comment = "Job completed successfully" |
+
+Scenario: Mark job as failed
+  Given the job ends with an error
+  When the update call is made
+  Then the job row should be updated with:
+    | status = FAILED          |
+    | retryCount incremented   |
+    | comment = error summary  |
+    | scheduler_endtime        |
+Implementation Notes:
+
+Called by the business service after job completes
+
+Updates status, retryCount, and comment fields
+
+Subtasks:
+
+ Implement PUT /jobs/{jobId} in schedule-job API
+
+ Accept payload: status, comment, timestamps
+
+ Apply retry logic for failures
+
+ Validate status transitions (e.g., only mark completed once)
+
+ Test both success and failure flows
+
