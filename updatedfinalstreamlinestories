@@ -325,3 +325,223 @@ Subtasks:
 
  Test both success and failure flows
 
+
+
+Story 1: Trigger Streamline Extract Job via API
+Implementation Notes:
+
+sql
+Copy
+Edit
+- Endpoint: POST /create-streamline-extract
+  → Controller: StreamlineJobController.java
+  → Method: triggerJob(HttpServletRequest request)
+
+- Authentication:
+  → Extract Bearer token from Authorization header
+  → Validate against Vault-secret (injected via Spring Vault)
+
+- Inside triggerJob():
+  → Call JobTrackingClient.createJob(jobType = "streamline", schedulerName = "Stonebranch")
+  → Receive jobId from schedule-job API
+  → Launch business logic asynchronously using jobId
+
+- Return:
+  → HTTP 200 OK with jobId and created timestamp
+
+- Test:
+  → StreamlineJobControllerTest:
+    - testValidTokenTriggersJob
+    - testInvalidTokenReturns401
+    - testCreateJobFailureReturns500
+✅ Story 2: Insert Job Start Record in schedule_job Table
+Implementation Notes:
+
+yaml
+Copy
+Edit
+- Endpoint (in schedule-job API): POST /jobs
+  → Controller: JobController.java
+  → Method: createJob(@RequestBody JobCreateRequest request)
+
+- DTO: JobCreateRequest.java
+  → Fields: jobType, schedulerName
+  → Set default status = STARTED, retryCount = 0
+
+- Service: JobService.java
+  → Method: createJob(JobCreateRequest request)
+  → Generate UUID (jobId)
+  → Populate createdDatetime, status
+
+- Entity: JobEntity.java
+  → Mapped to table: schedule_job
+
+- Repository: JobRepository.java
+  → Method: save(JobEntity)
+
+- Response: JobCreateResponse.java
+  → jobId, created_datetime
+
+- Test:
+  → JobServiceTest:
+    - testCreateJobWithValidFields
+    - testJobRowPersistsCorrectly
+✅ Story 4: Configure Stonebranch to Trigger Streamline Job
+Implementation Notes:
+
+markdown
+Copy
+Edit
+- Stonebranch Job Setup:
+  → Schedule HTTP POST to: https://internal-api/create-streamline-extract
+  → Header: Authorization: Bearer <Vault-injected-token>
+  → Method: POST
+  → Retry: 3 attempts with 5-minute intervals
+
+- Expected response: 200 OK with jobId
+- Store jobId as runtime variable (if needed for polling)
+- Handle:
+  - 500 → alert
+  - 401 → authentication error
+  - 200 → success
+
+- Monitoring:
+  → Add webhook or job alerting for failed job submissions
+✅ Story 5: Secure Streamline API with Bearer Token
+Implementation Notes:
+
+markdown
+Copy
+Edit
+- Add Spring Security config
+  → SecurityConfig.java
+  → Permit only authenticated requests for /create-streamline-extract
+
+- Vault setup:
+  → Path: secret/job-api/token
+  → Spring Vault will load property `streamline.api.token`
+
+- Filter:
+  → JwtAuthenticationFilter.java
+  → Compare Bearer token in request against value from Vault
+
+- On failure:
+  → Return 401 Unauthorized
+
+- Test:
+  → JwtAuthenticationFilterTest:
+    - testMissingToken
+    - testInvalidToken
+    - testValidTokenPasses
+✅ Story 6: Ensure Concurrency and Data Integrity for Job Tracking
+Implementation Notes:
+
+markdown
+Copy
+Edit
+- Job table:
+  → Use jobId as primary key (UUID)
+
+- Repository:
+  → Use Spring Data JPA + @Transactional on insert/update methods
+
+- Validate:
+  - No update should affect a different jobId
+  - All updates must be atomic
+
+- Test:
+  → JobConcurrencyTest:
+    - testParallelInsertDoesNotClash
+    - testIsolatedUpdatePerJobId
+✅ Story 7: Load Bearer Token from Vault for Streamline API
+Implementation Notes:
+
+markdown
+Copy
+Edit
+- Vault config (application.yml):
+  → spring.cloud.vault.generic.application-name=streamline-service
+  → spring.cloud.vault.kv.backend=secret
+  → Token path: secret/job-api/token
+
+- Token injected via @Value or ConfigProperties class:
+  → class TokenProperties { String streamlineApiToken; }
+
+- Fail-fast behavior:
+  → If token is null or blank, fail application startup
+
+- Log secure startup message (not the token)
+
+- Test:
+  → VaultIntegrationTest:
+    - testTokenInjected
+    - testFailsWithoutVault
+✅ Story 8: Expose API to Retrieve Job Status by ID
+Implementation Notes:
+
+yaml
+Copy
+Edit
+- Endpoint: GET /job-status/{jobId}
+  → Controller: JobController.java
+  → Method: getJobStatus(UUID jobId)
+
+- Service: JobService.java
+  → Method: getJob(UUID jobId)
+  → Throw JobNotFoundException → maps to 404
+
+- Response DTO: JobStatusResponse.java
+  → Fields: jobId, jobType, status, comment, retryCount,
+            created_datetime, updated_datetime,
+            scheduler_starttime, scheduler_endtime
+
+- Test:
+  → JobStatusControllerTest:
+    - testValidJobIdReturnsData
+    - testInvalidJobIdReturns404
+✅ Story 9: Mark Job as Complete or Failed via schedule-job API
+Implementation Notes:
+
+yaml
+Copy
+Edit
+- Endpoint: PUT /jobs/{jobId}
+  → Controller: JobController.java
+  → Method: updateJobStatus(UUID jobId, @RequestBody JobUpdateRequest)
+
+- DTO: JobUpdateRequest.java
+  → Fields: status (COMPLETED or FAILED), comment, schedulerEndtime
+
+- Service: JobService.java
+  → Method: updateJob(UUID jobId, JobUpdateRequest)
+  → Validate:
+    - Status can only be updated from STARTED
+    - If FAILED: increment retryCount
+    - Set updated_datetime, comment, and end time
+
+- Entity: JobEntity.java
+  → Use @Version (optimistic locking) if needed
+
+- Test:
+  → JobUpdateTest:
+    - testMarkJobAsCompleted
+    - testMarkJobAsFailedIncrementsRetry
+    - testCannotUpdateInvalidStatus
+This now fully meets the criteria of technical user stories. Let me know if you'd like this assembled into a design doc, a CSV, or a developer wiki-style markdown file.
+
+
+
+
+
+
+
+
+
+
+
+Search
+
+
+
+ChatGP
+
