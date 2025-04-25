@@ -1,0 +1,8 @@
+Repository|QA Branch|Currently in QA|Testing Status|Currently in Dev|Testing Plan
+restrain-cloud-api|develop-2024|Lift Restraint|Feature is complete and under QA testing|Lift Restraint Status Fix (feature/status-fix)|Merge QA branch into feature branch, unit test, deploy to QAT, then merge into QA branch for production
+orchestrator-cloud-api|develop-2025|None yet|Branch created, waiting for features|KIF and Country, Document Profile|Merge into develop, deploy to QAT once complete
+kyc-refresh-ui-widget|To be created|None|No impact yet|Frontend for KIF and Country|Create develop branch, deploy to QAT after completion
+portal-cloud-api|develop-2025|None|develop mirrors production|Client Notification (Streamline, S3)|Develop on feature branch, unit test, merge to develop, then deploy to QA
+box-cloud-api|develop-2025|None|develop mirrors production|Client Notification (Email)|Develop on feature branch, unit test, merge to develop, then deploy to QA
+admin-portal-service|develop-2025|None|develop mirrors production|Staff Notification (tentative)|Develop on feature branch, unit test, merge to develop, then deploy to QA
+kyc-refresh-ui|QAT, PROD|Live features only|QAT and PROD branches protected|None specified|Awaiting feature development strategy
