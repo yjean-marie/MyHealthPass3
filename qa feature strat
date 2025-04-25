@@ -17,3 +17,67 @@ S3 Fix|portal-cloud-api|develop-2025|Yes|Validated in QA after Vault update|No|A
 
 Let me know if you'd like this as a downloadable .csv or if you want to expand these into Confluence-ready status blocks.
 
+
+Great question! Here's the distinction between the two:
+
+Test Data Requirements
+
+This refers to the specific data inputs needed to properly test a feature. It answers:
+
+> What kind of mock or real data do I need to simulate the feature’s behavior?
+
+
+
+Examples:
+
+A client with an active restraint (for Lift Restraint)
+
+A staff user with a pending approval status (for Staff Notification)
+
+A document mapped to a specific country and category (for Document Profile)
+
+
+These are conditions or values testers must ensure are present before running a test.
+
+
+---
+
+Data Impact Area
+
+This refers to the part of the system or database that the feature will interact with, modify, or depend on. It answers:
+
+> Where in the system will data be read from, written to, or affected by this feature?
+
+
+
+Examples:
+
+Restraint status table (for Lift Restraint)
+
+Vault configuration (for S3 Fix)
+
+Document config tables (for Document Profile)
+
+
+These define the scope of effect or risk, often used for:
+
+rollback plans
+
+audit impact
+
+isolating data between tests
+
+
+
+---
+
+Think of it as:
+
+Test Data Requirements = What I need to test
+
+Data Impact Area = What gets touched/affected during testing
+
+
+Would you like these definitions included on your Confluence page or tracker as a tooltip or note?
+
+
