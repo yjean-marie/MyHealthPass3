@@ -1,8 +1,9 @@
-Repository|QA Branch|Currently in QA|Testing Status|Currently in Dev|Testing Plan
-restrain-cloud-api|develop-2024|Lift Restraint|Feature is complete and under QA testing|Lift Restraint Status Fix (feature/status-fix)|Merge QA branch into feature branch, unit test, deploy to QAT, then merge into QA branch for production
-orchestrator-cloud-api|develop-2025|None yet|Branch created, waiting for features|KIF and Country, Document Profile|Merge into develop, deploy to QAT once complete
-kyc-refresh-ui-widget|To be created|None|No impact yet|Frontend for KIF and Country|Create develop branch, deploy to QAT after completion
-portal-cloud-api|develop-2025|None|develop mirrors production|Client Notification (Streamline, S3)|Develop on feature branch, unit test, merge to develop, then deploy to QA
-box-cloud-api|develop-2025|None|develop mirrors production|Client Notification (Email)|Develop on feature branch, unit test, merge to develop, then deploy to QA
-admin-portal-service|develop-2025|None|develop mirrors production|Staff Notification (tentative)|Develop on feature branch, unit test, merge to develop, then deploy to QA
-kyc-refresh-ui|QAT, PROD|Live features only|QAT and PROD branches protected|None specified|Awaiting feature development strategy
+Feature|Repository|QA Branch|Currently in QA|Status / Expected in QA|Currently in Dev|Test Data Requirements|Data Impact Area|Isolation Strategy|Testing Window|Assigned Tester|Testing Notes/Results
+Lift Restraint|restrain-cloud-api|develop-2024|Yes|In QA, feature is complete|No|Client with active restraint|Restraint status table|Run in isolated account, reset after test|Shared QAT env|TBD|
+Lift Restraint Status Fix|restrain-cloud-api|feature/status-fix|No|Expected post-merge from QA branch|Yes|Same as Lift Restraint|Restraint status table|Run in sequence after Lift Restraint tests|QAT (after Lift Restraint)|TBD|
+KIF and Country (Backend)|orchestrator-cloud-api|develop-2025|No|Pending dev completion|Yes|Clients with KYC profiles|Country and KIF mapping tables|Unique test clients per run|TBD|TBD|
+KIF and Country (Frontend)|kyc-refresh-ui-widget|To be created|No|Pending branch setup|Yes|Visual tests using matching backend client data|N/A (UI only)|Visual validation only|TBD|TBD|
+Document Profile|orchestrator-cloud-api|develop-2025|No|Pending backend dev|Yes|Country, category, document type mapping|Document config tables|Dedicated test country code|TBD|TBD|
+Client Notification (Streamline & S3)|portal-cloud-api|develop-2025|No|Pending feature branch merge|Yes|Clients triggering notifications|Notification logic, Vault config|Controlled test triggers|TBD|TBD|
+Client Notification (Email)|box-cloud-api|develop-2025|No|Pending feature branch merge|Yes|Email configuration and delivery check|Email service logic|Unique client-email per test|TBD|TBD|
+Staff Notification|admin-portal-service|develop-2025|No|Tentative feature, not yet started|Tentative|Staff account updates|Admin notifications|Run separate from client notification|TBD|TBD|
