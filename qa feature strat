@@ -7,3 +7,13 @@ Document Profile|orchestrator-cloud-api|develop-2025|No|Pending backend dev|Yes|
 Client Notification (Streamline & S3)|portal-cloud-api|develop-2025|No|Pending feature branch merge|Yes|Clients triggering notifications|Notification logic, Vault config|Controlled test triggers|TBD|TBD|
 Client Notification (Email)|box-cloud-api|develop-2025|No|Pending feature branch merge|Yes|Email configuration and delivery check|Email service logic|Unique client-email per test|TBD|TBD|
 Staff Notification|admin-portal-service|develop-2025|No|Tentative feature, not yet started|Tentative|Staff account updates|Admin notifications|Run separate from client notification|TBD|TBD|
+
+
+Sure! Here are the details for AO and S3 Fix presented in the same format as the table, using pipe (|) delimiter:
+
+Feature|Repository|QA Branch|Currently in QA|Status / Expected in QA|Currently in Dev|Test Data Requirements|Data Impact Area|Isolation Strategy|Testing Window|Assigned Tester|Testing Notes/Results
+AO|restrain-cloud-api|develop-2024|Yes|Validated in QA|No|Predefined client with AO condition|Database data only (no schema)|Use specific client ID, validate message output|Shared QAT env|TBD|
+S3 Fix|portal-cloud-api|develop-2025|Yes|Validated in QA after Vault update|No|Any client with notifications enabled|Vault configuration (service ID)|Restart container to pick up change|Shared QAT env|TBD|
+
+Let me know if you'd like this as a downloadable .csv or if you want to expand these into Confluence-ready status blocks.
+
