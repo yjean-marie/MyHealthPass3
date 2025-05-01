@@ -223,3 +223,54 @@ Runnable.run() doesn't allow checked exceptions	🔁 Wrap in try-catch and rethr
 ✅ Change signature to Callable<Void>
 CarobbeanException not caught by onErrorResume	✅ Use Mono.fromCallable(...) that can propagate the error
 Would you like me to rewrite your final runWithTracking method using the cleaner Callable<Void> approach?
+
+
+
+
+Updated handleJobAsync (using Callable<Void>)
+java
+Copy
+Edit
+import java.util.concurrent.Callable;
+
+private Mono<ResponseEntity<ApiResponse>> handleJobAsync(JobCreateRequest jobCreateRequest, Callable<Void> task) {
+    return jobApiService.createSimplifiedJob(jobCreateRequest)
+        .flatMap(jobEntity -> {
+            Long jobId = jobEntity.getJobId();
+            log.info("Job [{}] created. Dispatching to background executor.", jobId);
+            asyncJobRunner.runWithTracking(jobId, task);
+
+            ApiResponse response = new ApiResponse(true, "Job submitted successfully.", Map.of("jobId", jobId));
+            return Mono.just(ResponseEntity.accepted().body(response));
+        })
+        .onErrorResume(e -> {
+            log.error("Failed to create job", e);
+            ApiResponse errorResponse = new ApiResponse(false, "Job creation failed: " + e.getMessage(), null);
+            return Mono.just(ResponseEntity.badRequest().body(errorResponse));
+        });
+}
+Note the small improvements:
+
+Callable<Void> matches your new AsyncJobRunner signature
+
+Changed data: jobId to a map: Map.of("jobId", jobId) — to match your earlier request
+
+Imports: import java.util.Map; and import java.util.concurrent.Callable; may be needed
+
+✅ And in the controller (usage)
+Example:
+
+java
+Copy
+Edit
+@PostMapping("/createTZExtract")
+public Mono<ResponseEntity<ApiResponse>> createTZExtract(@RequestBody SchedulerTimeRequest input) {
+    JobCreateRequest request = JobRequestFactory.forTZExtract();
+    request.setSchedulerStartTime(input.getSchedulerStartTime());
+
+    return handleJobAsync(request, () -> {
+        scheduledTask.createTZExtract(); // throws CarobbeanException
+        return null;
+    });
+}
+Let me know if you'd like to update handleJobAsync to also log the jobType and schedulerStartTime for traceability.
