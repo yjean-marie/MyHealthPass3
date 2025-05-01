@@ -131,20 +131,95 @@ public class T24Service {
 
 
 
-public void runWithTracking(Long jobId, Runnable task) {
+Thanks — that confirms you’re throwing a custom exception (CarobbeanException) inside createTZExtract().
+
+The fact that your job is still getting marked as COMPLETED suggests one of the following is happening:
+
+🔍 1. Is CarobbeanException a checked or runtime exception?
+If it's a checked exception:
+java
+Copy
+Edit
+public class CarobbeanException extends Exception { ... }
+Then this code:
+
+java
+Copy
+Edit
+Mono.fromCallable(() -> {
+    task.run();
+    return true;
+})
+⚠️ Will not compile unless task.run() explicitly throws that exception — but Runnable.run() cannot throw checked exceptions, so the exception will get silently wrapped or not thrown as expected.
+
+✅ Recommended Fix
+✅ Option A: Wrap your Runnable with a lambda that catches and rethrows as a RuntimeException
+Update your runner to this:
+
+java
+Copy
+Edit
+Mono.fromCallable(() -> {
+    try {
+        task.run(); // task might throw CarobbeanException
+        return true;
+    } catch (Exception e) {
+        throw new RuntimeException("Wrapped exception from task", e);
+    }
+})
+.flatMap(result -> jobApiService.updateSimplifiedJob(
+        createJobUpdateRequest("COMPLETED", null, null, jobId)))
+.onErrorResume(e -> {
+    log.error("Task threw an error for job {}", jobId, e);
+    return jobApiService.updateSimplifiedJob(
+        createJobUpdateRequest("FAILED", "ERROR_CODE", e.getMessage(), jobId));
+})
+.subscribe();
+This guarantees any exception inside task.run() — including CarobbeanException — is caught and passed to onErrorResume.
+
+✅ Option B (Cleaner): Change your method signature to use Callable<Void>
+Instead of passing Runnable, change your runner to:
+
+java
+Copy
+Edit
+public void runWithTracking(Long jobId, Callable<Void> task) {
     jobApiService.updateSimplifiedJob(createJobUpdateRequestForStart(jobId)).subscribe();
 
     Mono.fromCallable(() -> {
-            task.run(); // if this throws, it will be caught by onErrorResume
-            return true;
-        })
-        .flatMap(result ->
-            jobApiService.updateSimplifiedJob(
-                createJobUpdateRequest("COMPLETED", null, null, jobId)))
-        .onErrorResume(e -> {
-            log.error("Job [{}] failed: {}", jobId, e.getMessage(), e);
-            return jobApiService.updateSimplifiedJob(
-                createJobUpdateRequest("FAILED", "ERROR_CODE", e.getMessage(), jobId));
-        })
-        .subscribe();
+        task.call(); // call() can throw checked exceptions
+        return true;
+    })
+    .flatMap(result -> jobApiService.updateSimplifiedJob(
+        createJobUpdateRequest("COMPLETED", null, null, jobId)))
+    .onErrorResume(e -> {
+        log.error("Job [{}] failed: {}", jobId, e.getMessage(), e);
+        return jobApiService.updateSimplifiedJob(
+            createJobUpdateRequest("FAILED", "ERROR_CODE", e.getMessage(), jobId));
+    })
+    .subscribe();
 }
+Then, from your controller:
+
+java
+Copy
+Edit
+asyncJobRunner.runWithTracking(jobId, () -> {
+    scheduledTask.createTZExtract(); // can throw CarobbeanException
+    return null;
+});
+✅ This approach:
+
+Fully supports checked exceptions
+
+Doesn’t need wrapping in RuntimeException
+
+Is clean and expressive
+
+🧠 Summary
+
+Problem	Fix
+Runnable.run() doesn't allow checked exceptions	🔁 Wrap in try-catch and rethrow as RuntimeException, or
+✅ Change signature to Callable<Void>
+CarobbeanException not caught by onErrorResume	✅ Use Mono.fromCallable(...) that can propagate the error
+Would you like me to rewrite your final runWithTracking method using the cleaner Callable<Void> approach?
