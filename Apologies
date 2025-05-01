@@ -132,9 +132,15 @@ public class T24Service {
 
 
 public void runWithTracking(Long jobId, Runnable task) {
-    Mono.fromRunnable(task)
-        .flatMap(unused -> jobApiService.updateSimplifiedJob(
-            createJobUpdateRequest("COMPLETED", null, null, jobId)))
+    jobApiService.updateSimplifiedJob(createJobUpdateRequestForStart(jobId)).subscribe();
+
+    Mono.fromCallable(() -> {
+            task.run(); // if this throws, it will be caught by onErrorResume
+            return true;
+        })
+        .flatMap(result ->
+            jobApiService.updateSimplifiedJob(
+                createJobUpdateRequest("COMPLETED", null, null, jobId)))
         .onErrorResume(e -> {
             log.error("Job [{}] failed: {}", jobId, e.getMessage(), e);
             return jobApiService.updateSimplifiedJob(
