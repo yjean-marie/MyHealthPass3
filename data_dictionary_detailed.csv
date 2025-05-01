@@ -1,0 +1,51 @@
+TABLE_SCHEMA,TABLE_NAME,COLUMN_NAME,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,IS_NULLABLE,COLUMN_DEFAULT,IS_PRIMARY_KEY,COLUMN_DESCRIPTION
+dbo,box_document_details,document_id,int,4,NO,,YES,Unique identifier for the document
+dbo,box_document_details,case_id,int,4,YES,,NO,ID of the case associated with the document
+dbo,box_document_details,client_id,nvarchar,40,YES,,NO,ID of the client associated with the document
+dbo,box_document_details,doc_category_code,nvarchar,510,YES,,NO,Code representing the document category
+dbo,box_document_details,doc_type_code,nvarchar,510,YES,,NO,Code representing the document type
+dbo,box_document_details,file_id,nvarchar,510,YES,,NO,Identifier of the file in storage
+dbo,box_document_details,file_name,nvarchar,510,YES,,NO,Original or saved name of the file
+dbo,box_document_details,document_status,nvarchar,510,YES,,NO,"Current status of the document (e.g., active, archived)"
+dbo,box_document_details,box_client_folder_id,nvarchar,510,YES,,NO,ID of the folder assigned to the client
+dbo,box_document_details,created_by,nvarchar,510,YES,,NO,Username or identifier of the user who created the record
+dbo,box_document_details,created_datetime,datetime2,8,YES,,NO,Date and time the record was created
+dbo,box_document_details,updated_by,nvarchar,510,YES,,NO,Username or identifier of the user who last updated the record
+dbo,box_document_details,updated_datetime,datetime2,8,YES,,NO,Date and time the record was last updated
+dbo,box_document_details_AUD,document_id,int,4,NO,,YES,Unique identifier for the document
+dbo,box_document_details_AUD,case_id,int,4,YES,,NO,ID of the case associated with the document
+dbo,box_document_details_AUD,client_id,nvarchar,40,YES,,NO,ID of the client associated with the document
+dbo,box_document_details_AUD,doc_category_code,nvarchar,510,YES,,NO,Code representing the document category
+dbo,box_document_details_AUD,doc_type_code,nvarchar,510,YES,,NO,Code representing the document type
+dbo,box_document_details_AUD,file_id,nvarchar,510,YES,,NO,Identifier of the file in storage
+dbo,box_document_details_AUD,file_name,nvarchar,510,YES,,NO,Original or saved name of the file
+dbo,box_document_details_AUD,document_status,nvarchar,510,YES,,NO,"Current status of the document (e.g., active, archived)"
+dbo,box_document_details_AUD,box_client_folder_id,nvarchar,510,YES,,NO,ID of the folder assigned to the client
+dbo,box_document_details_AUD,created_by,nvarchar,510,YES,,NO,Username or identifier of the user who created the record
+dbo,box_document_details_AUD,created_datetime,datetime2,8,YES,,NO,Date and time the record was created
+dbo,box_document_details_AUD,updated_by,nvarchar,510,YES,,NO,Username or identifier of the user who last updated the record
+dbo,box_document_details_AUD,updated_datetime,datetime2,8,YES,,NO,Date and time the record was last updated
+dbo,box_document_details_AUD,REV,bigint,8,NO,,YES,Revision number for auditing
+dbo,box_document_details_AUD,REVTYPE,tinyint,1,YES,,NO,"Type of revision (e.g., insert, update, delete) in audit trail"
+dbo,box_folders_details,id,int,4,NO,,YES,"Generic identifier, usually primary key"
+dbo,box_folders_details,jurisdiction,nvarchar,510,YES,,NO,Country or legal area the folder/document applies to
+dbo,box_folders_details,customer_type,nvarchar,510,YES,,NO,"Category of customer (e.g., retail, corporate)"
+dbo,box_folders_details,year,nvarchar,510,YES,,NO,Year associated with the folder or document
+dbo,box_folders_details,year_folder_id,nvarchar,510,YES,,NO,Unique folder ID for a specific year
+dbo,dp_document_categories,doc_category_id,int,4,NO,,YES,Unique ID for document category
+dbo,dp_document_categories,doc_category_code,nvarchar,510,NO,,NO,Code representing the document category
+dbo,dp_document_categories,doc_category_name,nvarchar,510,NO,,NO,Name of the document category
+dbo,dp_document_categories,doc_category_description,nvarchar,510,YES,,NO,Description or notes about the document category
+dbo,dp_document_country_categories_types,id,int,4,NO,,YES,"Generic identifier, usually primary key"
+dbo,dp_document_country_categories_types,country_id,int,4,NO,,NO,Identifier for the country
+dbo,dp_document_country_categories_types,doc_category_id,int,4,NO,,NO,Unique ID for document category
+dbo,dp_document_country_categories_types,doc_type_id,int,4,NO,,NO,Unique ID for document type
+dbo,dp_document_country_categories_types,updated_datetime,datetime,8,YES,(getdate()),NO,Date and time the record was last updated
+dbo,dp_document_types,doc_type_id,int,4,NO,,YES,Unique ID for document type
+dbo,dp_document_types,doc_type_code,nvarchar,510,NO,,NO,Code representing the document type
+dbo,dp_document_types,doc_type_name,nvarchar,510,NO,,NO,Name of the document type
+dbo,dp_document_types,doc_type_description,nvarchar,510,YES,,NO,Description or notes about the document type
+dbo,error_table,id,int,4,NO,,YES,"Generic identifier, usually primary key"
+dbo,error_table,error_code,nvarchar,510,YES,,NO,Code representing a specific error
+dbo,error_table,error_description,nvarchar,510,YES,,NO,Human-readable message for the error code
+dbo,error_table,is_active,bit,1,YES,,NO,Indicates if the record is currently active

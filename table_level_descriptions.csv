@@ -1,0 +1,8 @@
+TABLE_SCHEMA,TABLE_NAME,TABLE_DESCRIPTION
+dbo,box_document_details,"Stores metadata about client or case-related documents, including their type, status, and file information."
+dbo,box_document_details_AUD,"Audit table for box_document_details, tracking revisions and changes over time."
+dbo,box_folders_details,"Holds folder structure metadata for organizing documents by jurisdiction, customer type, and year."
+dbo,dp_document_categories,"Stores master data for document categories, including codes, names, and descriptions."
+dbo,dp_document_country_categories_types,Maps countries to document categories and types; helps enforce document requirements per region.
+dbo,dp_document_types,"Stores master data for document types, with codes, names, and descriptions."
+dbo,error_table,"Captures application or system errors, including status and human-readable descriptions."
