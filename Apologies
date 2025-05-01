@@ -128,3 +128,17 @@ public class T24Service {
 
 🚀 Now your error handling is bulletproof! Let me know if you need any refinements. 🔥
 
+
+
+
+public void runWithTracking(Long jobId, Runnable task) {
+    Mono.fromRunnable(task)
+        .flatMap(unused -> jobApiService.updateSimplifiedJob(
+            createJobUpdateRequest("COMPLETED", null, null, jobId)))
+        .onErrorResume(e -> {
+            log.error("Job [{}] failed: {}", jobId, e.getMessage(), e);
+            return jobApiService.updateSimplifiedJob(
+                createJobUpdateRequest("FAILED", "ERROR_CODE", e.getMessage(), jobId));
+        })
+        .subscribe();
+}
