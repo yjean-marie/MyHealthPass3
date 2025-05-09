@@ -1,0 +1,95 @@
+Here are the slide notes (speaker talking points) for each slide in your Amplify Tech Mindset deck:
+
+
+---
+
+Slide 1: Building for a Bank, Not Just a Demo
+
+Speaker Notes:
+
+> "This isn’t just about a student project or a cool demo — you’re building something meant to function in a banking environment. That means even your early design decisions should reflect production-level thinking. In this space, we’re dealing with regulations, customer data, and compliance — and your tech choices should be informed by that. Start thinking like engineers in a real system: how do you design for scale, for security, and for traceability?"
+
+
+
+
+---
+
+Slide 2: You're Free to Build, But Not Free to Ignore Risk
+
+Speaker Notes:
+
+> "RBC isn’t here to limit your creativity — but we do have to stay within certain boundaries. There’s an approved tech stack. There are extra checks if you’re using GenAI tools, APIs that reach outside RBC, or anything storing data in the cloud. If you're in doubt about whether you can use a tool — ask. It's better to be safe than run into a blocker in the final month."
+
+
+
+
+---
+
+Slide 3: Provisioned Tech & Collaboration Tools
+
+Speaker Notes:
+
+> "Everything listed here has already been made available to you. You’ll find developer tools like GitHub, Jenkins, Vault, OpenShift, and Artifactory — which are great for CI/CD and secrets management. For collaboration, use Slack, Mural, and SharePoint. And your local dev tools — things like VS Code or Jupyter — are fair game too. These are the tools that RBC teams use every day. Get comfortable with them early."
+
+
+
+
+---
+
+Slide 4: What Sets Real Solutions Apart
+
+Speaker Notes:
+
+> "Real solutions are traceable, explainable, and built with intention. You should be able to walk someone through your system and justify each major technical decision — not just for performance, but also for data handling, privacy, and compliance. That includes logging and audit trails. Think about how you’d defend your work to a compliance officer or an auditor."
+
+
+
+
+---
+
+Slide 5: Avoid Common Pitfalls in OCR, NLP, LLM Workflows
+
+Speaker Notes:
+
+> "Here’s where teams often trip up: OCR might work great in test data but fail silently with real-world noise. Always store original and parsed versions. With LLMs and NLP, log your prompts and responses. Don’t depend purely on AI — insert rule-based logic or validations beforehand. Keep the outputs traceable and if possible, return confidence scores or reasons behind decisions."
+
+
+
+
+---
+
+Slide 6: Ask Early, Avoid Rework
+
+Speaker Notes:
+
+> "The worst thing you can do is wait until the demo to ask if a tool is allowed. We’re not here to micromanage, but we can help you avoid painful rewrites or compliance issues. If something feels uncertain — just ask. The teams that succeed in Amplify are the ones that check in early and pivot quickly when needed."
+
+
+
+
+---
+
+Slide 7: Today’s Walkthrough
+
+Speaker Notes:
+
+> "Here’s the plan for the rest of the session. We’ll walk through the RBC tech stack and common design patterns you’ll find useful. Then we’ll demo some of those patterns in practice, and go through examples from past teams. After that, we’ll open the floor — you can bring up any tools you want to use, ideas you're working on, or challenges you’re already facing."
+
+
+
+
+---
+
+Slide 8: What is PII (Personally Identifiable Information)?
+
+Speaker Notes:
+
+> "In banking, handling PII properly is critical. PII includes anything that identifies a person — name, ID number, address, even phone numbers and sometimes IPs. Your system must protect this data at every step. That means encrypting it, restricting who sees it, and not sending it outside our secure infrastructure. Think of this as not just a best practice, but a legal responsibility."
+
+
+
+
+---
+
+Let me know if you’d like these exported into speaker notes inside the PowerPoint file itself, or if you'd prefer a printable version.
+
