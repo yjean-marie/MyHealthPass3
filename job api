@@ -1,0 +1,238 @@
+Ah — got it. Thanks for the clarification. You're saying:
+
+> The Schedule Job API is its own component, and needs to be tested independently of the Notification APIs. So the user stories should now be written from the perspective of the Job API itself, not how other apps use it.
+
+
+
+Perfect. Here's the restructured, clean set of stories for the Schedule Job API as a standalone component.
+
+
+---
+
+Story 1: Create Job Entry
+
+Title: Create Job Entry via API
+
+Description:
+As a client of the Schedule Job API,
+I want to create a new job record,
+So that I can begin tracking the lifecycle of a scheduled job.
+
+Acceptance Criteria (Gherkin):
+
+Scenario: Successful job creation
+  Given valid job metadata is provided
+  When a POST request is made to /jobs
+  Then a new job should be created in the database
+  And the response should contain the jobId and status STARTED
+
+Scenario: Missing required fields
+  Given an incomplete request payload
+  When the API is called
+  Then a 400 Bad Request should be returned with a validation message
+
+Implementation Notes:
+
+Endpoint: POST /jobs
+
+Required fields: jobName, jobType, environment, status
+
+Defaults: createDatetime set to current timestamp
+
+Returns: generated jobId, initial status
+
+
+
+---
+
+Story 2: Update Job Status
+
+Title: Update Job Status via API
+
+Description:
+As a user of the Job API,
+I want to update the job’s status throughout its lifecycle,
+So that the system can track its current progress or failure state.
+
+Acceptance Criteria (Gherkin):
+
+Scenario: Update job to IN_PROGRESS
+  Given a job exists
+  When a PUT request is made with status IN_PROGRESS
+  Then the job's status should be updated in the database
+
+Scenario: Mark job as FAILED
+  Given a failure occurs
+  When a PUT request is made with status FAILED and failure details
+  Then the job should be updated accordingly with failure code/message
+
+Scenario: Retry count increment
+  Given a job is retried
+  When a PUT request is made with an incremented retry count
+  Then the retry_count field should reflect the new value
+
+Implementation Notes:
+
+Endpoint: PUT /jobs/{jobId}
+
+Optional fields: retryCount, failureCode, failureMessage, summary, updatedDatetime
+
+Only mutable fields should be updateable
+
+
+
+---
+
+Story 3: Retrieve Job by ID
+
+Title: Retrieve Job Details
+
+Description:
+As a monitoring tool or polling service,
+I want to retrieve the full job metadata using a job ID,
+So I can confirm job completion or monitor its progress.
+
+Acceptance Criteria (Gherkin):
+
+Scenario: Fetch job by ID
+  Given a valid jobId
+  When a GET request is made to /jobs/{jobId}
+  Then the full job record should be returned
+
+Scenario: Invalid job ID
+  Given a jobId that does not exist
+  When the API is queried
+  Then a 404 Not Found should be returned
+
+Implementation Notes:
+
+Endpoint: GET /jobs/{jobId}
+
+Should return all fields in the job entity
+
+Must include error response structure for invalid IDs
+
+
+
+---
+
+Story 4: Secure API Access with Bearer Token
+
+Title: Secure Schedule Job API
+
+Description:
+As an admin,
+I want all endpoints of the Job API to be protected by Bearer Token authentication,
+So that only authorized services can use it.
+
+Acceptance Criteria (Gherkin):
+
+Scenario: Valid token access
+  Given a valid bearer token is sent in the header
+  When the API is called
+  Then the request should be allowed
+
+Scenario: Missing or invalid token
+  When a request is made without a token or with an invalid token
+  Then a 401 Unauthorized response should be returned
+
+Implementation Notes:
+
+Use Spring Security
+
+Bearer token stored in Vault
+
+Token validation filter to check Authorization header on every request
+
+
+
+---
+
+Story 5: Handle Job Retries with Parent Reference
+
+Title: Store Retry Chains via Parent Job ID
+
+Description:
+As a system handling retries,
+I want to link a retry job to the original job via parent_job_id,
+So I can trace retry relationships.
+
+Acceptance Criteria (Gherkin):
+
+Scenario: Create a retry job with parent reference
+  Given a failed job ID
+  When a new job is created with parentJobId
+  Then the system should store the relationship correctly
+
+Implementation Notes:
+
+parentJobId is optional during job creation
+
+Enables retry tracking and lineage analysis
+
+One-to-many relationship (a job can have many retries)
+
+
+
+---
+
+Story 6: Implement Global Exception Handling
+
+Title: Global Error Handling
+
+Description:
+As a user of the Job API,
+I want to receive consistent error responses,
+So that I can handle failures gracefully in clients.
+
+Acceptance Criteria (Gherkin):
+
+Scenario: Missing fields
+  Given required fields are not provided
+  Then the API should return HTTP 400 with a clear validation message
+
+Scenario: Unhandled exception
+  Given an unexpected error occurs
+  Then the API should return a 500 response with a standard format
+
+Implementation Notes:
+
+Use @ControllerAdvice
+
+Include timestamp, error message, status code in all error responses
+
+Useful for frontend or automated clients
+
+
+
+---
+
+Story 7: Add Swagger Documentation
+
+Title: Expose API Documentation via Swagger
+
+Description:
+As a developer integrating with the Job API,
+I want to view all available endpoints in Swagger UI,
+So that I can understand how to consume them.
+
+Acceptance Criteria (Gherkin):
+
+Scenario: Swagger UI loads
+  When I navigate to /swagger-ui.html
+  Then I should see documentation for all Job API endpoints
+
+Implementation Notes:
+
+Use SpringDoc OpenAPI
+
+Include operation summaries, request/response models
+
+Hosted at /swagger-ui.html
+
+
+
+---
+
+Would you like me to generate this into a downloadable CSV or Word document next?
+
