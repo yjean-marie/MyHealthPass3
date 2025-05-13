@@ -1,0 +1,85 @@
+Thank you for the correction — now it’s crystal clear:
+
+> You must call your HTTP-based job status API (e.g. PUT /jobs/{id}) from inside the job function itself, using WebClient or a similar HTTP client — and when you do this, you’re getting a PrematureCloseException.
+
+
+
+
+---
+
+✅ Let's solve this cleanly and reliably
+
+🔥 The Root Cause
+
+You're likely using Spring WebClient with Netty, and calling the same service (self-call) while that service is also under Netty's reactive event loop — which creates an internal thread/resource conflict.
+
+
+---
+
+✅ Solution: Force the WebClient call to execute on a separate thread so it doesn't block the Netty loop
+
+Here’s how you do it properly:
+
+
+---
+
+✅ Step 1: In your job function
+
+public void createTZExtract(Long jobId) {
+    log.info("Starting job [{}]", jobId);
+
+    // Force IN_PROGRESS update to run on boundedElastic thread pool
+    jobApiService.updateSimplifiedJob(
+        createJobUpdateRequest("IN_PROGRESS", null, null, jobId)
+    )
+    .subscribeOn(Schedulers.boundedElastic())  // critical!
+    .doOnSubscribe(sub -> log.info("Calling job API to mark IN_PROGRESS"))
+    .doOnSuccess(resp -> log.info("Marked job [{}] as IN_PROGRESS", jobId))
+    .doOnError(err -> log.error("Failed to mark job [{}] as IN_PROGRESS", jobId, err))
+    .subscribe();
+
+    // ... continue job logic
+}
+
+
+---
+
+✅ Step 2: Ensure Your jobApiService Uses a Properly Configured WebClient
+
+@Configuration
+public class WebClientConfig {
+    @Bean
+    public WebClient jobWebClient() {
+        return WebClient.builder()
+            .baseUrl("http://localhost:8080") // or your job API host
+            .build();
+    }
+}
+
+
+---
+
+✅ Step 3: Defensive Error Handling (Optional)
+
+You can also .block() if you're OK with waiting:
+
+jobApiService.updateSimplifiedJob(...)
+    .subscribeOn(Schedulers.boundedElastic())
+    .doOnError(...)
+    .block(); // if you're NOT inside a reactive chain
+
+
+---
+
+✅ Summary
+
+Problem	Fix
+
+Calling your own API via WebClient from inside the job causes PrematureCloseException	Use .subscribeOn(Schedulers.boundedElastic()) to force it onto a worker thread
+
+
+
+---
+
+Let me know if your jobApiService is using a custom WebClient or RestTemplate — I can adjust the fix accordingly.
+
