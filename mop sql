@@ -1,0 +1,85 @@
+Here’s the full sequence of steps you can include in your Method of Procedure (MOP) for opening SQL Server Management Studio (SSMS), connecting to a database, and preparing to run queries:
+
+
+---
+
+Procedure: Accessing SQL Server and Running Queries in SSMS
+
+1. Launch SQL Server Management Studio (SSMS)
+
+Click the Start menu.
+
+Type and select SQL Server Management Studio.
+
+Wait for SSMS to fully load.
+
+
+2. Open the ‘Connect to Server’ Dialog
+
+If not automatically shown, go to the top menu and click:
+File → Connect Object Explorer.
+
+
+3. Enter Server Connection Information
+
+Server Type: Leave as Database Engine.
+
+Server Name: Input the server’s name or IP address (e.g., DBServer01\SQLEXPRESS).
+
+Authentication:
+
+Select Windows Authentication if using your domain credentials.
+
+Select SQL Server Authentication if using a SQL account and enter:
+
+Login: your SQL username
+
+Password: your SQL password
+
+
+
+
+4. Click Connect
+
+SSMS will establish a connection and display the server in the Object Explorer panel.
+
+
+5. Expand the Server Node
+
+In Object Explorer, expand the connected server.
+
+Expand the Databases folder to view available databases.
+
+
+6. Select Your Target Database
+
+Right-click the database you wish to query.
+
+Click New Query.
+
+A query window will open with the selected database already in context (visible in the dropdown next to the "Execute" button).
+
+
+
+7. Run Your SQL Query
+
+In the query editor window, type or paste your SQL statement.
+
+Example: SELECT * FROM dbo.Employee;
+
+
+Click the Execute button or press F5 to run the query.
+
+
+8. View Results
+
+Query results will appear in the Results tab at the bottom of the window.
+
+Errors or messages (if any) will be shown in the Messages tab.
+
+
+
+---
+
+Let me know if you want to add steps for saving results, exporting, or modifying data.
+
