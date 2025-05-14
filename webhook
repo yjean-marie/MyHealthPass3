@@ -1,0 +1,52 @@
+Of course! Here’s the updated email:
+
+
+---
+
+Subject: Options for Receiving SMS Delivery Status Updates
+
+Hi [Recipient’s Name],
+
+I hope you’re doing well. I wanted to outline the potential options for how we can receive delivery status updates from Telius for our KYC system. Here are the three main approaches, along with their pros and cons:
+
+1. Webhook Integration:
+
+Description: We can set up a webhook endpoint on our server that Telius will call whenever they have an update on message delivery. This would allow us to receive real-time notifications and update our system immediately.
+
+Pros: Real-time updates, no need for polling, minimal latency.
+
+Cons: Requires us to maintain an endpoint and ensure it’s secure and scalable.
+
+
+
+2. Batch File via S3:
+
+Description: Telius can periodically generate batch files with delivery statuses and upload them to our Amazon S3 bucket. We would then process these files at regular intervals to update our records.
+
+Pros: Leverages our existing S3 infrastructure, batch processing can be efficient.
+
+Cons: Not real-time, requires setting up a scheduled job on both sides (for Telius to generate and upload the file and for us to retrieve and process it), adding extra overhead.
+
+
+
+3. API Polling:
+
+Description: We can periodically call Telius’s API to check the status of messages that have been handed off to the carrier.
+
+Pros: Simple to implement if Telius provides the necessary endpoints, no need to handle incoming requests.
+
+Cons: Increased load on our side due to frequent polling, potential delays depending on polling frequency, and requires setting up a scheduled job on our end to handle the polling.
+
+
+
+
+Given these options, the webhook approach seems the most efficient for real-time updates, but we can also consider the batch file via S3 if we prefer leveraging our existing setup. Let me know which direction you think we should go or if there's anything else you'd like to discuss!
+
+Best regards,
+[Your Name]
+
+
+---
+
+Let me know if you'd like any changes or additions!
+
