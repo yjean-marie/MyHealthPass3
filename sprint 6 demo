@@ -1,0 +1,96 @@
+Got it! Here's the revised PowerPoint content with a clear focus on the deliverables from Arun’s workstream, without naming him directly, and presented as a unified effort under Feature 5 – Scheduling:
+
+
+---
+
+Slide 1: Title Slide
+
+Title:
+Feature 5 – Scheduling & Job Management
+Sprint Demo
+
+Presented by:
+Core Banking Team
+
+
+---
+
+Slide 2: Sprint Focus
+
+This Sprint Covered Two Core Areas:
+
+Scheduling & Rollout Enhancements for KYC notifications
+
+Job API & Execution Enhancements including Stonebranch onboarding
+
+
+
+---
+
+Slide 3: KYC Scheduling Enhancements
+
+Completed:
+
+New API to schedule client notices.
+
+Client Data Simulator API to fetch required KYC info.
+
+New database design for scalable storage of scheduled notices.
+
+Enhanced job logic to:
+
+Calculate notice dates based on rollout rules.
+
+Pull notice type/methods from the master table.
+
+Include backup and audit handling.
+
+Run in parallel across jurisdictions for performance.
+
+
+
+
+---
+
+Slide 4: Value of KYC Scheduling Work
+
+Business Value:
+
+Flexible Rollout: Supports deployment by jurisdiction, risk level, and customer type.
+
+Performance Gains: Parallel execution for faster processing.
+
+Audit-Ready: Built-in backup and logging.
+
+Scalable Model: Designed for long-term maintainability and expansion.
+
+
+
+---
+
+Slide 5: Job API & Cron Conversion
+
+Completed:
+
+13 legacy cron jobs converted to API-triggered executions.
+
+Central Job API implemented to:
+
+Track job status: started → in progress → completed.
+
+Record full status history with timestamps.
+
+
+Scaled from 3 to 14 jobs using this shared API framework.
+
+
+
+---
+
+Slide 6: Stonebranch Integration
+
+What We’ve Done:
+
+Beg
+
+
