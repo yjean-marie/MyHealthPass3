@@ -1,0 +1,22 @@
+Got it! Here’s a revised draft:
+
+
+---
+
+Subject: Urgent: Approval Needed for DAST Scan Addition Before Production Deployment
+
+Hi Team,
+
+I hope you're all well.
+
+We’re scheduled to deploy to production tomorrow, but I've identified that the DAST scan wasn't included in our pipeline. To address this, I need to update the Helios.config file and add a Swagger document that the configuration will reference.
+
+I'm requesting approval to deploy these changes to the QAT environment first. The DAST scan only runs in QAT, so once we deploy there, the scan will automatically be triggered as part of the pipeline.
+
+Please let me know if you have any concerns or if we can proceed with this update. Your quick approval would be greatly appreciated.
+
+Thanks, Yuri
+
+
+---
+
