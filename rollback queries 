@@ -1,0 +1,63 @@
+Yes, absolutely — you can generate a script that contains the UPDATE statements for rollback before you run your actual updates. Here's how to do that:
+
+
+---
+
+SQL Script to Generate Rollback Statements (for SQL Server)
+
+A. For the “Restrained” → “Restrain Lifted” update
+
+SELECT 
+  'UPDATE rst_detail_v1 SET refresh_status = ''' + refresh_status + ''' WHERE uuid = ''' + CAST(uuid AS VARCHAR(100)) + ''';'
+AS rollback_sql
+FROM rst_detail_v1
+WHERE refresh_status = 'Restrained'
+  AND lift_restrain_action = 'RESTRAIN_LIFTED';
+
+B. For the “Due for Restrain” → “Exception Granted” update
+
+SELECT 
+  'UPDATE rst_detail_v1 SET refresh_status = ''' + refresh_status + ''' WHERE uuid = ''' + CAST(uuid AS VARCHAR(100)) + ''';'
+AS rollback_sql
+FROM rst_detail_v1
+WHERE refresh_status = 'Due for restrain' 
+  AND revised_restrain_due_date IS NOT NULL 
+  AND DATEDIFF(DAY, revised_restrain_due_date, GETDATE()) > 30;
+
+
+---
+
+How to Use This Script
+
+1. Run the queries above.
+
+
+2. The result will be a list of UPDATE statements — each one is a rollback command.
+
+
+3. Copy the results into a .sql file (e.g., rollback_rst_detail_YYYYMMDD.sql) and save it.
+
+
+4. You can execute that file later to undo the changes if necessary.
+
+
+
+
+---
+
+Optional: Save to File Directly (via SSMS)
+
+If you're using SQL Server Management Studio (SSMS):
+
+Run the script.
+
+Right-click the result grid > Save Results As… > Choose .sql or .txt.
+
+
+This gives you a fully executable rollback script without changing any database structure.
+
+
+---
+
+Let me know if you'd like a version for PostgreSQL, MySQL, or another DBMS — the string concatenation syntax would differ slightly.
+
