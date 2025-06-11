@@ -1,0 +1,77 @@
+Perfect—thanks for the extra context. Based on that, here’s a clean breakdown for the Epic, Feature, and suggested Stories under your control. Since Teleios is doing their part separately, your focus is mostly around integrating with their daily file upload and reflecting that data in your system.
+
+
+---
+
+🧩 Epic: Teleios SMS Delivery Status Integration
+
+Description: Enable KYC Portal to receive and process daily delivery status updates from Teleios via an S3-hosted file, improving accuracy of SMS delivery tracking.
+
+
+---
+
+✅ Feature: Process Daily SMS Delivery Status File from Teleios
+
+Description: Implement backend and UI enhancements to fetch, parse, and update delivery status from the daily file uploaded by Teleios to S3.
+
+
+---
+
+📄 Story 1: Store Message ID from Initial Teleios API Response
+
+Description: Modify the SMS sending logic to extract and persist the messageId returned by Teleios for later matching with status updates.
+
+
+---
+
+🗂 Story 2: Create or Update Scheduled Job to Poll S3 and Process File
+
+Description: Create a job (or modify an existing one) that runs daily, fetches the SMS status file from the S3 bucket, and parses it.
+
+
+---
+
+🔄 Story 3: Update Notification Send Status Based on File Contents
+
+Description: Implement logic to map message IDs in the file to stored records and update their delivery status in the KYC system.
+
+
+---
+
+🧪 Story 4: QE - Write Unit and Integration Tests for Job and Parser
+
+Description: Write tests for file reading, parsing, and database update logic to ensure accuracy and reliability of the status sync job.
+
+
+---
+
+🖥 Story 5: Update UI to Reflect Accurate Delivery Status
+
+Description: Modify the Notification Send Status display on the KYC Portal UI to reflect the updated delivery statuses pulled from Teleios.
+
+
+---
+
+🧵 Story 6: Network Gateway Alignment
+
+Description: Coordinate with the Network team to ensure connectivity and permissions for the S3 bucket are properly configured.
+
+
+---
+
+📁 Story 7: S3 Bucket Setup and Access Coordination
+
+Description: Work with the internal S3 team to set up the bucket, configure access policies, and provide credentials to Teleios.
+
+
+---
+
+📣 Story 8: BA - Coordinate Stakeholder Communication
+
+Description: Communicate changes, timelines, and dependencies with relevant stakeholders to ensure smooth rollout and visibility.
+
+
+---
+
+Want me to format that into a Jira table or export-ready format next?
+
