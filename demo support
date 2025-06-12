@@ -1,46 +1,46 @@
-Yes, it can fit in one slide if formatted cleanly using bullet points and minimal text per line. Here's a condensed version that keeps all your key points but makes it slide-friendly:
+Thanks for sharing the context! Based on your screenshots, here’s how you can refine the business value section of your demo slide to align with the initiative “Enhance KYC Portal data intake/processing logic for scalable Market Roll Out” and tie in the deployment work you did:
 
 
 ---
 
-Sprint Demo Summary
+Sprint Demo Summary – KYC Portal Enhancement
 
 Deployment Support
 
-Deployed 3 APIs:
+Deployed APIs:
 
-Portal Cloud API – SMS, letters, initial email
+Portal Cloud API – handles SMS, letters, and initial email step.
 
-Box Cloud API – final email
+Box Cloud API – final step of email delivery.
 
-Schedule Job API – job table updates (cron replacement)
+Schedule Job API – records job progress, supporting audit trail and retries.
 
 
 
-Stonebranch Integration
+Job Execution & Automation
 
-Onboarded cron triggers & web services to prod
+Onboarded cron triggers and APIs to Stonebranch (prod-ready).
 
-Prepping for API-based activation
+Supports automated scheduling, job retries, and error handling.
 
 
 Security & QA
 
-DAST config, AquaScan passed
-
-Supported QA testing & troubleshooting
+Passed AquaScan checks; supported QA during testing.
 
 
 Business Value
 
-Streamlines KYC client notifications
+Enables scalable KYC market roll-out by improving job automation and reliability.
 
-Enhances communication, efficiency & compliance
+Boosts audit compliance via tracked job execution.
+
+Increases operational efficiency with reduced manual intervention.
 
 
 
 
 ---
 
-Let me know your slide format (title + bullets, split column, visual w/ text), and I can adjust it further to suit.
+Let me know if you want a PowerPoint-ready version (landscape, text sizing, slide layout).
 
