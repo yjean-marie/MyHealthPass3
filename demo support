@@ -1,0 +1,46 @@
+Yes, it can fit in one slide if formatted cleanly using bullet points and minimal text per line. Here's a condensed version that keeps all your key points but makes it slide-friendly:
+
+
+---
+
+Sprint Demo Summary
+
+Deployment Support
+
+Deployed 3 APIs:
+
+Portal Cloud API – SMS, letters, initial email
+
+Box Cloud API – final email
+
+Schedule Job API – job table updates (cron replacement)
+
+
+
+Stonebranch Integration
+
+Onboarded cron triggers & web services to prod
+
+Prepping for API-based activation
+
+
+Security & QA
+
+DAST config, AquaScan passed
+
+Supported QA testing & troubleshooting
+
+
+Business Value
+
+Streamlines KYC client notifications
+
+Enhances communication, efficiency & compliance
+
+
+
+
+---
+
+Let me know your slide format (title + bullets, split column, visual w/ text), and I can adjust it further to suit.
+
