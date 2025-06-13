@@ -1,46 +1,32 @@
-Thanks for sharing the context! Based on your screenshots, here’s how you can refine the business value section of your demo slide to align with the initiative “Enhance KYC Portal data intake/processing logic for scalable Market Roll Out” and tie in the deployment work you did:
+Got it. Here's a revised version of your message to Adrian, incorporating both the screenshot’s context and your updated request about giving Tealios access to the dev S3 bucket:
 
 
 ---
 
-Sprint Demo Summary – KYC Portal Enhancement
+Subject: Support Needed – S3 Access for Tealios
 
-Deployment Support
+Hi Adrian,
 
-Deployed APIs:
+Hope you’re doing well.
 
-Portal Cloud API – handles SMS, letters, and initial email step.
+A while back, we granted streamlined access to an external vendor for our dev instance of S3 as part of the KYC project. They’ve been updating a delivery status file in our bucket as part of the mail delivery service integration.
 
-Box Cloud API – final step of email delivery.
+We’re now looking to onboard Tealios, another external vendor, to do something similar — they’ll be uploading a daily status file related to SMS delivery. I’d appreciate your help in confirming what’s required to grant Tealios access to the same non-prod S3 instance.
 
-Schedule Job API – records job progress, supporting audit trail and retries.
+Could you let me know:
 
+Whether we can follow the same process as before?
 
-
-Job Execution & Automation
-
-Onboarded cron triggers and APIs to Stonebranch (prod-ready).
-
-Supports automated scheduling, job retries, and error handling.
+If anything (e.g., credentials, whitelisting, endpoint exposure) needs to be set up or updated for their integration?
 
 
-Security & QA
+Let me know what steps we need to take from our side.
 
-Passed AquaScan checks; supported QA during testing.
-
-
-Business Value
-
-Enables scalable KYC market roll-out by improving job automation and reliability.
-
-Boosts audit compliance via tracked job execution.
-
-Increases operational efficiency with reduced manual intervention.
-
-
+Thanks so much,
+[Your Name]
 
 
 ---
 
-Let me know if you want a PowerPoint-ready version (landscape, text sizing, slide layout).
+Let me know if you want a version that includes any names from the prior integration, or if you’d like to reference Kamad’s earlier help.
 
