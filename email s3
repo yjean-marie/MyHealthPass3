@@ -1,4 +1,10 @@
-Absolutely! I'll drop that right here in the chat so you can easily copy it whenever you're ready:
+Certainly! Here's a full, polished version of the email and instructions that you can copy into a Word document and send to the vendor. I've left out the Java snippet and phrased everything to suit both technical and non-technical readers.
+
+
+---
+
+EMAIL TEXT
+(Place this at the top of your Word document or paste into the email body)
 
 
 ---
@@ -7,11 +13,13 @@ Subject: Access to Amazon S3 for Daily Delivery Status Uploads
 
 Hi Team,
 
-I hope this message finds you well. First and foremost, I want to apologize for the delay in getting back to you regarding this access. I truly appreciate your patience and understanding.
+I hope this message finds you well. First and foremost, I want to apologize for the delay in getting back to you regarding access. Thank you for your patience.
 
-I’m happy to let you know that we now have the credentials ready for you to access the S3 bucket. Our team is also in the process of gathering the necessary information on how to set up the network gateway on your end, as one of our team members has done this before for another vendor. I'll make sure to pass along those details as soon as I have them.
+We now have the credentials ready for you to access the S3 bucket. Please see the instructions below for accessing the bucket manually using Cyberduck. This can be useful for testing or initial validation.
 
-Once again, I apologize for the delay, and thank you for your understanding. Please let me know if you have any questions or need further assistance.
+We understand you may prefer to integrate directly via code. While the instructions below focus on manual access, the provided credentials and endpoint are fully compatible with most AWS S3 SDKs and HTTP clients. If you would like a code snippet in your preferred language, we're happy to provide that as well.
+
+Let us know if you have any questions or run into any issues.
 
 Best regards,
 Yuri
@@ -19,5 +27,99 @@ Yuri
 
 ---
 
-There you go! Let me know if there's anything else you need.
+ATTACHMENT OR COPY BELOW TO BODY:
+(Title this section “S3 Access Instructions – Manual Upload via Cyberduck” in the Word document)
+
+
+---
+
+📂 S3 Access Instructions – Manual Upload via Cyberduck
+
+These instructions will guide you through manually uploading your daily delivery status file to our S3 bucket using Cyberduck. This can be helpful for initial setup and validation.
+
+
+---
+
+🔧 Step 1: Download and Install Cyberduck
+
+Visit: https://cyberduck.io
+
+Download and install Cyberduck for your operating system (Windows or macOS)
+
+
+
+---
+
+🔐 Step 2: Connect to the S3 Bucket
+
+1. Open Cyberduck
+
+
+2. Click “Open Connection”
+
+
+3. In the dropdown, select Amazon S3
+
+
+4. Fill in the following details:
+
+Server: cages3sgd.devfg.rbc.com
+
+Access Key ID: HLSTYMH9K5FCQJBVEEB6
+
+Secret Access Key: gR3DLooslnMWNQQrnejeOjkd/52Fyzlrdsl2MtS
+
+Bucket: kflo-kflo1kycs3bucket001
+
+Region: us-east-1 (if prompted)
+
+
+
+5. Click “Connect”
+
+
+
+
+---
+
+📁 Step 3: Navigate to the Correct Folder
+
+Once connected:
+
+Open the bucket: kflo-kflo1kycs3bucket001
+
+Then open the folder: teleios/sms_delivery_status
+
+
+
+---
+
+⬆️ Step 4: Upload the File
+
+Drag and drop your delivery status file (e.g., delivery_status.csv) into the folder
+
+Overwrite the file if prompted — this is expected for daily updates
+
+Please ensure consistent file naming
+
+
+
+---
+
+✅ Step 5: Confirm the Upload
+
+Right-click the file and choose “Info”
+
+Verify the file size and modified timestamp to confirm successful upload
+
+
+
+---
+
+Optional: If your team prefers to automate the upload, you're welcome to use your preferred SDK or HTTP client. The endpoint and credentials above are compatible with most cloud storage libraries. Let us know if you’d like a code snippet to help with that.
+
+
+---
+
+Let me know if you'd like this converted to a branded document or saved as PDF.
 
