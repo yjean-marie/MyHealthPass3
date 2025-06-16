@@ -1,0 +1,35 @@
+# Use RBC internal Python 3.12 base image
+FROM innersource-docker.rbcartifactory.fg.rbc.com/container-hub/python:3.12-linux-amd64
+
+# Copy everything from project root into /app in the container
+COPY . /app
+
+# Set the working directory
+WORKDIR /app
+
+# Debug: list all files recursively to verify main.py location
+RUN echo "===== Debug: Listing all files under /app =====" && ls -R /app
+
+# Optional: Confirm Python version
+RUN echo "===== Python version =====" && python3 --version
+
+# Optional: Confirm pip version
+RUN echo "===== Pip version =====" && pip --version
+
+# Debug: List pip packages before install
+RUN echo "===== Pip packages BEFORE install =====" && pip freeze
+
+# Install packages from local wheelhouse (if exists)
+RUN pip install --force-reinstall --no-index ./site_packages/* || echo "Skipping local packages..."
+
+# Install project dependencies
+RUN pip install -r requirements.txt
+
+# Debug: List pip packages after install
+RUN echo "===== Pip packages AFTER install =====" && pip freeze
+
+# Drop to non-root user (ensure this user has read access to files)
+USER 1001
+
+# Run FastAPI using uvicorn with correct module path
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
