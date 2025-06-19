@@ -1,0 +1,8 @@
+Hi [Boss's Name],
+
+Thanks for the feedback and I completely understand your concerns. This was definitely a learning experience for the team, as we're new to Stonebranch, and it was the first time we pushed to production with it. We had hardcoded the URLs in UAT by mistake, which led to the issue when we promoted to production.
+
+Also, I wanted to mention that we've been following the guidance from the Stonebranch team on how promotions are handled, and we weren't aware of Ansible before you brought it up. It's definitely something we'll look into as we refine our deployment process and make it more robust moving forward. Really appreciate your understanding as we fine-tune everything!
+
+Best,
+[Yuri]
