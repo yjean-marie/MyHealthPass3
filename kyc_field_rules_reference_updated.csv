@@ -1,0 +1,55 @@
+Field Name,Description with Examples
+2 UID,"If Source is T24 (Trinidad or Curacao), UID = CIF + Next KYC Refresh Date (yyyymmdd). If Source is RIBS (Bahamas or Barbados), UID = Transit + CIF + Next KYC Refresh Date."
+3 CIF,"randomly generated number(800000002, 860050419) - upto 9 characters (7 for RIBS and 9 for T24 clients)"
+4 Client Type,"Personal, Business"
+5 Name,Use Faker with country specific names
+Country,"Bahamas, Barbados, Curacao, Trinidad and Tobago"
+7 Transit,"Bahamas 05625, Curacao=AN0806100, Barbados=09435, Trinidad=TT018930"
+3 Address1,Use Faker with country speciific formatting
+Address2,Use Faker with country speciific formatting
+0 Address3,Use Faker with country speciific formatting
+1 Address4,Use Faker with country speciific formatting
+2 Email Address,use the name with dot(.) in between
+3 Box Link,generate a sample box link
+4 Telephone Contact,generate based on country
+5 Risk Rating,"MEDIUM, STANDARD, HIGH"
+6 KYC Refresh Status,"Refresh Coming Due, Due for Restrain, Out Of Order, Restrained, Restrain Lifted, Exception Granted"
+7 Current Case Status,"Refresh Coming Due, Due for Restrain, Out Of Order, Restrained, Restrain Lifted, Exception Granted - may not be required"
+8 Business Documents Outstanding,"Come up with the best vues here(YES,NO)"
+9 Entity Self-Certification Form Outstanding,"Come up with the best values here(YES, NO)"
+20 UBOID Outstanding,"Come up with the best values here(YES,NO)"
+21 UBO-Proof of Address Outstanding,"Come up with the best values here(YES,NO)"
+22 UBO in order,"Come up with the best values here(YES,NO)"
+23 ROS officer,Generate names with faker
+24 File Review Date,Date that make sense in the flow
+25 1st Notice Date,Only populated if Next KYC Refresh Date > today AND Case Status is 'Out Of Order'. Value = Next KYC Refresh Date + 30 days.
+26 1st Notice Type,"Should only be filled if Next KYC Refresh Date is greater than current data and Case Status is ""Out of Order"" Options are E, L, S (signifying EMAIL, LETTER, SMS)"
+27 2nd Notice Date,Only populated if Next KYC Refresh Date > today AND Case Status is 'Out Of Order'. Value = 30 days after 1st Notice Date.
+28 2nd Notice Type,"Should only be filled if Refresh Date is greater than current data and Case Status is ""Out of Order"".  Options are E, L, S (signifying EMAIL, LETTER, SMS)"
+29 3rd Notice Date,Only populated if Next KYC Refresh Date > today AND Case Status is 'Out Of Order'. Value = 30 days after 2nd Notice Date.
+30 3rd Notice Type,"Should only be filled if Refresh Date is greater than current data and Case Status is ""Out of Order"".  Options are E, L, S (signifying EMAIL, LETTER, SMS)"
+31 Notice1 Method status,"Only populated if notice is sent. 95% chance of '0' (success), 5% '1' (failure)."
+32 Notice 2 Method status,"null, 0 (0 is for success)"
+33 Notice3 Method status,"Only populated if notice is sent. 95% chance of '0' (success), 5% '1' (failure)."
+34 Notice1 Method fail reason,Only populated if corresponding status is not '0'. Random failure message.
+35 Notice2 Method fail reason,Only populated if corresponding status is not '0'. Random failure message.
+36 Notice 3 Method fail reason,"Error text coming in form vendor (for email, letter, sms)"
+37 Notification Expiry date,Only populated if Next KYC Refresh Date > today AND Case Status is 'Out Of Order'. Value = Next KYC Refresh Date + 105 days.
+38 Refresh date (Last KYC),Date that makes sense in the flow for the client
+39 Next KYC Refresh date,"Date that makes sense in the flow for the client (based on set cadence + Last KYC Refresh date, eg if Last KYC refresh date is 1/1/2024 and the refresh cadence for the clients jurisdiction/risk rating is 2 years, the Next KYC date will be 1/1/2026 (last kyc + 2 years cadence)"
+40 Client Response Due Date,Only populated if Next KYC Refresh Date > today AND Case Status is 'Out Of Order'. Value = later of (Next KYC Refresh Date + 120 days) or (3rd Notice Date + 30 days).
+41 Restraint date,Should only be filled if case status matches. Date that makes sense in the flow for the client
+42 Exception start date,Should only be filled if case status matches. Date that makes sense in the flow for the client
+43 Exception expiry date,"Should only be filled if case status matches. Date that makes sense in the flow for the client. Usually computed as Exception start date + certain extension period (30, 90 days)."
+44 Exception Duration,"Cumulative exception duration, eg 120 (signifies 120 days extn received so far)"
+45 level1 Exception Rationale,Exception reason text eg 'Client is out of country'
+46 level2 Exception Rationale,Exception reason text eg 'Client is out of country'
+47 level3 Exception Rationale,Exception reason text eg 'Client is out of country'
+48 Updates to ICN,"Come up with the best values here(YES,NO)"
+49 Updates on Core,"Come up with the best values here(YES,NO)"
+50 Portfolio,Come up with the best values here - what is this field for?
+51 AO Code,Account Officers code - upto 10 char: 821006
+52 Source,"RIBS, T24. RIBS is Bahamas and Barabados. T24 is Trinidad and Curacao. Make sure and match this up with transit"
+53 ESCG Oversight,"Y,N"
+54 ESCG Lead,"Y,N"
+55 Staff Role,"role in staff in Portal - p10_collections, p9_rslu, ros, senior ros, rm, bm etc"
