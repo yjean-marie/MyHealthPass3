@@ -1,0 +1,38 @@
+Field Name,Description
+CIF,"randomly generated number(800000002, 860050419)"
+Client Type,"Personal,Business"
+Name,Use Faker with country specific names
+Country,"Bahamas, Barbados, Curacao, Trinidad and Tobago"
+Transit,"Bahamas=05625, Curacao=AN0806100, Barbados=09435, Trinidad=TT018930"
+Address1,Use Faker with country speciific formatting
+Address2,Use Faker with country speciific formatting
+Address3,Use Faker with country speciific formatting
+Address4,Use Faker with country speciific formatting
+Email Address,use the name with dot(.) in between
+Box Link,generate a sample box link
+Telephone Contact,generate based on country
+Risk Rating,"MEDIUM,STANDARD"
+Case Status,"Refresh Coming Due, Due for Restrain, Out Of Order, Restrained, Restrain Lifted, Exception Granted, Due For Restrain"
+Current Case Status,"Refresh Coming Due, Due for Restrain, Out Of Order, Restrained, Restrain Lifted, Exception Granted, Due For Restrain"
+Business Documents Outstanding,"Come up with the best values here(YES,NO)"
+Entity Self-Certification Form Outstanding,"Come up with the best values here(YES,NO)"
+UBOID Outstanding,"Come up with the best values here(YES,NO)"
+UBO-Proof of Address Outstanding,"Come up with the best values here(YES,NO)"
+UBO in order,"Come up with the best values here(YES,NO)"
+ROS officer,Generate names with faker
+File Review Date,Date that make sense in the flow
+1st Notice Date,"Should only be filled if Refresh Date is greater than current data and Case Status is ""Out of Order"""
+1st Notice Type,"Should only be filled if Refresh Date is greater than current data and Case Status is ""Out of Order"". Options are EMAIL, LETTER, SMS"
+2nd Notice Date,"Should only be filled if Refresh Date is greater than current data and Case Status is ""Out of Order"". And is 30 days from 1st Notice Date"
+2nd Notice Type,"Should only be filled if Refresh Date is greater than current data and Case Status is ""Out of Order"". Options are EMAIL, LETTER, SMS"
+3rd Notice Date,"Should only be filled if Refresh Date is greater than current data and Case Status is ""Out of Order"". And is 30 days from 2nd Notice Date"
+3rd Notice Type,"Should only be filled if Refresh Date is greater than current data and Case Status is ""Out of Order"". Options are EMAIL, LETTER, SMS"
+Notification Expiry date,"Should only be filled if Refresh Date is greater than current data and Case Status is ""Out of Order"". And is 30 days from 3rd Notice Date"
+Refresh date (Last KYC),Date that makes sense in the flow for the client
+Next KYC Refresh date,Date that makes sense in the flow for the client
+Restraint date,Should only be filled if case status matches. Date that makes sense in the flow for the client
+Exception date,Should only be filled if case status matches. Date that makes sense in the flow for the client
+Exception expiry date,Should only be filled if case status matches. Date that makes sense in the flow for the client
+Updates to ICN,"Come up with the best values here(YES,NO)"
+Updates on Core,"Come up with the best values here(YES,NO)"
+Portfolio,Come up with the best values here
