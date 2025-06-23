@@ -321,3 +321,178 @@ Feature: Process Teleios delivery status file and update DB
  Confirm correct run_date and created_at values are set.
 
  Upload a file with malformed rows and confirm they're skipped.
+
+
+
+📌 Subtask / Technical Task:
+Title:
+Create Message and MessageLog tables
+
+Description:
+Create two new tables to support SMS tracking and audit logging:
+
+1. Message Table
+Stores the most recent delivery status for a message:
+
+message_id (PK, string)
+
+phone_number (string)
+
+delivery_status (string, nullable)
+
+error_message (string, nullable)
+
+status_timestamp (datetime, nullable)
+
+run_date (date, nullable)
+
+message_period (string, nullable)
+
+delivery_attempts_count (int, default 1)
+
+2. MessageLog Table
+Stores a historical record of all delivery attempts:
+
+message_log_id (PK)
+
+message_id (FK to Message)
+
+delivery_status
+
+error_message
+
+status_timestamp
+
+run_date
+
+source or attempt_type (e.g., "Teleios File")
+
+created_at timestamp
+
+Acceptance Criteria:
+
+Both tables are created via ORM or migration scripts
+
+Repository classes (MessageRepository, MessageLogRepository) are created and injected
+
+Tables are ready for use in downstream processing and file ingestion jobs
+
+Here are the Java classes and repository interfaces for Story 1, based on your Message and MessageLog table structure, assuming you're using Spring Boot + JPA/Hibernate. This will support the subtask for implementing persistence.
+
+📁 model/Message.java
+java
+Copy
+Edit
+package com.example.teleios.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "message")
+public class Message {
+
+    @Id
+    @Column(name = "message_id", nullable = false)
+    private String messageId;
+
+    @Column(name = "phone_number", nullable = false)
+    private String phoneNumber;
+
+    @Column(name = "delivery_status")
+    private String deliveryStatus;
+
+    @Column(name = "error_message")
+    private String errorMessage;
+
+    @Column(name = "status_timestamp")
+    private LocalDateTime statusTimestamp;
+
+    @Column(name = "run_date")
+    private LocalDate runDate;
+
+    @Column(name = "message_period")
+    private String messagePeriod;
+
+    @Column(name = "delivery_attempts_count", nullable = false)
+    private int deliveryAttemptsCount = 1;
+
+    // Getters and Setters omitted for brevity
+}
+📁 model/MessageLog.java
+java
+Copy
+Edit
+package com.example.teleios.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "message_log")
+public class MessageLog {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "message_log_id")
+    private Long messageLogId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "message_id", nullable = false)
+    private Message message;
+
+    @Column(name = "delivery_status")
+    private String deliveryStatus;
+
+    @Column(name = "error_message")
+    private String errorMessage;
+
+    @Column(name = "status_timestamp")
+    private LocalDateTime statusTimestamp;
+
+    @Column(name = "run_date")
+    private LocalDate runDate;
+
+    @Column(name = "source")
+    private String source;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    // Getters and Setters omitted for brevity
+}
+📁 repository/MessageRepository.java
+java
+Copy
+Edit
+package com.example.teleios.repository;
+
+import com.example.teleios.model.Message;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface MessageRepository extends JpaRepository<Message, String> {
+}
+📁 repository/MessageLogRepository.java
+java
+Copy
+Edit
+package com.example.teleios.repository;
+
+import com.example.teleios.model.MessageLog;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface MessageLogRepository extends JpaRepository<MessageLog, Long> {
+}
+Let me know if you'd like to also include:
+
+Custom queries (e.g., by runDate, status, etc.)
+
+Liquibase changelog for DB creation
+
+Service layer scaffolding
+
+Unit tests for persistence
+
+Or if you're using a different DB setup (e.g., reactive repositories, MongoDB, etc.).
