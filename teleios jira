@@ -1,0 +1,270 @@
+Thanks — that screenshot and your uploaded file give me a complete understanding of:
+
+Where and how the SendSmsResponse is returned
+
+How messageID is retrieved
+
+Where to introduce the logic for storing the messageID
+
+Where to log a critical error if messageID == null
+
+
+Now here’s your fully detailed and testable Jira story, complete with technical notes and Gherkin-formatted acceptance criteria tailored for your code.
+
+
+---
+
+📝 Jira Story
+
+Title:
+Capture and store messageID from SMS API response; log critical error if null
+
+Description:
+As a developer, I want to store the messageID returned by Teleios (from SendSmsResponse) in a new Message table. If the messageID is null, the system must log a critical error and skip message table insertion.
+
+
+---
+
+🔧 Technical Details
+
+Update KYCServiceImpl.java to check response.getMessageID().
+
+If messageID == null, log a Level.ERROR or Level.FATAL log:
+
+> "CRITICAL: Teleios returned null messageID for UUID: [uuid], Phone: [phoneNumber]"
+
+
+
+If messageID != null, insert a new row into the Message table with:
+
+message_id = response.getMessageID()
+
+phone_number = notificationMetaData.getClientMobile()
+
+status = response.getStatus()
+
+timestamp = response.getTimestamp()
+
+message_period = derived from method
+
+delivery_attempts_count = 1
+
+
+
+> Note: You will need to create a new Message JPA entity and MessageRepository if not yet done.
+
+
+
+
+---
+
+✅ Acceptance Criteria (Gherkin Format)
+
+Feature: Store messageID from Teleios and log when missing
+
+  Background:
+    Given the Message table has the following columns:
+      | message_id             | string, primary key |
+      | phone_number           | string              |
+      | delivery_status        | string (nullable)   |
+      | error_message          | string (nullable)   |
+      | run_date               | date (nullable)     |
+      | status_timestamp       | datetime (nullable) |
+      | message_period         | string (nullable)   |
+      | delivery_attempts_count| int (default 1)     |
+
+  Scenario: Teleios returns a valid messageID
+    Given a valid SMS request is sent to Teleios
+    And the response contains a non-null messageID
+    When the KYC service processes the response
+    Then a new row should be inserted into the Message table
+    And the message_id should match the one returned from Teleios
+    And the phone_number should match the original recipient
+    And the timestamp should match response.getTimestamp()
+    And delivery_status and error_message should be null
+
+  Scenario: Teleios returns a null messageID
+    Given a valid SMS request is sent to Teleios
+    And the response contains a null messageID
+    When the KYC service processes the response
+    Then no record should be inserted into the Message table
+    And a critical error should be logged with:
+      "CRITICAL: Teleios returned null messageID for UUID: <uuid>, Phone: <phone>"
+
+  Scenario: Regression - Successful SMS still behaves correctly
+    Given a valid phone number and message
+    When Teleios responds successfully with a messageID
+    Then the SMS should be considered delivered
+    And the Message table should be updated as per normal flow
+
+  Scenario: Regression - SMS send failure (invalid number)
+    Given an invalid phone number is used
+    When the SMS service attempts to send
+    Then no call is made to Teleios
+    And no messageID is processed
+    And no entry is inserted into the Message table
+
+  Scenario: Regression - Network or server failure when sending SMS
+    Given the Teleios API is unavailable
+    When a request is sent
+    Then the system retries or fails as per current logic
+    And no record is inserted into the Message table
+    And the error is logged appropriately
+
+
+---
+
+🧪 QA Checklist
+
+Test messageID presence with a mock response.
+
+Verify DB insertion only occurs when messageID != null.
+
+Confirm logging via application logs (ELK, console, etc.).
+
+Execute regression test cases for SMS delivery, failure, and null inputs.
+
+
+
+---
+
+Let me know if you'd like a follow-up story for creating the actual Message table and JPA repository, or if you want this framed for a Confluence doc or Jira Epic layout.
+
+
+Crystal clear — this is a great refinement.
+
+You're building a system where only one mode (Cron or API) can be active at any given time, controlled by a Vault-stored scheduler_switch. So the job can be triggered either:
+
+Automatically via Cron, or
+
+Manually via API (Stonebranch),
+
+
+…but never both at the same time, and the system should enforce this using the switch.
+
+Here’s the complete Jira story with all logic and constraints covered, plus robust Gherkin acceptance criteria for both Cron and API execution paths.
+
+
+---
+
+📝 Jira Story
+
+Title:
+Implement delivery status job with dual trigger: Cron & API (Stonebranch), controlled by Vault-based scheduler switch
+
+Description:
+As a developer, I want to support two methods for triggering the Teleios delivery status job — via a daily cron and via a REST API endpoint — but only one method should be active at a time. A scheduler switch stored in Vault (scheduler_selector_switch) will determine the active mode: either "CRON" or "API". The inactive path should be disabled at runtime.
+
+Both triggers must call the same service that processes the daily Teleios SMS delivery status file and updates the Message and MessageLog tables accordingly.
+
+
+---
+
+🔧 Technical Implementation Notes
+
+Create one central method, e.g. processTeleiosDeliveryStatusFile(), in a DeliveryStatusService.
+
+Cron job uses @Scheduled(cron = "...") but checks the Vault switch before running.
+
+REST endpoint POST /jobs/teleios-delivery-status does the same — checks switch before execution.
+
+If the mode is disabled, return/log an appropriate error and do not run the job.
+
+
+
+---
+
+✅ Acceptance Criteria (Gherkin Format)
+
+Feature: Trigger delivery status job via Cron or API, governed by scheduler switch
+
+  Background:
+    Given the system reads the scheduler switch value from Vault
+    And the value is either "CRON" or "API"
+
+  Scenario: Cron executes the job when switch is set to CRON
+    Given the scheduler_selector_switch is set to "CRON"
+    When the scheduled cron job triggers
+    Then the delivery status job should execute
+    And the delivery file should be read and processed
+    And the Message and MessageLog tables should be updated
+
+  Scenario: Cron is blocked when switch is set to API
+    Given the scheduler_selector_switch is set to "API"
+    When the scheduled cron job triggers
+    Then the job should not run
+    And a log message should be written:
+      "Cron execution skipped due to scheduler switch set to API"
+
+  Scenario: API triggers the job when switch is set to API
+    Given the scheduler_selector_switch is set to "API"
+    And a POST request is made to /jobs/teleios-delivery-status
+    When the endpoint is hit
+    Then the job should execute
+    And return 200 OK with a success message
+    And the delivery file should be read and processed
+    And the Message and MessageLog tables should be updated
+
+  Scenario: API is blocked when switch is set to CRON
+    Given the scheduler_selector_switch is set to "CRON"
+    When a POST request is made to /jobs/teleios-delivery-status
+    Then the request should return 403 Forbidden
+    And the response should contain:
+      {
+        "status": "failure",
+        "message": "API trigger disabled by scheduler switch"
+      }
+
+  Scenario: Delivery job updates records for valid message IDs
+    Given the file contains message_id "abc123"
+    And that message exists in the Message table
+    When the job runs
+    Then the Message table should be updated with new status data
+    And a new MessageLog row should be inserted for that message_id
+
+  Scenario: File contains unknown message ID
+    Given the delivery file contains message_id "unknown123"
+    And no record exists in the Message table
+    When the job runs
+    Then no Message record is updated
+    And a warning is logged:
+      "Warning: message_id unknown123 not found in Message table"
+
+  Scenario: File not found in S3
+    Given no delivery file exists for the current day
+    When the job is triggered
+    Then a critical error should be logged:
+      "Error: Teleios delivery file not found for today"
+    And the job exits gracefully without crashing
+
+  Scenario: Invalid file content is skipped
+    Given the delivery file contains a malformed row
+    When the job runs
+    Then all valid rows are processed
+    And the malformed row is logged and ignored
+
+  Scenario: Manual trigger logs audit trail
+    When the job is triggered via the API
+    Then the system logs:
+      "Manual trigger: Teleios delivery job executed via Stonebranch"
+
+
+---
+
+🧪 QA Checklist
+
+Toggle the Vault variable and test both execution paths.
+
+Simulate each scenario (valid file, invalid file, missing file).
+
+Confirm DB updates and MessageLog inserts.
+
+Confirm that the inactive mode (Cron or API) correctly refuses execution.
+
+
+
+---
+
+Would you like a follow-up story for setting the Vault value during deployment or enabling runtime Vault refresh?
+
+
