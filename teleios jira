@@ -146,36 +146,35 @@ Here’s the complete Jira story with all logic and constraints covered, plus ro
 
 
 ---
-
-📝 Jira Story
-
-Title:
-Implement delivery status job with dual trigger: Cron & API (Stonebranch), controlled by Vault-based scheduler switch
-
+Story 2a – Implement delivery status job with dual trigger: Cron & API (Stonebranch), controlled by Vault-based scheduler switch
 Description:
 As a developer, I want to support two methods for triggering the Teleios delivery status job — via a daily cron and via a REST API endpoint — but only one method should be active at a time. A scheduler switch stored in Vault (scheduler_selector_switch) will determine the active mode: either "CRON" or "API". The inactive path should be disabled at runtime.
 
-Both triggers must call the same service that processes the daily Teleios SMS delivery status file and updates the Message and MessageLog tables accordingly.
+Both triggers must call the same service that reads the Teleios SMS delivery status file from S3 and processes it.
 
+🔧 Technical Implementation Notes:
+Create a shared method, e.g. processTeleiosDeliveryStatusFile(), in DeliveryStatusService.
 
----
+Cron job uses @Scheduled(cron = "...") but checks the Vault switch before execution.
 
-🔧 Technical Implementation Notes
+API endpoint: POST /jobs/teleios-delivery-status
 
-Create one central method, e.g. processTeleiosDeliveryStatusFile(), in a DeliveryStatusService.
+Also checks Vault before triggering the job.
 
-Cron job uses @Scheduled(cron = "...") but checks the Vault switch before running.
+Use Vault variable: scheduler_selector_switch (values: CRON, API)
 
-REST endpoint POST /jobs/teleios-delivery-status does the same — checks switch before execution.
+S3 details:
 
-If the mode is disabled, return/log an appropriate error and do not run the job.
+Bucket: rbc-client-delivery
 
+Path: teleios/status/
 
-
----
+Filename pattern: delivery-status-YYYYMMDD.csv
 
 ✅ Acceptance Criteria (Gherkin Format)
-
+gherkin
+Copy
+Edit
 Feature: Trigger delivery status job via Cron or API, governed by scheduler switch
 
   Background:
@@ -186,8 +185,8 @@ Feature: Trigger delivery status job via Cron or API, governed by scheduler swit
     Given the scheduler_selector_switch is set to "CRON"
     When the scheduled cron job triggers
     Then the delivery status job should execute
-    And the delivery file should be read and processed
-    And the Message and MessageLog tables should be updated
+    And the delivery file "delivery-status-YYYYMMDD.csv" should be read from S3 bucket "rbc-client-delivery" path "teleios/status/"
+    And the file contents should be passed for processing
 
   Scenario: Cron is blocked when switch is set to API
     Given the scheduler_selector_switch is set to "API"
@@ -201,9 +200,8 @@ Feature: Trigger delivery status job via Cron or API, governed by scheduler swit
     And a POST request is made to /jobs/teleios-delivery-status
     When the endpoint is hit
     Then the job should execute
+    And the delivery file should be read and passed for processing
     And return 200 OK with a success message
-    And the delivery file should be read and processed
-    And the Message and MessageLog tables should be updated
 
   Scenario: API is blocked when switch is set to CRON
     Given the scheduler_selector_switch is set to "CRON"
@@ -215,56 +213,111 @@ Feature: Trigger delivery status job via Cron or API, governed by scheduler swit
         "message": "API trigger disabled by scheduler switch"
       }
 
-  Scenario: Delivery job updates records for valid message IDs
-    Given the file contains message_id "abc123"
-    And that message exists in the Message table
-    When the job runs
-    Then the Message table should be updated with new status data
-    And a new MessageLog row should be inserted for that message_id
-
-  Scenario: File contains unknown message ID
-    Given the delivery file contains message_id "unknown123"
-    And no record exists in the Message table
-    When the job runs
-    Then no Message record is updated
-    And a warning is logged:
-      "Warning: message_id unknown123 not found in Message table"
-
-  Scenario: File not found in S3
-    Given no delivery file exists for the current day
-    When the job is triggered
-    Then a critical error should be logged:
-      "Error: Teleios delivery file not found for today"
-    And the job exits gracefully without crashing
-
-  Scenario: Invalid file content is skipped
-    Given the delivery file contains a malformed row
-    When the job runs
-    Then all valid rows are processed
-    And the malformed row is logged and ignored
-
   Scenario: Manual trigger logs audit trail
     When the job is triggered via the API
     Then the system logs:
       "Manual trigger: Teleios delivery job executed via Stonebranch"
-
-
----
-
 🧪 QA Checklist
+ Simulate Vault toggle between "CRON" and "API" values and confirm correct path executes.
 
-Toggle the Vault variable and test both execution paths.
+ Validate that file delivery-status-YYYYMMDD.csv is fetched from rbc-client-delivery/teleios/status/.
 
-Simulate each scenario (valid file, invalid file, missing file).
+ Validate 403 response when wrong method is used.
 
-Confirm DB updates and MessageLog inserts.
+ Confirm logging messages appear per scenario.
 
-Confirm that the inactive mode (Cron or API) correctly refuses execution.
+ Mock S3 file not found and confirm error handling.
 
+📘 Story 2b – Parse delivery status file and update Message and MessageLog tables
+Description:
+As a developer, I want the delivery status job to parse the Teleios delivery status file from S3 and update the Message table with the latest delivery status while also appending a historical record to the MessageLog table. This supports audit tracking of all delivery attempts.
 
+🗂 Tables to Use
+Message Table
 
----
+Field	Type	Description
+message_id	string (PK)	Unique ID from Teleios
+phone_number	string	Recipient number
+delivery_status	string, nullable	Latest status
+error_message	string, nullable	Error from delivery
+status_timestamp	datetime, nullable	Time status updated
+run_date	date, nullable	Date the job ran
+message_period	string, nullable	Period label (optional)
+delivery_attempts_count	int, default 1	Tracks how many attempts made
 
-Would you like a follow-up story for setting the Vault value during deployment or enabling runtime Vault refresh?
+MessageLog Table
 
+Field	Type	Description
+message_log_id	PK	Auto-generated
+message_id	FK to Message	
+delivery_status	string	Status for the attempt
+error_message	string	Error from Teleios (if any)
+status_timestamp	datetime	Time of delivery update
+run_date	date	Execution day
+source	string	e.g. "Teleios File"
+created_at	timestamp	Record creation timestamp
 
+🔧 Implementation Notes:
+Each row in the delivery file includes:
+MessageId, Timestamp, Delivered_Status, ErrorMessage, RunDate
+
+For each valid MessageId in the file:
+
+Update the matching row in Message table
+
+If it exists, update status and timestamp
+
+If it doesn't exist, log a warning (do not insert)
+
+Insert a new row into MessageLog with full delivery record
+
+Source for MessageLog = "Teleios File"
+
+✅ Acceptance Criteria (Gherkin Format)
+gherkin
+Copy
+Edit
+Feature: Process Teleios delivery status file and update DB
+
+  Scenario: Message and MessageLog tables updated correctly
+    Given the file contains a row with message_id "abc123"
+    And that message exists in the Message table
+    When the job runs
+    Then the Message table is updated with Delivered_Status, ErrorMessage, and Timestamp
+    And a new MessageLog row is inserted with source = "Teleios File"
+
+  Scenario: File contains unknown message ID
+    Given the file contains message_id "unknown123"
+    And that message does not exist in the Message table
+    When the job runs
+    Then no Message row is created
+    And a warning is logged:
+      "Warning: message_id unknown123 not found in Message table"
+
+  Scenario: File contains multiple delivery attempts for same message
+    Given multiple rows with the same message_id exist in the file
+    When the job runs
+    Then the Message table should reflect the latest timestamp row
+    And all rows should be recorded in the MessageLog table
+
+  Scenario: Malformed row is skipped
+    Given a row is missing required fields
+    When the job runs
+    Then the malformed row is logged and skipped
+    And other valid rows are processed
+
+  Scenario: Run date is stored with all updates
+    Given the file contains RunDate "2025-06-23"
+    Then both Message and MessageLog rows store this run date
+🧪 QA Checklist
+ Upload mock file with valid rows and test updates.
+
+ Confirm delivery_status, error_message, and timestamp update in Message table.
+
+ Confirm MessageLog entries are appended.
+
+ Confirm that unknown message IDs are skipped with warning log.
+
+ Confirm correct run_date and created_at values are set.
+
+ Upload a file with malformed rows and confirm they're skipped.
