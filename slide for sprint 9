@@ -1,0 +1,69 @@
+Great idea. Here's how you can simplify the slide content for presentation, with detailed points moved to the speaker notes:
+
+
+---
+
+🎯 Slide Title: Accomplishments – Last Two Weeks
+
+On Slide (High-Level Bullet Points Only):
+
+
+---
+
+✅ Stonebranch Deployment
+• Job deployed and validated in production
+
+🛠️ DAST Scan Fixes
+• Resolved issues from scan; fixes validated
+
+⚠️ Lower Env Deployment Issues
+• Troubleshooting ongoing infra challenges
+
+💬 Teleios SMS Delivery Status
+• Network gateway confirmed
+• POC completed and demo scheduled
+• Stories finalized for dual-trigger flow
+
+
+---
+
+Speaker Notes (Detailed Context):
+
+
+---
+
+Stonebranch Deployment
+
+Successfully deployed and validated the new Stonebranch job for production use.
+
+Worked closely with QE and business to ensure successful integration and monitoring.
+
+
+DAST Scan Fixes
+
+Investigated and resolved several security vulnerabilities flagged by DAST.
+
+Retested and validated all fixes in lower environments.
+
+
+Lower Environment Deployment Issues
+
+Still encountering issues in the lower environments during deployment.
+
+Collaborating with infrastructure and QE to isolate and resolve the root causes.
+
+
+Teleios SMS Delivery Status
+
+Network Gateway Access Coordination: Identified the need for a gateway for Teleios/external vendor to access S3 bucket. Began coordination with internal teams for access provisioning.
+
+Proof of Concept (POC): Built a quick POC to simulate the ingestion and processing of SMS delivery status files. A demo is scheduled to walk through the solution.
+
+User Stories Finalized: Stories cover cron and API triggers, file validation, and database updates for delivery status. Ready for development kickoff.
+
+
+
+---
+
+Let me know if you'd like a version of this with the speaker notes embedded in PowerPoint.
+
