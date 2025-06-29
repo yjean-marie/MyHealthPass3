@@ -1,0 +1,99 @@
+Great catch — yes, you're right. We need to reintroduce the regression-related acceptance criteria that ensure existing functionality isn't broken when we update Notice_V1.
+
+Here’s the updated Story 1 with regression criteria included:
+
+
+---
+
+✅ Updated Story 1: Store Message ID on Notice_V1 Table
+
+As a developer,
+I want to store the Teleios message_id directly on the Notice_V1 table for each type of notice (notice1, notice2, notice3),
+so that I can later reconcile SMS delivery status with the original message, without relying on a separate Message table.
+
+
+---
+
+🧱 Schema Change (Technical Task)
+
+Add the following columns to the Notice_V1 table:
+
+notice1_message_id VARCHAR(255)
+
+notice2_message_id VARCHAR(255)
+
+notice3_message_id VARCHAR(255)
+
+
+
+---
+
+✅ Acceptance Criteria (Gherkin Format)
+
+Feature: Store message ID for sent SMS notices
+
+  Background:
+    Given the system sends SMS via Teleios API
+    And the response includes a message_id if successful
+
+  Scenario: Successful SMS send for notice1
+    Given an SMS is sent for a notice1 record
+    And the API returns message_id "abc123"
+    When the system processes the response
+    Then the value "abc123" is stored in notice1_message_id on Notice_V1
+
+  Scenario: Successful SMS send for notice2
+    Given an SMS is sent for a notice2 record
+    And the API returns message_id "def456"
+    Then the value "def456" is stored in notice2_message_id on Notice_V1
+
+  Scenario: Successful SMS send for notice3
+    Given an SMS is sent for a notice3 record
+    And the API returns message_id "ghi789"
+    Then the value "ghi789" is stored in notice3_message_id on Notice_V1
+
+  Scenario: Teleios response contains no message_id
+    Given the API response has no message_id
+    Then a critical error is logged:
+      "Critical: Teleios message_id was null — message ID not saved"
+
+  Scenario: Teleios API returns a failure due to invalid number
+    Given the SMS send fails
+    Then no message_id should be saved
+    And the existing Notice_V1 record should remain unchanged
+
+  Scenario: Existing logic continues to function
+    Given SMS send logic was previously functioning correctly
+    When the message_id is added to the record
+    Then the SMS content, client matching, audit logging, and delivery attempt logic still function as before
+
+
+---
+
+🧪 QA Checklist
+
+✅ Send test SMS for each of the three notice types and verify correct message ID is stored.
+
+✅ Simulate null message_id and confirm error is logged.
+
+✅ Simulate invalid phone number — verify no message ID saved.
+
+✅ Validate that no existing SMS-related functionality (e.g., sending logic, number validation, audit logging, retries) is broken.
+
+
+
+---
+
+This now reflects:
+
+The revised solution storing directly in Notice_V1
+
+All three notice types
+
+Null/invalid scenarios
+
+Regression protection
+
+
+Let me know if you want this reflected in a JIRA-style breakdown or with technical subtasks next.
+
