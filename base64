@@ -1,0 +1,48 @@
+You're likely using PowerShell on Windows, where base64 is not a recognized command. Here's how to handle base64 decoding in PowerShell to check your keystore certificate expiry using keytool:
+
+
+---
+
+✅ Step-by-step (PowerShell + Java keytool)
+
+🔁 Step 1: Decode the base64 keystore string
+
+Assuming your base64 content is in a file called keystore.b64:
+
+$base64Content = Get-Content -Raw -Path "keystore.b64"
+[System.IO.File]::WriteAllBytes("decoded_keystore.jks", [System.Convert]::FromBase64String($base64Content))
+
+> This creates a file decoded_keystore.jks from the base64 string.
+
+
+
+
+---
+
+🛠️ Step 2: Use keytool to check expiry
+
+Run this in the same PowerShell window:
+
+keytool -list -v -keystore decoded_keystore.jks
+
+You’ll be prompted for the keystore password.
+
+
+---
+
+✅ Optional: Add alias and password directly
+
+keytool -list -v -keystore decoded_keystore.jks -alias myalias -storepass yourPassword
+
+
+---
+
+Let me know if:
+
+Your base64 string is in a variable instead of a file
+
+You’re using .p12/.pfx format (use -storetype PKCS12)
+
+
+I can tailor the command further if you share how you're storing or receiving the base64.
+
