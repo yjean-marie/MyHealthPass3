@@ -1,0 +1,232 @@
+Thanks, that clarification is spot on. You're no longer using the Message and MessageLog tables — the delivery status and error now need to be stored directly in the existing Notice_V1 table, which has three sets of columns, one for each notice type:
+
+notice1_message_id, notice1_delivery_status, notice1_error_message
+
+notice2_message_id, notice2_delivery_status, notice2_error_message
+
+notice3_message_id, notice3_delivery_status, notice3_error_message
+
+
+Here’s your updated Story 3.
+
+
+---
+
+✅ Story 3: Update Delivery Status on Notice_V1 from Teleios File
+
+As a developer,
+I want to update the Notice_V1 table with delivery status and error message fields based on the message IDs returned in the Teleios delivery file,
+so that the system can track the outcome of SMS sends for each notice type (notice1, notice2, notice3) within the same table.
+
+
+---
+
+🔄 Implementation Notes
+
+The daily delivery file uploaded to S3 contains:
+
+message_id,timestamp,status,error_message,run_date
+
+Match message_id to one of the three message ID fields on Notice_V1:
+
+notice1_message_id
+
+notice2_message_id
+
+notice3_message_id
+
+
+For the match:
+
+Update corresponding *_delivery_status, *_error_message, and possibly a *_status_timestamp (if you want to track when it was updated).
+
+
+Important: Only one field should match — you should not update multiple notice columns per record.
+
+
+
+---
+
+✅ Acceptance Criteria (Gherkin Format)
+
+Feature: Update delivery status on Notice_V1 from Teleios delivery file
+
+  Scenario: Matching message ID to notice1
+    Given the delivery file contains message_id "abc123"
+    And a record exists in Notice_V1 with notice1_message_id = "abc123"
+    When the job runs
+    Then update notice1_delivery_status with the file’s status
+    And update notice1_error_message with the file’s error_message
+    And update notice1_status_timestamp with the file’s timestamp
+
+  Scenario: Matching message ID to notice2
+    Given the delivery file contains message_id "def456"
+    And it matches notice2_message_id
+    Then update the notice2_delivery_status, notice2_error_message, and timestamp
+
+  Scenario: Matching message ID to notice3
+    Given the delivery file contains message_id "ghi789"
+    And it matches notice3_message_id
+    Then update the notice3_delivery_status, notice3_error_message, and timestamp
+
+  Scenario: File contains unknown message ID
+    Given the message_id "xyz999" does not exist in any noticeX_message_id fields
+    Then skip the row
+    And log a warning: "Unknown message_id xyz999 not found in Notice_V1"
+
+  Scenario: File contains malformed row
+    Given a row is missing a required field or improperly formatted
+    Then log the row and skip processing it
+
+  Scenario: File not found in S3
+    Given no delivery file exists for the expected run_date
+    Then log a critical error:
+      "Teleios delivery file not found for expected date"
+
+  Scenario: Manual trigger via API
+    Given the job is triggered via API
+    Then log: "Manual trigger: Teleios delivery job executed via API"
+
+  Scenario: Multiple message IDs match (should not happen)
+    Given a message_id exists in multiple noticeX_message_id fields
+    Then log a critical error and skip the record:
+      "Ambiguous message_id: found in multiple notice columns"
+
+
+---
+
+🧪 QA Checklist
+
+✅ Simulate a delivery file with valid entries — confirm status and error columns are updated appropriately.
+
+✅ Simulate unknown message_id — confirm row is skipped and logged.
+
+✅ Simulate malformed row — confirm valid rows processed, bad one logged.
+
+✅ Confirm that only one notice column is updated per record.
+
+✅ Confirm log messages on API/manual trigger and missing file scenarios.
+
+
+
+---
+
+Let me know if you'd like subtasks for:
+
+Parsing and matching logic
+
+Integration with S3
+
+API vs Cron trigger
+
+Unit tests
+
+
+Or if the naming of columns (*_status_timestamp) differs from your schema.
+
+Yes — that makes perfect sense, and it's a smart move for operational hygiene. Archiving the processed delivery status file helps:
+
+Prevent clutter in the active folder.
+
+Avoid re-processing the same file.
+
+Maintain a history for audits or replays.
+
+
+Here’s your next story:
+
+
+---
+
+✅ Story 4: Archive Delivery File After Successful Processing
+
+As a developer,
+I want to move the processed Teleios delivery status file from the active folder to an archive folder in the same S3 bucket,
+so that we avoid reprocessing and keep the incoming folder clean and manageable.
+
+
+---
+
+📁 Folder Structure in S3
+
+Bucket: rbc-client-delivery (or whatever your actual bucket name is)
+
+Incoming folder: teleios/sms-delivery-status/
+
+Archive folder: teleios/sms-delivery-status-archive/
+
+
+
+---
+
+🔄 Implementation Notes
+
+Archive only after successful processing of the file.
+
+Move (not copy) the file from:
+
+s3://rbc-client-delivery/teleios/sms-delivery-status/delivery-status-YYYYMMDD.csv
+
+to:
+
+s3://rbc-client-delivery/teleios/sms-delivery-status-archive/delivery-status-YYYYMMDD.csv
+
+Maintain the same file name in the archive folder.
+
+If the move fails, log an error and do not delete the original.
+
+Archive step should not prevent the job from succeeding (non-blocking).
+
+
+
+---
+
+✅ Acceptance Criteria (Gherkin Format)
+
+Feature: Archive Teleios delivery file after processing
+
+  Scenario: File is successfully processed
+    Given the delivery file has been parsed and matched successfully
+    When processing is complete
+    Then move the file to the archive folder "teleios/sms-delivery-status-archive/"
+    And preserve the original file name
+
+  Scenario: File move fails due to permission or network issue
+    Given the file was processed
+    But the archive move fails
+    Then log an error:
+      "Failed to archive file delivery-status-YYYYMMDD.csv to archive folder"
+    And retain the file in the original folder
+
+  Scenario: File already exists in archive (edge case)
+    Given a file with the same name exists in the archive folder
+    Then rename the archived version with a timestamp suffix, e.g. `delivery-status-YYYYMMDD-duplicate.csv`
+    And move the processed file with the new name
+
+  Scenario: Archive folder does not exist
+    Given the archive folder is missing
+    When the job attempts to move the file
+    Then automatically create the folder
+    And move the file successfully
+
+
+---
+
+🧪 QA Checklist
+
+✅ Simulate full job run with mock file — confirm file is moved post-processing.
+
+✅ Confirm file no longer exists in original folder.
+
+✅ Confirm content in archive is identical.
+
+✅ Simulate move failure — ensure log is written and file remains.
+
+✅ Confirm job still succeeds if archiving fails.
+
+
+
+---
+
+Would you like subtasks for the file move logic or want to include a unit test to validate archive path construction?
+
