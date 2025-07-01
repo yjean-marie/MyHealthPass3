@@ -1,0 +1,37 @@
+Got it — you want to maintain your technical credibility while acknowledging that your UI-specific knowledge is lighter, and you're leaning on Siddharth for his closer view of the implementation.
+
+Here’s the refined version of that last paragraph:
+
+
+---
+
+Let’s connect tomorrow to walk through it together — and if needed, I’ll follow up with Charlton to clarify what he had in mind. He mentioned a few packaging-related suggestions, but since you're more directly involved with the widget's build setup, it might be easier for you to interpret and apply his feedback from a UI standpoint.
+
+
+---
+
+And here’s the full email with that edit included:
+
+
+---
+
+Subject: Re: Widget Compatibility with Angular 16 Host App
+
+Hi Siddharth,
+
+Thanks for the update and for looking into the integration.
+
+I had a quick chat with Charlton from the Digital team, and from what I gathered, the issue seems to be related to how the widget is currently packaged — specifically that the Angular libraries are being bundled into the component. That might be what’s causing the version mismatch in the Angular 16 application.
+
+Given that the widget was built as a Web Component, my understanding is that it should ideally remain framework-agnostic and not require the host app to match Angular versions. So upgrading the Angular 16 application to Angular 18 just to support the widget doesn’t quite feel like the right approach — especially if it’s more about how the dependencies are handled during packaging (e.g., marking Angular as a peer dependency or excluding it).
+
+Let’s connect tomorrow to walk through it together — and if needed, I’ll follow up with Charlton to clarify what he had in mind. He mentioned a few packaging-related suggestions, but since you're more directly involved with the widget's build setup, it might be easier for you to interpret and apply his feedback from a UI standpoint.
+
+Best,
+Yuri
+
+
+---
+
+Let me know if you want to add a time or calendar link for the sync.
+
