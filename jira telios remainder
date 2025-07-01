@@ -230,3 +230,84 @@ Feature: Archive Teleios delivery file after processing
 
 Would you like subtasks for the file move logic or want to include a unit test to validate archive path construction?
 
+
+
+Perfect — thanks for the field-level specificity. Here's the final refined Gherkin acceptance criteria for the story that updates the Notice_V1 table based on the Teleios delivery status file, now reflecting the exact fields and their naming pattern.
+
+
+---
+
+✅ Final Acceptance Criteria – Story 3: Update Delivery Status on Notice_V1
+
+Feature: Update Notice_V1 with mapped delivery status from Teleios delivery file
+
+  Background:
+    Given the Teleios file includes: message_id, timestamp, status (text), error_message, run_date
+    And the system only considers "DELIVERED" as a successful delivery
+    And all other statuses are treated as retryable failures (mapped to 1)
+    And the Notice_V1 table has fields:
+      - notice_01_method_01_status
+      - notice_01_method_01_field_reason
+      - updated_datetime
+
+  Scenario: Map "DELIVERED" to status = 0
+    Given the file contains message_id "abc123" with status "DELIVERED"
+    And it matches notice_01_message_id in Notice_V1
+    When the job runs
+    Then set notice_01_method_01_status = 0
+    And set notice_01_method_01_field_reason = null
+    And set updated_datetime = the timestamp from the file
+
+  Scenario: Map any other status to status = 1 and log the error message
+    Given the file contains message_id "def456" with status "REJECTED" and error_message "Number invalid"
+    And it matches notice_02_message_id in Notice_V1
+    When the job runs
+    Then set notice_02_method_01_status = 1
+    And set notice_02_method_01_field_reason = "Number invalid"
+    And set updated_datetime = the timestamp from the file
+
+  Scenario: No error_message provided for non-DELIVERED status
+    Given the file contains message_id "ghi789" with status "FAILED"
+    And error_message is blank
+    When the job runs
+    Then set the corresponding noticeX_method_01_status = 1
+    And set noticeX_method_01_field_reason = null
+    And set updated_datetime
+
+  Scenario: Unknown message_id
+    Given message_id "unknown000" is not found in any of notice_01/02/03_message_id fields
+    Then skip the row
+    And log a warning:
+      "Warning: message_id unknown000 not found in Notice_V1"
+
+  Scenario: Malformed or incomplete row
+    Given a row is missing message_id or status
+    Then skip the row
+    And log:
+      "Malformed row encountered: <row details>"
+
+  Scenario: File not found
+    Given no delivery file exists in S3 for the current day
+    Then log a critical error:
+      "Delivery file not found for processing"
+
+
+---
+
+🧠 Notes:
+
+This version directly ties message_id → notice_01/02/03_message_id, and maps accordingly to:
+
+notice_01_method_01_status
+
+notice_01_method_01_field_reason
+
+updated_datetime
+
+
+It also preserves extensibility: if you later want to distinguish true failures (-1), we can extend this mapping logic.
+
+
+Let me know if you're ready for the next story (archiving the processed file), or want this wrapped as a formal Jira ticket with description and subtasks.
+
+
