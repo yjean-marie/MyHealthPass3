@@ -1,0 +1,18 @@
+Sure! Here's a concise and clear deployment description for your request from Dev to QAT:
+
+
+---
+
+Deployment Description:
+This deployment includes the following key fixes:
+
+A correction to the job history list logic to ensure job statuses are updated accurately and no longer remain stuck in "In Progress."
+
+A configuration fix to enable proper retrieval of the schedulerSelectorSwitch variable from Vault. This resolves an issue where all requests were defaulting to the "API" path due to the missing Vault pull.
+
+
+
+---
+
+Let me know if you want this more formal, more technical, or if it should be tailored for a change request form.
+
