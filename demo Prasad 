@@ -1,0 +1,12 @@
+Here’s a concise 1-minute talking script based on your slide:
+
+
+---
+
+“One of our team members focused on improving operational efficiency. Previously, two separate jobs were querying the client profile database to update downstream tables. Now, with the introduction of the Client API, we’ve eliminated that redundancy. The first job fetches client data directly from the API and populates an internal KYC table. From there, the second job reads from this local table instead of making another external call. This change reduces load on the client system, removes our dependency on scheduled data transfers, and makes our process faster, lighter, and more scalable moving forward.”
+
+
+---
+
+Let me know if you want a more casual or technical tone.
+
