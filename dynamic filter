@@ -1,0 +1,95 @@
+Here’s a small accessible demo of an ARIA live region in action, using plain HTML and JavaScript.
+
+When a user selects a document type, that choice is removed (hidden) from the other dropdown, and a message is announced using an ARIA live region.
+
+
+---
+
+✅ Live Demo (HTML + JS)
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ARIA Live Region Dropdown Example</title>
+  <style>
+    .visually-hidden {
+      position: absolute;
+      left: -9999px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Select Document Types</h2>
+
+  <label for="doc1">Document 1:</label>
+  <select id="doc1" class="doc-select">
+    <option value="">-- Select --</option>
+    <option value="passport">Passport</option>
+    <option value="license">Driver's License</option>
+    <option value="utility">Utility Bill</option>
+  </select>
+
+  <br><br>
+
+  <label for="doc2">Document 2:</label>
+  <select id="doc2" class="doc-select">
+    <option value="">-- Select --</option>
+    <option value="passport">Passport</option>
+    <option value="license">Driver's License</option>
+    <option value="utility">Utility Bill</option>
+  </select>
+
+  <!-- ARIA Live Region -->
+  <div id="ariaStatus" class="visually-hidden" aria-live="polite"></div>
+
+  <script>
+    const selects = document.querySelectorAll('.doc-select');
+    const ariaStatus = document.getElementById('ariaStatus');
+
+    function updateDropdowns() {
+      const selectedValues = Array.from(selects)
+        .map(s => s.value)
+        .filter(v => v);
+
+      selects.forEach(select => {
+        const currentValue = select.value;
+        Array.from(select.options).forEach(option => {
+          if (option.value === "") return; // skip placeholder
+          option.hidden = selectedValues.includes(option.value) && option.value !== currentValue;
+        });
+      });
+
+      // ARIA message
+      if (selectedValues.length) {
+        ariaStatus.textContent = `Option${selectedValues.length > 1 ? 's' : ''} ${selectedValues.join(', ')} ${
+          selectedValues.length > 1 ? 'are' : 'is'
+        } no longer available in other dropdowns.`;
+      } else {
+        ariaStatus.textContent = '';
+      }
+    }
+
+    selects.forEach(select => {
+      select.addEventListener('change', updateDropdowns);
+    });
+  </script>
+
+</body>
+</html>
+
+
+---
+
+🔍 What This Demo Shows:
+
+Two dropdowns with shared options.
+
+When a user selects an option in one, it is hidden in the other.
+
+A screen reader will announce which options are no longer available using the aria-live region.
+
+
+Let me know if you'd like a version using React, Vue, or another framework.
+
