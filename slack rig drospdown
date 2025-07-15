@@ -1,0 +1,20 @@
+Here’s a clear, professional Slack message you can send to someone from the RIG team:
+
+
+---
+
+Hey [Name], quick question for you when you have a moment.
+
+We’re working on a form where the user is required to upload five different types of documents. Each type is selected from its own dropdown, and users shouldn’t be able to select the same document type more than once.
+
+Initially, we considered disabling already-selected options in the other dropdowns, but we realized that may violate accessibility standards. So instead, we’re now dynamically hiding already-selected options from the other dropdowns using the hidden attribute, and we’re also using an ARIA live region to announce changes for screen reader users when an option becomes unavailable.
+
+Just wanted to confirm if this approach aligns with RBC’s accessibility guidelines — particularly around using hidden (not disabled) and providing screen reader feedback via a polite live region.
+
+Let me know if this sounds good or if you’d recommend a different approach. Thanks!
+
+
+---
+
+Let me know if you'd like a more casual or more technical version.
+
