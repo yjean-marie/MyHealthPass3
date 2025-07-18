@@ -1,0 +1,92 @@
+Great — here’s a full breakdown of tasks, descriptions, and story point estimates for each notification type (SMS, Letter, Email) in CTF-5, assuming a Fibonacci-style pointing system (e.g., 1, 2, 3, 5, 8). These estimates assume medium complexity and familiarity with the codebase.
+
+
+---
+
+🔔 Notification Refactor Tasks (per notification type)
+
+1. Update DAO/Repository to Use notification_transaction_master Table
+
+Story Points: 3
+Description:
+Replace all references to the notice_v1 table with notification_transaction_master. Ensure correct mapping of fields to the normalized structure and adapt queries accordingly.
+
+
+---
+
+2. Refactor Service Logic to Fetch Client Profile via Client API
+
+Story Points: 5
+Description:
+Remove dependency on the cz_ntft1_v1 table for client profile data. Integrate the Client API into the notification service, handle retries, and deserialize the profile into usable data structures.
+
+
+---
+
+3. Modify Notification Builder Logic
+
+Story Points: 3
+Description:
+Update the logic that assembles the final notification message (SMS/email/letter) to source data from the new table and client API response. Ensure templates still render correctly.
+
+
+---
+
+4. Update Unit Tests to Reflect Table and API Changes
+
+Story Points: 2
+Description:
+Refactor or add unit tests to mock the new API and DB sources. Validate that existing test coverage is maintained for all key logic paths.
+
+
+---
+
+5. Write New Integration Tests for Notification Flow
+
+Story Points: 3
+Description:
+Develop integration tests that validate the full flow—from fetching the notification record and client profile to sending the message. Focus on end-to-end correctness.
+
+
+---
+
+6. Update Configuration or Constants (if applicable)
+
+Story Points: 1
+Description:
+Update environment configs or code constants that relate to table names, API endpoints, or notification types. Externalize where possible for future ease of change.
+
+
+---
+
+7. Perform Code Review and Static Analysis Checks
+
+Story Points: 1
+Description:
+Submit the final code for peer review. Address review comments, run static analysis tools, and ensure compliance with internal coding standards.
+
+
+---
+
+8. Deploy to QA and Validate Notification Output
+
+Story Points: 2
+Description:
+Deploy the changes to the QA environment. Trigger test notifications and confirm that both data and message output are accurate and reflect the refactored flow.
+
+
+---
+
+9. Document Changes in Internal Wiki or Release Notes
+
+Story Points: 1
+Description:
+Create or update developer documentation outlining the new data flow, including table replacement, API integration, and testing notes for future reference.
+
+
+---
+
+🔢 Total per notification type: ~21 story points
+
+Let me know if you want this tailored for a smaller dev team (e.g., fewer points) or if you want a combined epic for all three notifications.
+
