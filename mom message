@@ -1,0 +1,7 @@
+Quick Update:
+
+The issue Rajesh encountered during testing stems from a recent Helios configuration change. Based on Komad’s recommendation, we marked develop-2024 as a release branch. As a result, deployments are now being pushed to the main route in OCP.
+
+With this deployment request, our QAC environment will contain production code only, while UAC—pending approval of the request—will host the develop-2024 code.
+
+That said, this setup is not ideal for our workflow. I'm currently working with Komad to resolve the situation, as we need a solution that allows continued deployment from develop-2024 without affecting our main/prod routing.
