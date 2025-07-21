@@ -1,0 +1,4 @@
+Got it! Here's a revised version including the prompt:
+
+"Hey there! I was thinking about our classification challenge and had an idea that might help as a temporary fix. We could use an LLM to handle the initial classification. The prompt could be something like: 'Please analyze the following PDF document and determine if it matches any of the known document types from this list. If not, indicate that it doesn't fit the known categories, and provide a confidence level.' If the confidence is low, we can just prompt the user to select the document type. It's not a huge deal, but it might make things smoother for now. We can chat more about it in our stand-up tomorrow. Let me know what you think!"
+
