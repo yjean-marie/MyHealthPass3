@@ -1,0 +1,28 @@
+Here’s a professional and punchy slide draft you can use for your sprint demo:
+
+
+---
+
+Sprint Demo – Week of [Insert Date]
+
+Work Completed: Optimizing the SendSMS Job
+
+Client API Integration:
+Replaced direct database calls with the new Client API for retrieving client profiles.
+
+Database Refactor:
+Updated job to use the new normalized notice_transaction table instead of the legacy structure.
+
+Performance Gains:
+Execution time reduced from 68 seconds to 3 seconds (95.6% improvement) for the same input.
+
+
+Impact:
+
+Significantly improved operational efficiency and response time of the SendSMS job, aligning with our ongoing efforts to modernize and streamline existing services.
+
+
+---
+
+Let me know if you want a visual to accompany it (like a small bar chart showing 68s vs 3s), or if you'd like to tone the language up/down based on the audience.
+
