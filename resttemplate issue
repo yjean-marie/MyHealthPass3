@@ -1,0 +1,110 @@
+Got it — based on your screenshots and goal, here’s the simple and specific fix to make your RestTemplate use the custom SSLContext you already configured in CommonConfigProperties.
+
+
+---
+
+✅ What You Already Have
+
+You already have this method in CommonConfigProperties.java:
+
+@Bean
+public SSLContext configureSSL() {
+    ...
+    return sslContext;
+}
+
+But in your EYP0Handler, you’re doing this:
+
+RestTemplate restTemplate = new RestTemplate(); // ❌ This ignores your SSLContext
+
+
+---
+
+✅ How to Fix It
+
+🔧 Step 1: Add a RestTemplate Bean using your SSLContext
+
+Put this below your existing configureSSL() method in the same file (CommonConfigProperties.java):
+
+@Bean
+public RestTemplate restTemplate(SSLContext sslContext) {
+    HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
+
+    CloseableHttpClient httpClient = HttpClients.custom()
+        .setSSLContext(sslContext)
+        .build();
+
+    factory.setHttpClient(httpClient);
+    return new RestTemplate(factory);
+}
+
+
+---
+
+🔧 Step 2: Inject the RestTemplate in EYP0Handler
+
+In your EYP0Handler.java:
+
+1. Remove this line:
+
+
+
+RestTemplate restTemplate = new RestTemplate(); // ❌ remove this
+
+2. Inject it instead:
+
+
+
+Update your class like this:
+
+@Component
+public class EYP0Handler {
+
+    private final RestTemplate restTemplate;
+
+    @Autowired
+    public EYP0Handler(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    public Eyp0RestrainResponse eyp0ApiCall(...) {
+        // use this.restTemplate here instead
+    }
+}
+
+
+---
+
+🔧 Step 3: Replace Usage
+
+In your eyp0ApiCall(...) method:
+
+Change this:
+
+RestTemplate restTemplate = new RestTemplate();
+
+To just use the injected one:
+
+// Already available as this.restTemplate
+
+So leave everything else the same — you're just replacing the line where you manually instantiate the RestTemplate.
+
+
+---
+
+✅ Done!
+
+Now your RestTemplate will:
+
+Use your SSLContext
+
+Send your client certificate
+
+Pass Apigee’s mTLS check
+
+
+
+---
+
+Let me know if you're using Spring Boot’s @ComponentScan on a different base package and need to move your config to its own @Configuration class — but the above should work based on your current setup.
+
