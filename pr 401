@@ -1,0 +1,25 @@
+Here’s your content rewritten in a polished and clear way for both purposes:
+
+
+---
+
+✅ Pull Request Description:
+
+> Resolved an issue where requests to the restrainer client via EYP0 were returning a 401 Unauthorized: nobody. While investigating, we initially addressed a separate EYP0 deployment issue caused by recent T24 upgrade changes. Once EYP0 was redeployed and functioning correctly, the 401 error persisted. Further investigation pointed to a compatibility issue—likely due to the older RestTemplate-based HTTP client conflicting with recent changes in how RPG handles SSL certificates. A single line of code was added to explicitly set the SSL context, resolving the authorization issue during testing.
+
+
+
+
+---
+
+💬 Message to Boss (WhatsApp style):
+
+> Hey, just raising a quick PR to fix an issue Viraj picked up during testing. He was getting a 401 unauthorized from the restrainer client via EYP0. At first, we thought it might’ve been due to a separate EYP0 deployment problem from the T24 upgrade, but even after fixing that, the 401 persisted. Turns out it’s likely due to a mismatch between the old RestTemplate client and changes in how RPG handles certs now. I added one line to explicitly set the SSL context, and it seems to have resolved the issue.
+
+
+
+
+---
+
+Let me know if you want it even more casual or more technical in tone.
+
