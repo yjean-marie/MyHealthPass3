@@ -1,0 +1,62 @@
+Day,Participant,Baseline Blood Pressure,Current Blood Pressure,BP Improvement (%),Baseline Weight,Current Weight,Weight Loss (%)
+1,Participant 1,140,139.7,0.21,157,156.8,0.13
+2,Participant 1,140,139.3,0.5,157,156.6,0.25
+3,Participant 1,140,139.4,0.43,157,156.6,0.25
+4,Participant 1,140,139.4,0.43,157,156.0,0.64
+5,Participant 1,140,138.1,1.36,157,156.8,0.13
+6,Participant 1,140,138.7,0.93,157,156.5,0.32
+7,Participant 1,140,139.2,0.57,157,155.4,1.02
+8,Participant 1,140,139.6,0.29,157,156.1,0.57
+9,Participant 1,140,138.4,1.14,157,156.1,0.57
+10,Participant 1,140,138.7,0.93,157,156.9,0.06
+11,Participant 1,140,137.5,1.79,157,156.6,0.25
+12,Participant 1,140,134.5,3.93,157,156.7,0.19
+13,Participant 1,140,138.1,1.36,157,154.5,1.59
+14,Participant 1,140,133.8,4.43,157,155.5,0.96
+15,Participant 1,140,138.6,1.0,157,156.7,0.19
+16,Participant 1,140,134.7,3.79,157,153.3,2.36
+17,Participant 1,140,131.6,6.0,157,152.6,2.8
+18,Participant 1,140,132.2,5.57,157,154.9,1.34
+19,Participant 1,140,135.7,3.07,157,152.2,3.06
+20,Participant 1,140,138.4,1.14,157,154.9,1.34
+1,Participant 2,120,119.7,0.25,197,196.8,0.1
+2,Participant 2,120,119.3,0.58,197,197.0,0.0
+3,Participant 2,120,119.0,0.83,197,196.5,0.25
+4,Participant 2,120,119.5,0.42,197,196.4,0.3
+5,Participant 2,120,119.3,0.58,197,195.6,0.71
+6,Participant 2,120,117.9,1.75,197,196.6,0.2
+7,Participant 2,120,118.9,0.92,197,195.4,0.81
+8,Participant 2,120,119.8,0.17,197,195.0,1.02
+9,Participant 2,120,116.4,3.0,197,195.9,0.56
+10,Participant 2,120,119.7,0.25,197,194.3,1.37
+11,Participant 2,120,116.9,2.58,197,194.6,1.22
+12,Participant 2,120,118.7,1.08,197,195.2,0.91
+13,Participant 2,120,114.2,4.83,197,194.5,1.27
+14,Participant 2,120,119.0,0.83,197,196.4,0.3
+15,Participant 2,120,114.4,4.67,197,194.6,1.22
+16,Participant 2,120,114.0,5.0,197,194.9,1.07
+17,Participant 2,120,115.0,4.17,197,195.2,0.91
+18,Participant 2,120,111.0,7.5,197,196.3,0.36
+19,Participant 2,120,115.3,3.92,197,192.7,2.18
+20,Participant 2,120,111.4,7.17,197,196.1,0.46
+1,Participant 3,128,127.9,0.08,165,164.8,0.12
+2,Participant 3,128,127.4,0.47,165,164.8,0.12
+3,Participant 3,128,127.1,0.7,165,164.6,0.24
+4,Participant 3,128,127.5,0.39,165,164.3,0.42
+5,Participant 3,128,125.6,1.88,165,164.0,0.61
+6,Participant 3,128,127.7,0.23,165,163.4,0.97
+
+
+
+
+Participant,Avg BP Improvement (%),Total Weight Loss (%),BP Trend Slope,Combined Score
+Participant 1,1.94,1.34,0.06,3.28
+Participant 2,2.53,0.46,0.41,2.99
+Participant 3,2.47,0.85,0.4,3.32
+Participant 4,1.65,3.35,0.36,5.0
+Participant 5,1.91,2.9,0.18,4.81
+Participant 6,1.66,3.61,0.21,5.27
+Participant 7,2.05,1.13,-0.0,3.18
+Participant 8,2.4,0.99,0.37,3.39
+Participant 9,1.83,2.52,0.4,4.35
+Participant 10,2.26,3.13,0.02,5.39
