@@ -1,0 +1,143 @@
+Alright — here’s the airtight version of the story with expanded Gherkin acceptance criteria so it fully covers:
+
+New table usage
+
+Client API integration
+
+Mapping logic
+
+Date filtering
+
+Field validation rules
+
+Mixed success/failure batches
+
+
+
+---
+
+Jira Story
+
+Story Type: Technical User Story
+Title: Refactor SMS Notification Service to Use Client API and Notice Transaction Master Table
+
+
+---
+
+Story Description
+
+As a developer,
+I want the SMS notification process to retrieve client profile details via the Client API and update statuses in the Notice Transaction Master Table,
+so that notifications are processed using the new centralized architecture and updated according to the current day’s eligibility rules.
+
+
+---
+
+Implementation Notes
+
+Query pending notifications via NoticeTransactionMasterRepository.getNotificationsToBeSentTodayByDate(...).
+
+Retrieve client profiles from ClientApiService.fetchClientDataUsingClientAPI(...).
+
+Match notifications to profiles by UUID (or equivalent unique key).
+
+Validate required fields for the notification type (e.g., SMS = mobile or phone).
+
+Send SMS via smsService.sendSMS(...).
+
+Update success/failure in NoticeTransactionMasterRepository via:
+
+updateNotificationSuccessStatus(...)
+
+updateNotificationFailureStatus(...)
+
+
+Remove legacy direct table access to CZ_NTF_T_V1 and per-notice status update calls.
+
+
+
+---
+
+Acceptance Criteria (Gherkin)
+
+Feature: Send SMS Notifications using Client API and Notice Transaction Master Table
+
+  Scenario: Successfully sending an SMS and updating status
+    Given there are pending SMS notifications in the Notice Transaction Master Table for today's date
+    And the Client API returns valid client profile data with a mobile or phone number
+    When the SMS Notification job runs
+    And the SMS service returns status "0" and communication state "1"
+    Then the Notice Transaction Master record for that notification should be updated with:
+      | status    | "sent"                 |
+      | messageId | <MessageIdFromResponse> |
+      | timestamp | <CurrentTimestamp>     |
+    And a log entry should record "SMS notification sent successfully" with the UUID
+
+  Scenario: Failure due to missing mobile or phone number
+    Given there are pending SMS notifications in the Notice Transaction Master Table for today's date
+    And the Client API returns a client profile without any mobile, phone, or business phone number
+    When the SMS Notification job runs
+    Then the Notice Transaction Master record for that notification should be updated with:
+      | status     | "failure"          |
+      | failReason | "NO_MOBILE_NUMBER" |
+      | timestamp  | <CurrentTimestamp> |
+    And a log entry should record "No contact number found for UUID"
+
+  Scenario: Failure when sending SMS
+    Given there are pending SMS notifications in the Notice Transaction Master Table for today's date
+    And the Client API returns valid client profile data with a mobile or phone number
+    When the SMS Notification job runs
+    And the SMS service returns a non-zero status code or an error state
+    Then the Notice Transaction Master record for that notification should be updated with:
+      | status     | "failure"       |
+      | failReason | <ErrorMessage>  |
+      | timestamp  | <CurrentTimestamp> |
+    And a log entry should record "SMS notification failed for UUID"
+
+  Scenario: Notifications are only processed for today's date
+    Given there are notifications in the Notice Transaction Master Table for dates other than today
+    When the SMS Notification job runs
+    Then those notifications should not be sent
+    And no updates should be made to their status or messageId
+
+  Scenario: Notifications correctly map to matching client profiles
+    Given there are pending SMS notifications in the Notice Transaction Master Table for today's date
+    And the Client API returns multiple client profiles
+    When the SMS Notification job runs
+    Then each notification should be matched to the correct client profile by UUID
+    And only the matched profile's contact details should be used to send the SMS
+
+  Scenario: Mixed batch with successes and failures
+    Given there are three pending SMS notifications in the Notice Transaction Master Table for today's date
+    And the Client API returns:
+      | UUID1 | Valid phone number |
+      | UUID2 | No phone number    |
+      | UUID3 | Valid phone number |
+    And the SMS service will:
+      | UUID1 | Return success     |
+      | UUID2 | N/A                |
+      | UUID3 | Return failure     |
+    When the SMS Notification job runs
+    Then the Notice Transaction Master record for UUID1 should have status "sent"
+    And the record for UUID2 should have status "failure" and failReason "NO_MOBILE_NUMBER"
+    And the record for UUID3 should have status "failure" and failReason set to the error message
+
+
+---
+
+Effort & Story Points
+
+Effort: Medium-High
+
+Story Points: 5
+
+
+
+---
+
+This covers every possible path from your updated code — the happy path, failure paths, filtering, mapping correctness, and batch processing integrity.
+
+If you want, I can also give QE sample test data for each Gherkin scenario so they can execute them without guessing values. That would make the Jira ticket fully self-contained for testing.
+
+Do you want me to add that?
+
