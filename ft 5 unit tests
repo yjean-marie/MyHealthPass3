@@ -1,0 +1,170 @@
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+import com.rbc.notifications.*;
+import com.rbc.notifications.model.*;
+import com.rbc.notifications.repository.*;
+import com.rbc.notifications.service.*;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.*;
+
+import java.time.LocalDateTime;
+import java.util.*;
+
+class NotificationServiceTest {
+
+    @InjectMocks
+    private NotificationService notificationService; // Class containing sendSMSNew()
+
+    @Mock
+    private NoticeTransactionMasterRepository noticeTransactionMasterRepository;
+
+    @Mock
+    private ClientApiService clientApiService;
+
+    @Mock
+    private SmsService smsService;
+
+    @BeforeEach
+    void setup() {
+        MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    @DisplayName("Scenario: Successfully sending an SMS and updating status")
+    void testSendSMS_SuccessfulSend() {
+        NoticeTransactionMaster notification = createNotification("UUID1", LocalDateTime.now());
+        NotificationRequestDTO clientProfile = createClientProfile("UUID1", "1234567890");
+
+        when(noticeTransactionMasterRepository.getNotificationsToBeSentTodayByDate(any()))
+                .thenReturn(List.of(notification));
+        when(clientApiService.fetchClientDataUsingClientAPI(any()))
+                .thenReturn(List.of(clientProfile));
+
+        SendSmsResponse smsResponse = new SendSmsResponse();
+        smsResponse.setStatus("0");
+        smsResponse.setCommunicationState("1");
+        smsResponse.setMessageID("TELEIOS123");
+
+        when(smsService.sendSMS(any())).thenReturn(smsResponse);
+
+        notificationService.sendSMSNew(null);
+
+        verify(noticeTransactionMasterRepository).updateNotificationSuccessStatus(
+                eq("UUID1"), eq("TELEIOS123"), any()
+        );
+    }
+
+    @Test
+    @DisplayName("Scenario: Failure due to missing mobile or phone number")
+    void testSendSMS_NoMobileNumber() {
+        NoticeTransactionMaster notification = createNotification("UUID2", LocalDateTime.now());
+        NotificationRequestDTO clientProfile = createClientProfile("UUID2", null);
+
+        when(noticeTransactionMasterRepository.getNotificationsToBeSentTodayByDate(any()))
+                .thenReturn(List.of(notification));
+        when(clientApiService.fetchClientDataUsingClientAPI(any()))
+                .thenReturn(List.of(clientProfile));
+
+        notificationService.sendSMSNew(null);
+
+        verify(noticeTransactionMasterRepository).updateNotificationFailureStatus(
+                eq("UUID2"), eq("NO_MOBILE_NUMBER"), any()
+        );
+        verifyNoInteractions(smsService);
+    }
+
+    @Test
+    @DisplayName("Scenario: Failure when sending SMS")
+    void testSendSMS_FailureFromSmsService() {
+        NoticeTransactionMaster notification = createNotification("UUID3", LocalDateTime.now());
+        NotificationRequestDTO clientProfile = createClientProfile("UUID3", "1234567890");
+
+        when(noticeTransactionMasterRepository.getNotificationsToBeSentTodayByDate(any()))
+                .thenReturn(List.of(notification));
+        when(clientApiService.fetchClientDataUsingClientAPI(any()))
+                .thenReturn(List.of(clientProfile));
+
+        SendSmsResponse smsResponse = new SendSmsResponse();
+        smsResponse.setStatus("1");
+        smsResponse.setCommunicationState("0");
+        smsResponse.setMessageID(null);
+
+        when(smsService.sendSMS(any())).thenReturn(smsResponse);
+
+        notificationService.sendSMSNew(null);
+
+        verify(noticeTransactionMasterRepository).updateNotificationFailureStatus(
+                eq("UUID3"), anyString(), any()
+        );
+    }
+
+    @Test
+    @DisplayName("Scenario: Notifications are only processed for today's date")
+    void testSendSMS_FiltersByDate() {
+        NoticeTransactionMaster notification = createNotification("UUID4", LocalDateTime.now().minusDays(1));
+
+        when(noticeTransactionMasterRepository.getNotificationsToBeSentTodayByDate(any()))
+                .thenReturn(Collections.emptyList());
+
+        notificationService.sendSMSNew(null);
+
+        verifyNoInteractions(clientApiService);
+        verifyNoInteractions(smsService);
+    }
+
+    @Test
+    @DisplayName("Scenario: Mixed batch with successes and failures")
+    void testSendSMS_MixedBatch() {
+        NoticeTransactionMaster notif1 = createNotification("UUID1", LocalDateTime.now());
+        NoticeTransactionMaster notif2 = createNotification("UUID2", LocalDateTime.now());
+        NoticeTransactionMaster notif3 = createNotification("UUID3", LocalDateTime.now());
+
+        NotificationRequestDTO profile1 = createClientProfile("UUID1", "1234567890");
+        NotificationRequestDTO profile2 = createClientProfile("UUID2", null);
+        NotificationRequestDTO profile3 = createClientProfile("UUID3", "9876543210");
+
+        when(noticeTransactionMasterRepository.getNotificationsToBeSentTodayByDate(any()))
+                .thenReturn(List.of(notif1, notif2, notif3));
+        when(clientApiService.fetchClientDataUsingClientAPI(any()))
+                .thenReturn(List.of(profile1, profile2, profile3));
+
+        SendSmsResponse success = new SendSmsResponse();
+        success.setStatus("0");
+        success.setCommunicationState("1");
+        success.setMessageID("MSG1");
+
+        SendSmsResponse failure = new SendSmsResponse();
+        failure.setStatus("1");
+        failure.setCommunicationState("0");
+        failure.setMessageID(null);
+
+        when(smsService.sendSMS(any()))
+                .thenReturn(success) // UUID1
+                .thenReturn(failure); // UUID3
+
+        notificationService.sendSMSNew(null);
+
+        verify(noticeTransactionMasterRepository).updateNotificationSuccessStatus(eq("UUID1"), eq("MSG1"), any());
+        verify(noticeTransactionMasterRepository).updateNotificationFailureStatus(eq("UUID2"), eq("NO_MOBILE_NUMBER"), any());
+        verify(noticeTransactionMasterRepository).updateNotificationFailureStatus(eq("UUID3"), anyString(), any());
+    }
+
+    // --- Helpers ---
+    private NoticeTransactionMaster createNotification(String uuid, LocalDateTime date) {
+        NoticeTransactionMaster ntm = new NoticeTransactionMaster();
+        ntm.setUuid(uuid);
+        ntm.setNoticeDate(date);
+        return ntm;
+    }
+
+    private NotificationRequestDTO createClientProfile(String uuid, String phone) {
+        NotificationRequestDTO dto = new NotificationRequestDTO();
+        dto.setUuid(uuid);
+        dto.setMobileNumber(phone);
+        return dto;
+    }
+}
