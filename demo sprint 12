@@ -1,0 +1,70 @@
+Here’s a clean, professional slide draft with space for a before/after performance table, and a matching script to help you present it during your Sprint 13 demo.
+
+
+---
+
+Sprint 13 Demo – Client Notifications Optimization
+
+✅ Work Completed
+
+Completed integration of all six client notification jobs with the new Client API and normalized notice_transaction table.
+
+Retired legacy database calls across all jobs.
+
+Standardized and streamlined job logic for improved maintainability and scalability.
+
+
+⚡ Performance Improvements
+
+Significant reduction in runtime across all jobs.
+
+Enabled faster execution, improved reliability, and better system resource utilization.
+
+
+Job	Old Runtime (sec)	New Runtime (sec)	% Improvement
+
+SendSMS	68	3	95.6%
+EmailNotification	XX	XX	XX%
+VoiceAlert	XX	XX	XX%
+PushNotification	XX	XX	XX%
+ReminderJob	XX	XX	XX%
+FallbackNotifier	XX	XX	XX%
+
+
+> (Replace XX with your actual timing data)
+
+
+
+
+---
+
+🔄 Why This Matters
+
+Continues our mission to modernize core services.
+
+Boosts operational efficiency for critical notification workflows.
+
+Sets the stage for further enhancements with minimal regression risk.
+
+
+
+---
+
+Presentation Script
+
+> “This marks the end of Sprint 13, and we’re happy to share that we’ve completed work on all six client notification jobs.
+Each of these jobs has now been refactored to use the new Client API and our fully normalized notice_transaction table.
+
+This sprint was all about pushing the efficiency gains even further. Just like we saw with the SendSMS job earlier, all six jobs now show major performance improvements.
+
+You can see the before-and-after runtimes in the table here — for example, SendSMS went from 68 seconds to just 3 seconds.
+
+Overall, these improvements reduce system load, improve responsiveness, and make the jobs easier to manage long-term.”
+
+
+
+
+---
+
+Let me know if you want the table auto-filled with placeholder values or want a visual version of the slide (with charts).
+
