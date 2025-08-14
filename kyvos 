@@ -1,0 +1,23 @@
+Got it — here’s the more concise, manager-ready version that mentions the feature, summarizes the fix, and updates them on the deployment issue:
+
+
+---
+
+Subject: Dev Deployment Blocked – Telios SMS Delivery Status Processing Fix
+
+Hi [Manager],
+
+We’ve been trying to deploy the Telios SMS delivery status processing update to Dev for the past three hours. This fix sets the job status to “successfully completed” when the file is empty, instead of “sealed.”
+
+Deployments aren’t going through, and Slack updates suggest KYBUS may be down, affecting OCP deployments. We’ve raised a support ticket and are awaiting feedback.
+
+Will keep you posted.
+
+Thanks,
+[Your Name]
+
+
+---
+
+If you’d like, I can also make you a one-liner Slack version that’s even faster to send.
+
