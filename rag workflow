@@ -1,0 +1,174 @@
+Got it. Here’s a business-analyst friendly version—clear, jargon-lite, and focused on outcomes and governance.
+
+What we’re building (in plain English)
+
+An AI Help & Offers Assistant for the banking call/chat channel that:
+
+1. Solves common customer problems by looking up the right steps in our approved documents (RAG = “retrieve, then answer”).
+
+
+2. Then suggests an eligible product or offer (only if the customer consents and meets rules), written in friendly language.
+
+
+3. Hands off to a human smoothly when the question is sensitive or the answer isn’t clear.
+
+
+
+Think of it as one assistant with two “modes”: Help first → (maybe) Offer.
+
+Why this matters (business value)
+
+Shorter handle time and higher first-contact resolution on FAQs.
+
+Consistent answers (quotes the exact policy/version).
+
+Revenue lift via next-best-offer when appropriate and compliant.
+
+Better customer experience: less waiting, clear steps, easy handoff.
+
+
+Customer journey (what the client sees)
+
+1. Greets & understands the issue.
+
+
+2. Finds the exact steps from our internal help docs and shows them with a short checklist and a “Source: Policy XYZ (effective date)”.
+
+
+3. Checks if resolved. If not, it summarizes the case and connects to an agent.
+
+
+4. If resolved and the customer agrees, it presents one relevant offer (e.g., fee waiver upgrade, credit card pre-approval) with key facts and disclosures.
+
+
+5. Saves the interaction (for quality, audit, and learning).
+
+
+
+What’s under the hood (no code, just roles)
+
+Knowledge Base (KB): Approved FAQs, procedures, policy PDFs.
+
+Retrieval (the “R” in RAG): Finds the most relevant snippets from the KB based on the user’s question.
+
+Answering (the “G” in RAG): Writes a clear, step-by-step answer using only those snippets and shows the source.
+
+Offer Engine: Separate rules service that decides which offer is allowed (eligibility, consent, risk). The AI only explains that offer; it does not decide eligibility.
+
+Handoff: Sends a short summary and context to a human agent.
+
+
+Data, privacy, and controls (bank-ready)
+
+No raw statements or IDs are stored in the KB.
+
+Consent gate before any offer.
+
+Jurisdiction filters (e.g., TT vs. BB) so fees/terms match the customer’s location.
+
+Sensitive topics auto-handoff (lost card, suspected fraud, KYC status).
+
+Versioned answers (“effective as of YYYY-MM-DD”).
+
+Full audit trail (what content was used, what offer was shown, why).
+
+
+What BAs will manage
+
+Content lifecycle: which articles are in scope, owners, review dates, effective dates.
+
+Answer quality rules: tone, reading level, mandatory disclaimers, required steps.
+
+Eligibility & offer rules (with Product/Legal): which attributes matter, what to exclude, fairness checks.
+
+Routing rules: when to hand off to agents, and what summary fields are required.
+
+Metrics reviews: weekly dashboards, A/B test results, exceptions.
+
+
+Metrics we’ll track
+
+Containment rate (solved without agent).
+
+First-contact resolution and Average handle time.
+
+Groundedness (answers cite approved docs).
+
+CSAT for helped customers.
+
+Offer acceptance rate (and opt-outs).
+
+Escalation appropriateness (false handoffs).
+
+
+Rollout plan (phased, low-risk)
+
+Phase 1 (2–3 weeks):
+
+Top 50 FAQs, one country, one product line.
+
+Answers with citations; no offers yet.
+
+BA sign-off workflow and weekly quality review.
+
+
+Phase 2 (2–3 weeks):
+
+Add one simple, fully compliant offer via the Offer Engine (e.g., card upgrade).
+
+Consent prompt, disclosures, and audit logging.
+
+A/B test answer formats (checklists vs paragraphs).
+
+
+Phase 3:
+
+More products, more countries, richer routing (live chat, email follow-ups), multilingual.
+
+
+Example interaction (condensed)
+
+Client: “My online transfer keeps failing.”
+Assistant: “Let’s fix that. Here are the steps… (1–2–3). Source: ‘Digital Transfers Policy’, effective 2025-06-01.”
+Assistant: “Did that solve it?”
+Client: “Yes.”
+Assistant: “Would you like to see a no-annual-fee card that increases your daily transfer limit? (Learn more)”
+Client: “Sure.”
+Assistant: “Here’s the summary, benefits, and required disclosures. You can apply now or later.”
+
+Risks & how we mitigate
+
+Wrong/outdated guidance → Versioned content, citations, BA review workflow.
+
+Privacy concerns → Consent gate, no PII in the KB, minimal data to the AI.
+
+Over-marketing → “Help-first” rule, strict eligibility, offer frequency caps.
+
+Regulatory variance by island → Jurisdiction tags and filters in retrieval.
+
+
+Operating model (who does what)
+
+BAs: curate articles, define answer templates, review metrics, adjust flows.
+
+Product/Legal/Compliance: approve content and offers; set disclosures.
+
+Tech: maintain the assistant, retrieval index, Offer Engine, and dashboards.
+
+Ops/Contact Center: define handoff triggers and summary fields.
+
+
+Quick glossary
+
+RAG: Retrieve from our docs → Generate an answer that only uses those docs.
+
+Offer Engine: Rules system that returns eligible offers (AI just words it nicely).
+
+Grounded answer: One that cites its sources and matches policy wording.
+
+
+
+---
+
+If you’d like, I can convert this into a one-pager and a slide with a simple diagram for stakeholders (Help → Resolve → (Consent) Offer → Handoff), plus a checklist BAs can use for content sign-off.
+
