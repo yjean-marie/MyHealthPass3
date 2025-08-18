@@ -1,0 +1,77 @@
+You’re making perfect sense 👍🏽 — you want a “light-technical” section that lays out what’s required to actually build this thing, but still in BA/business language (not code). Sort of a “checklist of ingredients” that shows the moving parts without diving into syntax.
+
+Here’s how you could add that section:
+
+
+---
+
+What We Need in Place to Build This
+
+To get the AI Help & Offers Assistant working, a few key components need to be prepared and maintained:
+
+1. Knowledge Base (Support Content)
+
+A central set of documents: FAQs, policies, procedures, product guides.
+
+Version control so we know which policy is active and can show “effective as of” dates.
+
+A review cycle (monthly/quarterly) to keep documents up to date.
+
+
+2. Retrieval Setup (How the Assistant Finds Answers)
+
+Document formatting: split long policies into smaller “chunks” with tags (product, country, effective date).
+
+Search tool: the assistant needs a retrieval system that can pull back the most relevant chunk based on the client’s question.
+
+Answer rules: the assistant must only use approved content and show the source.
+
+
+3. Offer Rules (Next-Best-Offer Logic)
+
+A rules engine or a documented set of eligibility rules:
+
+Who can be offered what (e.g., must be in good standing, must have consent).
+
+Which countries/products apply.
+
+What to exclude (e.g., clients in arrears).
+
+
+Disclosures & compliance requirements tied to each offer (APR ranges, fees, terms).
+
+Frequency controls (e.g., max one offer per resolved chat).
+
+
+4. Customer Data Signals (Without Exposing PII)
+
+A way to pass safe attributes (e.g., “has checking account”, “country=TT”, “tenure>2 years”).
+
+Consent flag so the assistant knows if it can show offers.
+
+Strict privacy filters so no sensitive details are sent into the AI model.
+
+
+5. Handoff Path to Humans
+
+A clear rule set for when to stop and escalate (e.g., fraud, KYC issues).
+
+A handoff summary format so agents get a clean case history and don’t need to re-ask the customer everything.
+
+
+6. Governance & Oversight
+
+Content ownership: who signs off on FAQs and policies.
+
+Offer ownership: who maintains the rules and disclosures.
+
+Monitoring: dashboards for containment rate, satisfaction (CSAT), offer acceptance, and flagged cases.
+
+
+
+---
+
+This way, it’s not developer-level, but it shows exactly what building blocks need to exist and gives BAs/management a to-do list to line up before the tech team writes a line of code.
+
+Would you like me to drop this in the document draft we worked on earlier, so it flows as a new section?
+
