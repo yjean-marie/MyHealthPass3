@@ -1,0 +1,233 @@
+Got it—you want a workflow-by-workflow diff that literally says “Old did X via Y; New does Z via W,” step by step. Here’s a tighter prompt you can paste that forces exactly that style of output.
+
+
+---
+
+Prompt: Workflow-Based Comparison of SendSMS vs SendSMSnew
+
+Goal
+Produce a clear, business-friendly step-by-step workflow diff that states, for every step:
+
+what SendSMS (old) did and how it did it,
+
+what SendSMSnew (new) does now and how,
+
+what changed and why it matters (impact/risk).
+
+
+Inputs (replace placeholders):
+
+Old function SendSMS code:
+<paste code>
+
+New function SendSMSnew code:
+<paste code>
+
+Any helpers/dependencies either calls (repos/services/clients/config/flags/DTOs/constants):
+<paste or list>
+
+Operational context (stack, SMS provider(s), secrets source, logging/telemetry, environments):
+<brief notes>
+
+
+Instructions
+
+1. Normalize both functions into workflows (ordered steps). Align steps by intention, not just line order (e.g., “validate → format → template → send → persist → audit → report”).
+
+
+2. For each step, list Old vs New with exact mechanism: called methods, config keys, timeouts, retries, error mapping, side effects, logs/metrics, secrets usage.
+
+
+3. Call out dependencies used per step (repos, services, SDKs, Vault paths, feature flags).
+
+
+4. For each step, give a one-line Business Impact (“fewer failures,” “lower cost,” “compliance fix,” “risk of silent drop,” etc.).
+
+
+5. End with a Before/After diagram, a targeted test list, and a rollout note (flag/canary/rollback).
+
+
+
+Output format (use exactly this structure):
+
+A) One-Page Executive Summary (Plain English)
+
+What changed overall (3–6 bullets):
+
+Why it matters (deliverability/latency/cost/compliance/reliability):
+
+Risk & mitigations: feature flag, canary, alarms, fallback to SendSMS.
+
+
+B) Side-by-Side Workflow Diff (Step-by-Step)
+
+> Align by intention. Include only steps that exist (skip if N/A).
+Use this table for each step.
+
+
+
+Step 1: Input Validation & Normalization
+
+Old (SendSMS): What it did (e.g., “Trimmed, required E.164? No; accepted local; default country TT; threw ArgumentException.”)
+
+How: functions called, regex/formatter, config keys, feature flags
+
+Dependencies: helpers/repos/services/config/Vault keys
+
+
+New (SendSMSnew): What it does now
+
+How: functions called, config, flags
+
+Dependencies: …
+
+
+Change & Business Impact: Concrete diff + why it matters (e.g., “Now enforces E.164 → fewer gateway rejects, small increase in user-facing 400s.”)
+
+
+Step 2: Template Resolution & Variable Binding
+
+Old: … (include error-on-missing vars? default language? fallback?)
+
+New: … (e.g., added locale parameter, strict binding)
+
+Change & Business Impact: …
+
+
+Step 3: Content Processing (Unicode/Segmentation/URL shorteners)
+
+Old: … (GSM-7 vs UCS-2? Splitting logic?)
+
+New: …
+
+Change & Business Impact: …
+
+
+Step 4: Provider Selection & Routing
+
+Old: … (single vendor? round-robin? no failover?)
+
+New: … (multi-provider with priority/cost-based routing?)
+
+Change & Business Impact: …
+
+
+Step 5: Send Operation (Timeouts/Retries/Idempotency)
+
+Old: … (timeouts, retry policy, idempotency key usage)
+
+New: …
+
+Change & Business Impact: …
+
+
+Step 6: Error Handling & Mapping
+
+Old: … (maps 429/5xx to what? throws vs result object)
+
+New: …
+
+Change & Business Impact: …
+
+
+Step 7: Persistence & Audit
+
+Old: … (what was stored where: status, provider msgId, request/response, PII masking)
+
+New: …
+
+Change & Business Impact: …
+
+
+Step 8: Observability (Logs/Metrics/Tracing)
+
+Old: … (log fields, levels, correlation IDs; metrics emitted)
+
+New: …
+
+Change & Business Impact: …
+
+
+Step 9: Security & Compliance
+
+Old: … (Vault path, secret caching, redaction)
+
+New: …
+
+Change & Business Impact: …
+
+
+Step 10: Return Contract
+
+Old: … (return type, fields, error codes)
+
+New: …
+
+Change & Business Impact: …
+
+
+C) Dependency Delta (What moved/appeared/disappeared)
+
+Added: repos/services/SDKs/flags/config keys/Vault paths (with purpose).
+
+Removed/Changed: …
+
+Compatibility concerns: callers or jobs that will break (list).
+
+
+D) Micro-Diffs Table (TL;DR)
+
+Area	Old (SendSMS)	New (SendSMSnew)	Impact
+
+Validation	…	…	…
+Formatting	…	…	…
+Provider Routing	…	…	…
+Timeouts/Retries	…	…	…
+Error Mapping	…	…	…
+Persistence/Audit	…	…	…
+Logging/Metrics	…	…	…
+Secrets	…	…	…
+Return Contract	…	…	…
+
+
+E) Before/After Diagram (brief)
+
+Old:  SendSMS → Normalizer → TemplateRepo → Gateway A → AuditRepo
+New:  SendSMSnew → Normalizer2 → TemplateSvc → Router(A/B) → GatewayClient → AuditSvc
+
+F) Targeted Tests (Parity + Change-Driven)
+
+Parity cases (same output as old): at least 10 varied inputs.
+
+Change cases (new behavior): tighter validation, routing failover, UCS-2 segmentation, 429 backoff, idempotency duplicate.
+
+Security/Compliance: secrets never logged; PII masked.
+
+Observability: logs include correlationId, templateId, providerResponse; metrics for attempts/retries/p95.
+
+
+G) Rollout Notes
+
+Feature flag: name, default OFF/ON.
+
+Canary: % traffic, success criteria (delivery rate, p95 latency, error rate).
+
+Alarms: thresholds + dashboards to watch.
+
+Rollback: exact steps (flip flag / revert deploy).
+
+
+House Rules
+
+Quote specific code lines/snippets when asserting differences.
+
+If a helper is unclear, state the assumption and how it could change the conclusion.
+
+Keep business impact in plain English after every step.
+
+
+
+---
+
+If you want, paste your two functions and I’ll run this workflow diff for you now using this format.
+
