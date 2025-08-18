@@ -1,0 +1,47 @@
+Got it—you want a workflow-by-workflow diff that literally says “Old did X via Y; New does Z via W,” step by step. Here’s a tighter prompt you can paste that forces exactly that style of output.
+
+
+---
+
+Prompt: Workflow-Based Comparison of SendSMS vs SendSMSnew
+
+Goal
+Produce a clear, business-friendly step-by-step workflow diff that states, for every step:
+
+what SendSMS (old) did and how it did it,
+
+what SendSMSnew (new) does now and how,
+
+what changed and why it matters (impact/risk).
+
+
+Inputs (replace placeholders):
+
+Old function SendSMS code:
+<paste code>
+
+New function SendSMSnew code:
+<paste code>
+
+Any helpers/dependencies either calls (repos/services/clients/config/flags/DTOs/constants):
+<paste or list>
+
+Operational context (stack, SMS provider(s), secrets source, logging/telemetry, environments):
+<brief notes>
+
+
+Instructions
+
+1. Normalize both functions into workflows (ordered steps). Align steps by intention, not just line order (e.g., “validate → format → template → send → persist → audit → report”).
+
+
+2. For each step, list Old vs New with exact mechanism: called methods, config keys, timeouts, retries, error mapping, side effects, logs/metrics, secrets usage.
+
+
+3. Call out dependencies used per step (repos, services, SDKs, Vault paths, feature flags).
+
+
+4. For each step,
+
+
+
