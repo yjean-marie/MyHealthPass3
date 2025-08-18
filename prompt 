@@ -1,0 +1,198 @@
+Got you. Here’s a ready-to-paste prompt you can drop into ChatGPT (or any code reviewer) to get a rigorous, business-friendly comparison of SendSMS (old) vs SendSMSnew (new). It forces the model to look at dependencies, data flow, risks, audit/logging, performance, and compatibility—then produce an exec summary your stakeholders can read.
+
+
+---
+
+Prompt: Compare SendSMS vs SendSMSnew (with dependency + business impact review)
+
+Context:
+We’re replacing an existing function SendSMS with a new implementation SendSMSnew. Both call into repositories/services and may touch external providers (e.g., SMS gateway, Vault/Secrets, observability). I need a deep technical diff plus a clear, concise, business-friendly summary.
+
+Your task:
+
+1. Compare the two implementations line-by-line where useful and system-by-system where needed.
+
+
+2. Map all dependencies (internal methods, repositories, services, configs, feature flags, env vars, Vault/secret keys, external APIs).
+
+
+3. Identify changes in behaviour, contracts, performance, security/compliance, observability, and risk.
+
+
+4. Produce a one-page executive summary for non-engineers (what changed, why it matters, risk/mitigation, rollout plan).
+
+
+5. Suggest targeted tests to prove parity and catch regressions.
+
+
+
+Inputs (replace these placeholders with real content):
+
+Old function (SendSMS):
+<paste code>
+
+New function (SendSMSnew):
+<paste code>
+
+Referenced helpers / models / configs used by either version (paste or summarize):
+<paste code or list: repositories, DTOs, config keys, feature flags, constants, error codes, rate-limiters, retry policies, circuit breakers>
+
+Operational context:
+
+Language/stack (e.g., .NET 8 / Java Spring Boot)
+
+SMS provider(s) and SDK versions
+
+Secrets source (e.g., Vault path/key names)
+
+Logging/Tracing (e.g., Kibana/OpenTelemetry)
+
+Environments (DEV/QE/UAT/PROD) & deployment (OpenShift/K8s)
+
+Compliance constraints (PII handling, audit trails, retention)
+
+
+Analyze & Report in this exact structure:
+
+1) Executive Summary (business-friendly)
+
+What changed: 2–3 bullets in plain English.
+
+Why it matters: reliability, deliverability, cost, latency, compliance.
+
+Risk level: Low/Med/High with 1–2 lines of justification.
+
+Mitigation & rollout plan: flags, canary, fallback to old path, monitoring, rollback criteria.
+
+
+2) Behavioural Differences
+
+Inputs/validation: Required/optional fields; defaulting; normalization (E.164, country codes).
+
+Side effects: Writes/updates to DB, queues, audit logs.
+
+Error handling: Exceptions vs result objects; error code mapping; retry/circuit breaker behaviour; idempotency.
+
+Concurrency & ordering: Duplicate suppression, dedupe keys, message sequencing.
+
+Time-outs & retries: Values, backoff strategy, max attempts; differences from old.
+
+
+3) API & Contract Changes
+
+Method signature changes: parameters, return type, nullability.
+
+DTO/schema differences: field adds/removes/renames, enum changes, breaking vs non-breaking.
+
+Compatibility impact: Callers that will break; how to adapt.
+
+
+4) Dependency & Data-Flow Map
+
+Internal calls: helpers, repositories, services; indicate new/removed.
+
+External services: SMS provider endpoints/SDK versions; authentication mode; changed scopes/permissions.
+
+Configuration & secrets: env vars, feature flags, Vault paths/keys; default values and required overrides.
+
+Observability: log events (levels/fields), metrics (counters/timers), traces/spans; correlation IDs; PII redaction.
+
+Rate limiting & quotas: local/global limits; behavior on 429.
+
+
+> Provide a small diagram or bullet map: SendSMS(new) -> Normalizer -> TemplateEngine -> GatewayClient -> AuditRepo
+
+
+
+5) Performance & Resilience
+
+Latency & throughput: expected differences; synchronous vs async; batching.
+
+Resource usage: memory, thread usage, connection pools.
+
+Resilience: retry/circuit breaker, fallback paths, cached lookups, provider failover/multi-region.
+
+Scalability: any blocking calls, long I/O, per-request DB hits reduced/increased.
+
+
+6) Security & Compliance
+
+Secrets handling: retrieval (Vault), rotation, caching; any secrets logged.
+
+PII: phone numbers/content masking; logs/metrics redaction; retention.
+
+Authorization: who can call; service-to-service auth; signed requests.
+
+Auditability: where/what is recorded (who sent what to whom, when, outcome); parity with old.
+
+
+7) Edge Cases & Failure Modes
+
+Invalid numbers, unsupported locales, template variables missing, long SMS needing segmentation, provider partial failures, gateway 4xx vs 5xx, network timeouts, duplicate requests, idempotency keys, empty file/job semantics if relevant.
+
+
+8) Test Plan (parity + new coverage)
+
+Golden-path parity tests: show old vs new outputs equal for the same inputs (list at least 10 varied cases).
+
+Negative tests: invalid input, provider errors, timeouts.
+
+Contract tests: DTO/enum diffs.
+
+Load tests: N requests/sec with acceptable p95/p99.
+
+Security tests: secrets never logged; PII masked; authorization enforced.
+
+Observability checks: logs/metrics/traces emitted with required fields (correlation ID, client, templateId, provider response).
+
+
+9) Rollout & Backout
+
+Feature flag name & default state
+
+Canary scope & success metrics (delivery rate, p95 latency, error rate, 429s)
+
+Alerting thresholds and dashboards to watch
+
+Instant rollback steps (how to switch flag / revert deployment)
+
+
+10) Final Recommendation
+
+Adopt / Adopt with conditions / Do not adopt, with 3–5 bullet justifications.
+
+
+Deliverables:
+
+The full comparison (sections 1–10).
+
+A 2-column diff table summarizing key differences:
+
+
+Area	SendSMS (Old)	SendSMSnew (New)	Impact
+
+Validation	…	…	…
+Retries/Timeouts	…	…	…
+Logging/Audit	…	…	…
+Dependencies	…	…	…
+Secrets	…	…	…
+Performance	…	…	…
+Compliance	…	…	…
+
+
+House rules for the analysis:
+
+Cite exact code lines or snippets for claims.
+
+Call out any assumptions you had to make.
+
+If something is unclear/missing (e.g., a helper function), list what you need to confirm and how it could change the conclusion.
+
+Keep the exec summary ≤ 12 bullet points; keep technical deep-dive comprehensive.
+
+
+
+---
+
+If you want, paste your two functions + helper bits and I’ll run this analysis
+
