@@ -1,0 +1,56 @@
+Great — based on that continuation, here’s an updated Sprint 13 Summary Slide that builds naturally from the previous optimization slide and highlights your development, testing, and release work.
+
+
+---
+
+Sprint 13 Summary – Completion & Support Activities
+
+✅ Work Finalized
+
+Unit Testing completed for all six optimized Client Notification Jobs.
+
+All jobs tested successfully after integration with the new Client API and notice_transaction table.
+
+
+🧪 Support During Sprint
+
+~50% of sprint capacity dedicated to SMS job testing support, including:
+
+Rapid bug resolution
+
+Clarifying and capturing emerging requirements
+
+Ongoing collaboration with QA
+
+
+
+🚀 Release Readiness
+
+Deployment activities initiated and supported for:
+
+SMS Job Release
+
+Stonebranch Job Deployment
+
+
+
+
+---
+
+🗣️ Presentation Script
+
+> “As a wrap-up for Sprint 13, we didn’t just focus on optimizing the jobs — we also completed unit testing for all six client notification jobs that were refactored.
+
+A big part of the sprint was spent supporting SMS testing — this included validating behavior, fixing bugs quickly, and collaborating with QA to surface any new requirements.
+
+We also supported release prep and coordination for both the SMS job and Stonebranch deployment.
+
+Overall, this sprint not only delivered efficiency gains but also ensured those changes were thoroughly tested and production-ready.”
+
+
+
+
+---
+
+Let me know if you’d like this split across two slides or turned into a Confluence update or email recap!
+
