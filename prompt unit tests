@@ -1,0 +1,79 @@
+You’re bumping into “context drift” — Copilot invents helpers/classes because it isn’t strictly grounding itself in the files you attached. Fix this by forcing a two-phase, grounded workflow in your prompt.
+
+Here are copy-paste prompts that keep Copilot tied to your codebase.
+
+1) Preflight: enumerate only what exists
+
+Use this first so Copilot reads your files and lists real symbols before generating anything.
+
+PREVIEW ONLY — DO NOT GENERATE TESTS YET.
+
+Read ONLY the attached files. List:
+1) Exact fully-qualified class names that contain sendSMS (or call it).
+2) The exact method signature(s) of sendSMS you find.
+3) All collaborators the real code uses (helpers, repos, sms client), with their real method names/signatures.
+4) Any static calls, singletons, factories, or new() inside the SUT that could complicate testing.
+
+If anything is missing or ambiguous, STOP and ask me to attach the specific file.
+Do not infer or invent names, types, or packages. If uncertain, say “unknown”.
+
+2) Strict generation: ban inventions, verify interactions
+
+After Copilot returns the inventory, use this:
+
+Generate unit tests for the EXACT sendSMS method(s) you just listed.
+
+Guardrails:
+- Use ONLY symbols that appeared in the preflight list. DO NOT invent new classes, methods, DTOs, or package names.
+- If a required symbol wasn’t in the preflight list, STOP and ask for the file.
+- Imports must match the actual packages found; no placeholder packages.
+
+Framework & style:
+- Java, JUnit 5 + Mockito, AssertJ
+- Arrange–Act–Assert; Given_When_Then test names
+- One logical assert per test; verify interactions explicitly
+- Ignore logging unless specified in AC; if required, capture via a Logback ListAppender
+
+Dependencies policy:
+- Mock external/side-effecting deps (repository, SMS client, clock).
+- Use real pure helpers unless I need to PROVE the interaction; when proof is required, mock and verify args + call counts.
+- VerifyNoMoreInteractions on all mocks at test end.
+
+Acceptance Criteria (authoritative; one test per item + edges):
+1) <AC #1>
+2) <AC #2>
+3) <AC #3>
+
+Coverage expectations:
+- Happy path: verify smsClient.send(...) called with exact payloads and repository updated accordingly.
+- Guard paths (e.g., no recipients): prove helper was/was not called as per design; no SMS sent; repo untouched.
+- Error paths: when smsClient throws, assert outcome and skipped/compensating repo calls.
+- Boundary inputs: null/empty lists, duplicates, large list.
+
+3) If Copilot still hallucinates, tighten with a “compile gate”
+
+Add this line to the strict prompt:
+
+COMPILE GATE: If any referenced class/method is not found in the attached files, STOP and return a list of the missing symbols instead of generating tests.
+
+4) Optional: ask for seams if construction blocks mocking
+
+If your SUT does new SmsClient() or static calls, add:
+
+If the SUT constructs dependencies directly or uses static calls, propose the smallest refactor seam (@VisibleForTesting ctor, factory, or wrapper) and then generate tests using that seam. Keep code minimal and confined to test scope.
+
+Quick checklist (why Copilot invents stuff)
+
+Files not actually included / wrong versions attached.
+
+Multiple sendSMS overloads/classes; preflight disambiguates.
+
+DI bypassed (newing inside SUT) → hard to mock; add seam.
+
+Static utilities/singletons → wrap or use Mockito’s static mocking sparingly.
+
+Package names omitted → Copilot guesses; demand exact FQNs via preflight.
+
+
+Use the two-phase flow above and Copilot will stick to the real code you’ve attached and stop “tweaking services” into existence.
+
