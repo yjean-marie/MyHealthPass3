@@ -1,0 +1,18 @@
+Rewrite the unit tests to PROVE collaborator usage.
+
+Requirements:
+- Base cases strictly on the Acceptance Criteria below.
+- Mock all collaborators (helpers, repos, external clients).
+- For each test, verify interactions:
+  - Expected calls: use strict verification with exact call counts and argument matching.
+  - Unexpected calls: assert none (e.g., verifyNoInteractions / verifyNoMoreInteractions).
+- Add at least one test that FAILS if <HelperClass> is not invoked on the happy path.
+- Capture and assert helper arguments for correctness (argument captors).
+- Exercise all branches that reach the helper (null/empty, boundary values, exception paths).
+- Arrange–Act–Assert style; clear names: given_<precond>_when_<action>_then_<outcome>.
+
+Acceptance Criteria (authoritative):
+1) <AC #1>
+2) <AC #2>
+3) <AC #3>
+…
