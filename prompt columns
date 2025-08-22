@@ -1,0 +1,153 @@
+Got you. Here’s a plug-and-play Copilot/Copilot-Chat prompt that reliably inventories every table/column touched by a function (including what its dependencies hit via repos/ORM/raw SQL) and any fields used in outbound service calls (like your Send SMS API).
+
+Copy this into Copilot Chat while you have the target function file open (or select the function first, then run the prompt):
+
+
+---
+
+#️⃣ One-shot prompt (works for C#, Java, Node, Python)
+
+Role: You are a static-analysis assistant.
+Goal: For the selected function <FUNCTION_NAME> in <RELATIVE_FILE_PATH>, list all database tables and columns it reads/writes and any service/API call fields it sends/receives. Include everything reached through dependencies (helpers, repositories, ORM entities, mappers, SQL files, HTTP clients).
+
+Scope & traversal rules (very important):
+
+1. Start at <FUNCTION_NAME> and follow all internal calls it makes (directly and indirectly).
+
+
+2. For each call, open the implementation if it’s in this workspace; if it’s an interface, resolve concrete classes via DI config/annotations (e.g., Spring @Bean/@Repository, .NET registrations, NestJS providers).
+
+
+3. Capture all data access patterns:
+
+ORM mappings (EF Core/JPA/TypeORM/etc.): infer table and column names from entity attributes/annotations/Fluent API. Include shadow/owned types and navigation props that get materialized.
+
+Query builders & LINQ: resolve to underlying table/column names using mappings.
+
+Raw SQL: parse the SQL to list tables (FROM/JOIN/UPDATE/INSERT INTO) and columns in SELECT/WHERE/SET/VALUES/RETURNING.
+
+Migrations: if the code references views/TVFs/stored procs, resolve their underlying tables/columns if defined in repo.
+
+
+
+4. Capture service/API calls (HTTP/gRPC/message queues):
+
+Endpoint/route, HTTP method, headers.
+
+Request and response schemas (field names and where they originate from in code).
+
+Note any mapping between domain fields and payload keys (e.g., Client.PhoneNumber -> payload.to).
+
+
+
+5. Treat configuration as code: follow keys in appsettings*.json, application*.yml, env vars, constants, and typed options to find base URLs, routes, connection strings, schema prefixes, and feature flags that switch repos.
+
+
+
+Output exactly in this Markdown structure:
+
+Summary (TL;DR)
+
+Functions analyzed: <list>
+
+Total tables: <n> | Total columns: <n> | External services: <n>
+
+
+Database usage
+
+Table	Column	Operation (R/W)	Where used (file:line)	Code path (func → repo)	How resolved (ORM/Raw SQL)
+
+
+
+External/service calls
+
+Service	Method/Route	Request fields (source var → payload key)	Response fields consumed	Where used (file:line)
+
+
+
+Evidence (code excerpts)
+
+<file:line>: snippet showing the table/column or payload mapping
+
+Repeat for each unique finding (keep snippets short)
+
+
+Edge cases to handle:
+
+If an entity name differs from table name, show both.
+
+If columns are projected/aliased, show original and alias.
+
+If dynamic SQL or string interpolation exists, show the resolved shape and indicate any uncertainty.
+
+If a repo method name implies a query (e.g., findByClientIdAndStatus), resolve to columns using the mapping.
+
+If something is unresolved due to missing code, say so explicitly and list the likely location(s).
+
+
+Now analyze <FUNCTION_NAME> in <RELATIVE_FILE_PATH> and produce the tables.
+
+
+---
+
+Helpful variants (use as follow-ups)
+
+“Expand search depth”
+
+> Continue, but also scan files matching: */Repository*, */*Repo.*, */*Mapper*, */*Dao*, */*Service*, */*Client*, */*Http*, */*Controller*, */sql/**, */migrations/**. Include anything the DI container wires to the starting function.
+
+
+
+“Force ORM → SQL resolution”
+
+> For each ORM entity used, print the resolved schema.table and a list of property→column mappings. Include Fluent/Annotation config and OnModelCreating/@Table/@Column overrides.
+
+
+
+“Spot hidden columns”
+
+> List columns used only in predicates/joins/orderings (WHERE/JOIN/ORDER BY/GROUP BY) even if they’re not selected or written.
+
+
+
+“Outbound payload audit” (your Send SMS case)
+
+> For each HTTP request sent, show the full JSON path of fields in the request body/headers/query and trace each field back to its source variable or database column.
+
+
+
+“Confidence & gaps”
+
+> Add a “Gaps/Assumptions” section noting any unresolved dynamic SQL, reflection, or runtime configuration that could affect the list.
+
+
+
+
+
+---
+
+Tips to get best results
+
+Give Copilot the target: select the function body before running the prompt so Chat scopes correctly.
+
+Keep DI visible: open the files where repositories/clients are registered (Startup.cs, Program.cs, Spring config, NestJS modules).
+
+If you use EF Core/JPA: open entity + mapping files so Copilot can resolve table/column names.
+
+Have SQL files open if queries live in /sql or resources.
+
+
+
+---
+
+Optional: ultra-compact prompt (for inline chat)
+
+> From <FUNCTION_NAME> in <FILE>, traverse all calls. List every DB schema.table.column read/written (ORM + raw SQL) and every HTTP call’s request/response fields. Output two tables (DB usage, Service calls) with file:line evidence and note gaps due to dynamic SQL/DI.
+
+
+
+
+---
+
+If you want, paste a snippet of your sendSMSnew call + repo code and I’ll tailor this to your exact stack (e.g., EF Core vs JPA vs Dapper) and pre-fill the table headers with what your code actually uses.
+
