@@ -1,0 +1,149 @@
+Got it. Since these endpoints are internal and only Stonebranch should call them, you can fix Bright’s “ID enumeration” with very small, surgical changes—no big refactor, no tenant model overhaul.
+
+Here’s a minimal, pragmatic plan that works across your 3 worker repos + the job-orchestrator repo:
+
+Minimal change plan (do this first)
+
+1) Add a single “machine token” gate (1 file + 5 lines of config)
+
+Require a static service token on every scheduler/worker endpoint. Stonebranch adds the header; everyone else gets blocked.
+
+Pick one header name: X-Scheduler-Token (or use Authorization: Bearer <token>).
+
+Store the token in an env var (Vault later if you want): SCHEDULER_TOKEN.
+
+Add one filter class in each repo (copy/paste):
+
+
+@Component
+public class SchedulerTokenFilter extends OncePerRequestFilter {
+
+  @Value("${scheduler.token}")
+  private String expected;
+
+  @Override
+  protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
+      throws IOException, ServletException {
+
+    // Only protect your scheduler/job endpoints to keep blast radius tiny
+    String path = req.getRequestURI();
+    if (path.startsWith("/scheduler/") || path.startsWith("/jobs/")) {
+      String got = Optional.ofNullable(req.getHeader("X-Scheduler-Token"))
+                           .orElse(req.getHeader("Authorization")); // if you prefer Bearer
+      if (got == null || !isValid(got)) {
+        res.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+        return;
+      }
+    }
+    chain.doFilter(req, res);
+  }
+
+  private boolean isValid(String headerVal) {
+    if (headerVal == null || expected == null) return false;
+    // If using Authorization: Bearer <token>
+    if (headerVal.startsWith("Bearer ")) headerVal = headerVal.substring(7);
+    return MessageDigest.isEqual(headerVal.getBytes(StandardCharsets.UTF_8),
+                                 expected.getBytes(StandardCharsets.UTF_8));
+  }
+}
+
+application.yml:
+
+
+scheduler:
+  token: ${SCHEDULER_TOKEN}
+
+This blocks anonymous/Bright probing outright. It’s the smallest possible auth that still gives you machine identity. (You can later swap this for OAuth2/mTLS without touching controller code.)
+
+2) Normalize object responses to kill “enumeration” signals (tiny patch)
+
+Return 404 for any invalid/unknown job ID and avoid exposing whether an ID exists.
+
+Add a global advice once per repo:
+
+@RestControllerAdvice
+public class NotFoundAdvice {
+
+  @ExceptionHandler({EntityNotFoundException.class, NoSuchElementException.class})
+  @ResponseStatus(HttpStatus.NOT_FOUND)
+  public void notFound() { /* empty by design */ }
+}
+
+Then, where you fetch by ID, throw EntityNotFoundException if missing. Do not return different bodies for “forbidden” vs “missing”; your filter already keeps untrusted callers out, so inside the perimeter treat unknown IDs as 404. This removes the response-difference Bright uses to flag enumeration.
+
+3) Trim your “list” surface (no schema change)
+
+If any endpoint lists jobs or exposes counts:
+
+Filter to what Stonebranch actually needs (e.g., “last N my jobs”).
+
+Remove global counts / total sizes from the response.
+
+Keep pagination but don’t leak totals for objects outside scope.
+
+
+If you don’t need list endpoints for Stonebranch, disable them (fastest win).
+
+4) Rate-limit at the edge (zero code if you have a gateway)
+
+If you’re behind Apigee/OCP route, add a modest per-IP rate limit to /scheduler/** and /jobs/**. Enumeration relies on volume; this helps appease DAST even if somebody misconfigures a scan.
+
+Stonebranch + Bright tweaks (so the finding goes away correctly)
+
+Configure Stonebranch to send the header:
+
+X-Scheduler-Token: <the value of SCHEDULER_TOKEN>
+
+
+In Bright, set the same header globally for the scan or add an “Auth Rule” so it tests the authenticated posture.
+
+If some routes are cluster-only/internal, mark them out of scope in Bright.
+
+
+Where to apply changes in your layout
+
+3 worker repos:
+
+Add SchedulerTokenFilter
+
+Add NotFoundAdvice
+
+Ensure controllers throw EntityNotFoundException when an ID is bad
+
+(Optional) hide/trim list endpoints
+
+
+Job-orchestrator repo:
+
+Same filter & advice
+
+The “create job → return jobId” flow stays as-is (no breaking change)
+
+
+
+Why this satisfies the DAST finding (with minimum churn)
+
+Authentication present: only requests with the correct token reach handlers.
+
+No object leakage: unauthenticated = 401; authenticated but bad ID = 404 with uniform body.
+
+Enumeration thwarted: no differential responses or global discovery endpoints; rate limit adds friction.
+
+
+
+---
+
+Optional (low effort, nice-to-have)
+
+Switch exposed IDs to UUIDv4 for new jobs only (no migrations; keep old IDs working).
+
+Rotate SCHEDULER_TOKEN from Vault on deploys.
+
+Add a smoke test in CI that calls one real ID and one fake ID and asserts both shapes are indistinguishable (status aside).
+
+
+
+---
+
+If you paste one sample endpoint signature (e.g., GET /scheduler/jobs/{id}/status) from a worker repo, I’ll drop in the exact 10–15 lines to make it throw EntityNotFoundException cleanly and show the tiniest diff you’d commit.
+
