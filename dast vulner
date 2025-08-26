@@ -19,3 +19,28 @@ Thanks,
 
 Would you like me to make it more casual (like a short “hey, just checking…” style) or keep it this polite-but-formal tone?
 
+Perfect — I understand. You want to tie everything together: the past exemption case, the seven-day resolution rule, the assumption that passing gates = no more vulnerabilities, and now the surprise that vulnerabilities are still showing up. Here’s a polished version you can send that keeps the “we might have misunderstood” tone:
+
+
+---
+
+Subject: RE: KFLO DAST Vulnerabilities
+
+Hi Franklin,
+
+Maybe I’m misunderstanding, but our assumption based on feedback from DevOps was that once the DAST gates (Scan Complete Rule, Entrypoint Threshold Rule, Authentication Threshold Rule, Scan Template Rule, Entrypoint Type Rule) all passed, then we would be in the clear — meaning no vulnerabilities would continue to be flagged.
+
+Previously, when our DAST scans failed, we went through the exemption process to proceed with deployment. As part of that process, we understood there was a 7-day resolution rule, and if the issue wasn’t closed out within that window, it would continue to show as a vulnerability. Based on that experience, we assumed that the reason vulnerabilities were showing up in the past was specifically because we had gone through exemption, and that once the gates passed cleanly, the vulnerabilities would no longer be flagged.
+
+From what you’re saying though, it seems that even when the gates pass, vulnerabilities can still remain in the report. Can you confirm if that’s correct? If so, we probably need to adjust our understanding of the relationship between the DAST gates and the vulnerability reports.
+
+Thanks,
+Yuri Jean-Marie
+
+
+---
+
+Do you want me to also make a shorter variant (like 2–3 sentences total) that you can drop in quickly if you don’t want the long background every time?
+
+
+
