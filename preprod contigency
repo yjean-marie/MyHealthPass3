@@ -1,0 +1,17 @@
+Here’s a clean draft you can drop to Ajari as a quick message before formalizing it into an email:
+
+
+---
+
+Message to Ajari
+
+Hi Ajari,
+Quick question — for the upcoming SIT in pre-prog, I was thinking about a contingency plan. Since there’s always a chance that a production bug could push code/data through to pre-prog and impact the test data, how simple or straightforward would it be for the DB team to back up and restore the KFL0 and OpsDB databases if needed?
+
+Just want to get a sense of feasibility before I draft something more formal for the wider team.
+
+
+---
+
+Do you want me to also draft the follow-up email version (assuming he says it’s doable) so you’re ready to send it straight after his feedback?
+
