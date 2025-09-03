@@ -1,0 +1,26 @@
+// Two sends: one for "111" (success) and one for "333" (failure)
+verify(smsService, times(2)).sendSMS(any(SendSmsRequest.class));
+
+// Success update for id1 (status is NULL by design, messageId nonblank)
+verify(noticeTransactionMasterRepository).updateNotificationSuccessStatus(
+    eq(601),
+    isNull(),
+    any(java.sql.Timestamp.class),
+    argThat(mid -> mid != null && !mid.isBlank())
+);
+
+// Failure update for id2 (no mobile)
+verify(noticeTransactionMasterRepository).updateNotificationFailureStatus(
+    eq(602),
+    eq("NO_MOBILE_NUMBER"),
+    any(java.sql.Timestamp.class)
+);
+
+// Failure update for id3 (SMS error). Match by contains to avoid exact wording brittleness.
+verify(noticeTransactionMasterRepository).updateNotificationFailureStatus(
+    eq(603),
+    argThat(reason -> reason != null && reason.toUpperCase().contains("MESSAGE ID") && reason.toUpperCase().contains("INVALID")),
+    any(java.sql.Timestamp.class)
+);
+
+verifyNoMoreInteractions(smsService, noticeTransactionMasterRepository);
