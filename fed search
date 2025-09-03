@@ -1,0 +1,305 @@
+Awesome — here’s the UUID-based Copilot prompt tailored to your code.
+Paste this into COPILOT_PROMPT.md (or at the top of the new service file) and let Copilot scaffold from it.
+
+
+---
+
+Copilot: Federated server-side search (UUID join) for KYC Notifications
+
+Use these existing types (do not rename):
+
+Controller: KYCController
+
+Repo: NoticeTransactionMasterRepository
+
+Entity: NoticeTransactionMaster (table dbo.notice_transaction_master)
+
+Join key (DB): uuid (VARCHAR ~30)
+
+
+Client API: ClientApiService#fetchClientProfiles(String query, Map<String,Object> variables, Map<String,Object> filters)
+
+Join key (API): ClientDataResponse.ClientProfile.kycPortal.uid
+
+
+GraphQL queries: from KYCConstants (e.g., NOTIFICATION_QUERY, plus variants)
+
+API models: ClientDataResponse, ClientDataResponse.ClientProfiles, ClientDataResponse.ClientProfile (+ nested classes)
+
+UI DTO: KYCNotificationResponseDTO (what Angular DataTables displays)
+
+
+Goal Implement a new endpoint for Angular DataTables (serverSide=true) that searches across all columns (DB ~20 + API ~10), joining strictly by UUID (DB.uuid ↔ API.kycPortal.uid).
+No new tables. Use Caffeine cache for API hydration + ID lists. SQL Server uses a computed persisted column SearchConcat + Full-Text Index for global text search.
+
+
+---
+
+Generate (package com.rbc.caribbean.kyc.search)
+
+1) Request/Response models
+
+DataTablesRequest { int draw; int start; int length; List<Order> order; List<Column> columns; Search search; }
+
+DataTablesResponse<T> { int draw; int recordsTotal; int recordsFiltered; List<T> data; }
+
+
+2) Normalized query
+
+public class SearchQuery {
+  String global;                      // DataTables.search.value
+  Map<String,String> perColumn;       // columns[i].search.value by column name
+  String sortField;                   // columns[order[0].column].data
+  String sortDir;                     // asc|desc
+  int offset, limit;                  // start, length
+  Set<String> jurisdictions;          // country filter
+  Integer days;                       // 30|60|90|120
+  String toContainsQuery();           // -> "\"term1*\" AND \"term2*\"" (≤6 tokens, escape quotes)
+}
+
+3) Cache + nightly version
+
+Spring Cache (Caffeine):
+
+clientProfileByUuid — max ~200k, TTL 60–120s
+
+uuidsByQuery — max ~50k, TTL until nightly cutover
+
+
+SnapshotVersionService.currentVersion() flips at 02:15 America/Port_of_Spain
+helper versionKey(key) prefixes keys with the version.
+
+
+4) Providers (UUID-centric)
+
+DbSearchProvider (returns UUIDs, hydrates by UUID)
+
+deps: NoticeTransactionMasterRepository
+
+IdWindow searchUuids(SearchQuery q):
+
+Native query that returns uuid strings only + count using:
+
+global → CONTAINS(SearchConcat, :contains) when q.global present
+
+jurisdictions → country_name IN (:countries) (guard empty)
+
+days → choose the right date column (e.g., notice_sent_date or your business rule): notice_sent_date >= DATEADD(day, -:days, CAST(GETUTCDATE() AS date))
+
+optional per-column filters
+
+ORDER BY when sortField is a DB column; OFFSET :offset FETCH NEXT :limitWindow
+
+
+Clamp limitWindow = min(limit * 20, 2000)
+
+
+Map<String, NoticeTransactionMaster> hydrateByUuid(Collection<String> uuids) — single bulk query:
+
+SELECT * FROM dbo.notice_transaction_master WHERE uuid IN (:uuids)
+
+
+> SQL prep (comment only; you’ll run it):
+
+ALTER TABLE dbo.notice_transaction_master ADD SearchConcat AS (CONCAT(...)) PERSISTED;
+
+CREATE FULLTEXT INDEX ON dbo.notice_transaction_master (SearchConcat LANGUAGE 1033, notice_status, transaction_status, customer_type, kyc_refresh_status, response_status, response_fail_reason) KEY INDEX <PK_NAME> WITH CHANGE_TRACKING AUTO;
+
+
+
+
+ApiSearchProvider (returns UUIDs = kycPortal.uid, hydrates by UUID)
+
+deps: ClientApiService, CacheManager, SnapshotVersionService
+
+IdWindow searchUuids(SearchQuery q):
+
+Build GraphQL variables = { "page": n, "size": m } and filters from SearchQuery
+
+map jurisdictions to country filter;
+
+map days to the correct date filter (per your KYCConstants.NOTIFICATION_QUERY);
+
+map global to the API’s text filter if available.
+
+
+Call clientApiService.fetchClientProfiles(KYCConstants.NOTIFICATION_QUERY, variables, filters).
+
+Collect uuid = profile.kycPortal.uid until limitWindow or hasNextPage=false.
+
+Cache UUID list & total via versionKey(hash(q)) in uuidsByQuery.
+
+
+Map<String, ClientDataResponse.ClientProfile> hydrateByUuid(Collection<String> uuids):
+
+cache-first clientProfileByUuid; otherwise call GraphQL with a filter like uids: [ ... ] (adapt to your schema); return map keyed by uid.
+
+
+
+5) Orchestrator (UUID join)
+
+@Service
+public class FederatedNotificationSearchService {
+  private final DbSearchProvider db;
+  private final ApiSearchProvider api;
+  private final Executor executor;
+  private final int pageMax = 100;
+
+  public DataTablesResponse<KYCNotificationResponseDTO> search(DataTablesRequest dt) {
+    SearchQuery q = DataTablesMapper.from(dt);
+    q.limit = Math.min(Math.max(q.limit, 1), pageMax);
+
+    // Parallel UUID searches
+    var dbF  = CompletableFuture.supplyAsync(() -> db.searchUuids(q),  executor);
+    var apiF = CompletableFuture.supplyAsync(() -> api.searchUuids(q), executor);
+    var dbW  = dbF.join();
+    var apiW = apiF.join();
+
+    // “Search any column” => AND across sources (UUIDs)
+    List<String> mergedUuids = IdUtils.intersect(dbW.uuids(), apiW.uuids());
+
+    // Determine sort owner (DB column vs API column)
+    boolean dbOwnsSort = SortCatalog.isDbField(q.sortField);
+    List<String> ordered = Sorter.sortByOwner(mergedUuids, q, dbOwnsSort);
+    List<String> pageUuids = Paginator.slice(ordered, q.offset, q.limit);
+
+    // Hydrate in parallel by UUID
+    var dbRowsF  = CompletableFuture.supplyAsync(() -> db.hydrateByUuid(pageUuids),  executor);
+    var apiRowsF = CompletableFuture.supplyAsync(() -> api.hydrateByUuid(pageUuids), executor);
+    var dbRows   = dbRowsF.join();
+    var apiRows  = apiRowsF.join();
+
+    // Merge to UI DTO (UUID-keyed)
+    List<KYCNotificationResponseDTO> rows = pageUuids.stream()
+      .map(uuid -> NotificationMapper.toDto(dbRows.get(uuid), apiRows.get(uuid)))
+      .toList();
+
+    int recordsFiltered = mergedUuids.size();
+    int recordsTotal    = dbW.total(); // DB universe
+    return new DataTablesResponse<>(dt.draw, recordsTotal, recordsFiltered, rows);
+  }
+}
+
+6) Mapper (DB + API → KYCNotificationResponseDTO, UUID-safe)
+
+public final class NotificationMapper {
+  public static KYCNotificationResponseDTO toDto(
+      NoticeTransactionMaster ntm,
+      ClientDataResponse.ClientProfile prof) {
+
+    KYCNotificationResponseDTO dto = new KYCNotificationResponseDTO();
+
+    // --- DB fields ---
+    if (ntm != null) {
+      dto.setClientID(ntm.getClientId());
+      dto.setJurisdiction(ntm.getCountryName());
+      dto.setAoCode(ntm.getAoCode());
+      dto.setStatus(nz(ntm.getTransactionStatus(), ntm.getNoticeStatus()));
+      dto.setClientResponseDueDate(toIso(ntm.getClientResponseDueDate()));
+      // map the rest of the NTM fields you show in grid...
+    }
+
+    // --- API fields (via profile.kycPortal.uid) ---
+    if (prof != null) {
+      var cust = prof.getCustomerDetails();
+      var stat = prof.getCustomerStatus();
+      var cont = prof.getContactDetails();
+      var addr = prof.getAddressDetails();
+      var esc  = prof.getEscalationDetails();
+      var kyc  = prof.getKycPortal();
+
+      // ensure the join key is UUID/UID
+      // dto.setUuid(kyc != null ? kyc.getUid() : null); // add field in DTO if you want it visible
+
+      if (cust != null) {
+        dto.setClientName(nz(cust.getCustomerName1(), cust.getCustomerName2()));
+        dto.setCustType(nz(cust.getCustomerTypeCodeDescription(), cust.getCustomerType()));
+      }
+      if (stat != null) {
+        dto.setRiskRating(stat.getCustomerAmlRiskRating());
+        dto.setLastKYCRefreshDate(stat.getKycLastRefreshDate());
+        dto.setNextKYCRefreshDate(stat.getKycNextRefreshDate());
+      }
+      if (cont != null) {
+        dto.setClientEmail(cont.getCustomerEmailAddress());
+        dto.setClientMobile(cont.getCustomerPhoneMobile());
+      }
+      if (addr != null) {
+        dto.setClientAddress(AddressFmt.format(addr.getAddress1(), addr.getAddress2(),
+            addr.getAddress3(), addr.getAddress4(), addr.getPostalCode()));
+      }
+      if (esc != null) {
+        dto.setEscgOversight(esc.getEscgCustomer());
+        dto.setEscgLead(esc.getEscgLeadInd());
+        dto.setEscgContact(esc.getEscgContactEmail());
+      }
+      // map any remaining API fields you display (aoEmail, refreshDate, etc.)
+    }
+    return dto;
+  }
+}
+
+7) Controller (add endpoint in KYCController)
+
+@PostMapping(path = "/notification/search", produces = MediaType.APPLICATION_JSON_VALUE)
+public ResponseEntity<DataTablesResponse<KYCNotificationResponseDTO>> searchNotifications(
+    @RequestBody DataTablesRequest request) {
+  return ResponseEntity.ok(federatedNotificationSearchService.search(request));
+}
+
+8) GraphQL usage (UUID-focused)
+
+Map<String,Object> vars = Map.of("page", page, "size", size);
+Map<String,Object> filters = GraphqlFilters.from(q);   // jurisdictions, days, global → your schema
+ClientDataResponse r = clientApiService.fetchClientProfiles(KYCConstants.NOTIFICATION_QUERY, vars, filters);
+
+List<ClientDataResponse.ClientProfile> profiles =
+    r.getData().getClientProfiles().getClientProfiles();
+boolean hasNext = r.getData().getClientProfiles().isHasNextPage();
+int total = r.getData().getClientProfiles().getTotalCount();
+
+// Collect UUIDs for set ops
+List<String> uuids = profiles.stream()
+    .map(p -> p.getKycPortal() != null ? p.getKycPortal().getUid() : null)
+    .filter(Objects::nonNull)
+    .toList();
+
+9) Guardrails / SLAs
+
+Enforce length ≤ 100
+
+Provider window = limit * 20 (cap ~2000)
+
+Timeouts: DB ≤ 800 ms, API ≤ 900 ms, hydration ≤ 600 ms
+
+Nightly cache version flip
+
+Bulk only for API hydration (never per-row)
+
+If one side times out:
+
+Strict: return 0 results with message “API/DB unavailable”
+
+Soft (feature-flag): return partial with partial=true
+
+
+
+
+---
+
+Notes for Copilot
+
+All set operations and hydration MUST be UUID-based (DB.uuid ↔ API.kycPortal.uid).
+
+Reuse ClientApiService.fetchClientProfiles(...) and existing repo; do not re-implement OAuth or WebClient.
+
+SQL global search must use CONTAINS(SearchConcat, :contains); add needed native queries that select UUIDs (not numeric IDs).
+
+Keep KYCNotificationResponseDTO as the response model; set nulls when API data is missing.
+
+
+
+---
+
+If you want, I can also draft the native SQL for searchUuids(...) using your column names and a GraphQL filter builder (GraphqlFilters.from(q)) tailored to the filters you actually support.
+
