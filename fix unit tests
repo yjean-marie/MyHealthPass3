@@ -1,0 +1,142 @@
+You’re very close. The failure you’re seeing now means your verify for the repo’s failure update doesn’t match what actually happened for one of the items. From your latest screenshots, you’re already trying “Option A” (helper throws for n2). Two things usually trip this exact test:
+
+1. The SMS stub is too broad – when(smsService.sendSMS(any())) returns a success for every recipient, so items you expected to fail (like p3) are being marked success.
+
+
+2. Repo verifies are too strict – expecting a specific reason/value that the code doesn’t send (e.g., 0 vs null for status, or a different error string).
+
+
+
+Here’s a drop-in pattern that fixes both, matching your “mixed batch” example (p1 = "111" success, p2 = "" no-mobile failure, p3 = "333" SMS error failure).
+
+
+---
+
+Arrange (stubs)
+
+// Inputs
+Long jobId = 6L;
+
+String uuid1 = "UUID1", uuid2 = "UUID2", uuid3 = "UUID3";
+Integer id1 = 601, id2 = 602, id3 = 603;
+
+NoticeTransactionMaster n1 = new NoticeTransactionMaster(); n1.setUuid(uuid1); n1.setId(id1);
+NoticeTransactionMaster n2 = new NoticeTransactionMaster(); n2.setUuid(uuid2); n2.setId(id2);
+NoticeTransactionMaster n3 = new NoticeTransactionMaster(); n3.setUuid(uuid3); n3.setId(id3);
+
+NotificationRequestDTO p1 = new NotificationRequestDTO(); p1.setUuid(uuid1); p1.setClientMobile("111");
+NotificationRequestDTO p2 = new NotificationRequestDTO(); p2.setUuid(uuid2); p2.setClientMobile("");      // no number
+NotificationRequestDTO p3 = new NotificationRequestDTO(); p3.setUuid(uuid3); p3.setClientMobile("333");
+
+// Helper returns these
+NotificationResult result = new NotificationResult(List.of(n1, n2, n3), List.of(p1, p2, p3));
+when(notificationServiceHelper.getNotificationsToBeSentToday(anyLong(), anyString(), anyString()))
+    .thenReturn(result);
+
+// n1 (has number) → returns profile
+when(notificationServiceHelper.preProcessNotification(anyList(), eq(n1)))
+    .thenReturn(Optional.of(p1));
+
+// n2 (no number) → throws, so no SMS call for this one
+when(notificationServiceHelper.preProcessNotification(anyList(), eq(n2)))
+    .thenThrow(new NotificationPreProcessingException("No contact number found for UUID: " + uuid2));
+
+// n3 (has number) → returns profile
+when(notificationServiceHelper.preProcessNotification(anyList(), eq(n3)))
+    .thenReturn(Optional.of(p3));
+
+// SMS responses per recipient:
+// success ONLY for "111"
+SendSmsResponse ok = new SendSmsResponse();
+ok.setStatus(0);
+ok.setCommunicationState("ONE");
+ok.setMessageID("MS01");
+// ok.setMessage("OK"); // optional, affects only logs
+
+// failure for others (e.g., service unavailable OR invalid message id)
+SendSmsResponse fail = new SendSmsResponse();
+fail.setStatus(1);
+fail.setCommunicationState("ZERO");
+fail.setMessageID(null);  // makes your code treat it as failure
+
+when(smsService.sendSMS(argThat(req -> "111".equals(req.getRecipient()))))
+    .thenReturn(ok);
+when(smsService.sendSMS(argThat(req -> !"111".equals(req.getRecipient()))))
+    .thenReturn(fail);
+
+// If your method uses @Value props, set them (no need to mock):
+// ReflectionTestUtils.setField(kycService, "smsNotificationType", "SMS");
+// ReflectionTestUtils.setField(kycService, "smsNotificationTypeChar", "S");
+
+
+---
+
+Act
+
+kycService.sendSMSNew(jobId);
+
+
+---
+
+Assert (verifies only; don’t stub the void methods)
+
+// SMS called for p1 ("111") and p3 ("333"), but NOT for p2 (exception before send)
+verify(smsService, times(2)).sendSMS(any(SendSmsRequest.class));
+
+// Success row for id1: your code passes status=null on success
+verify(noticeTransactionMasterRepository).updateNotificationSuccessStatus(
+    eq(id1),
+    isNull(),                                  // not eq(0)
+    any(java.sql.Timestamp.class),
+    argThat(id -> id != null && !id.isBlank()) // messageId present (e.g., "MS01")
+);
+
+// Failure row for id2: no mobile number
+verify(noticeTransactionMasterRepository).updateNotificationFailureStatus(
+    eq(id2),
+    eq("NO_MOBILE_NUMBER"),
+    any(java.sql.Timestamp.class)
+);
+
+// Failure row for id3: SMS failure reason — match what your code sets.
+// If your code writes a fixed string, verify that:
+verify(noticeTransactionMasterRepository).updateNotificationFailureStatus(
+    eq(id3),
+    eq("SERVICE_UNAVAILABLE"),                 // or whatever your code uses for SMS error
+    any(java.sql.Timestamp.class)
+);
+
+// No extras
+verifyNoMoreInteractions(smsService, noticeTransactionMasterRepository);
+
+> If you’re not sure what the code uses as the failure reason for the SMS error, capture it once and assert more loosely:
+
+
+
+ArgumentCaptor<String> reason = ArgumentCaptor.forClass(String.class);
+verify(noticeTransactionMasterRepository).updateNotificationFailureStatus(eq(id3), reason.capture(), any(java.sql.Timestamp.class));
+System.out.println("id3 failure reason = " + reason.getValue());
+// then assert that it's nonblank, or contains something expected
+assertThat(reason.getValue()).isNotBlank();
+
+
+---
+
+Why this fixes your test
+
+n2 never reaches smsService because preProcessNotification(..., n2) throws → SUT updates failure for id2 with "NO_MOBILE_NUMBER".
+
+With conditional SMS stubs, n1 succeeds and n3 fails, so you get exactly one success (id1) and two failures (id2 “no mobile”, id3 “service unavailable”).
+
+Verifies match the actual values your code uses:
+
+success passes status=null (so isNull()),
+
+messageId nonblank,
+
+failure reasons matched to the branches.
+
+
+
+If a verify still says “Wanted X but got Y”, copy the exact Actual invocation line from the failure, and we’ll tune that one matcher (usually the reason string for the SMS-failure path).
+
