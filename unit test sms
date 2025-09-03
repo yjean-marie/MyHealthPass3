@@ -1,3 +1,55 @@
+You’re one step away. Your verify expects a success for id1=601, but the repo shows two failure updates (601 and 603). That means your test is still driving the SUT down the failure path for the first send.
+
+The usual cause here: the SMS stub for the “111” recipient isn’t matching, so your SUT gets the failure response for both sends. Matchers like argThat(req -> "111".equals(req.getRecipient())) are brittle (and blew up earlier when req was null).
+
+Make the SMS stub bulletproof (null-safe + branch inside Answer)
+
+Replace all when(smsService.sendSMS(...)) stubs with exactly this one:
+
+when(smsService.sendSMS(any(com.rbc.caribbean.kyc.model.SendSmsRequest.class)))
+    .thenAnswer(inv -> {
+        com.rbc.caribbean.kyc.model.SendSmsRequest req =
+            (com.rbc.caribbean.kyc.model.SendSmsRequest) inv.getArgument(0);
+
+        // DIAGNOSTIC: see who we're sending to
+        System.out.println("SMS stub got recipient: " + (req == null ? "null" : req.getRecipient()));
+
+        // Build fresh responses (no shared instances!)
+        com.rbc.caribbean.kyc.model.SendSmsResponse ok = new com.rbc.caribbean.kyc.model.SendSmsResponse();
+        ok.setStatus(0);
+        ok.setCommunicationState("ONE");
+        ok.setMessageID("MS01");     // must be non-null for success
+
+        com.rbc.caribbean.kyc.model.SendSmsResponse fail = new com.rbc.caribbean.kyc.model.SendSmsResponse();
+        fail.setStatus(1);
+        fail.setCommunicationState("ZERO");
+        fail.setMessageID(null);     // forces failure branch
+
+        // Treat anything containing "111" as the success case (tolerates formatting/country code)
+        boolean is111 = req != null && req.getRecipient() != null && req.getRecipient().contains("111");
+        return is111 ? ok : fail;
+    });
+
+This avoids matcher NPEs, tolerates formatting (+1…111), and guarantees exactly one success (the send to “111”) and one failure (the send to “333”). The helper stub that throws for n2 still yields the “NO_MOBILE_NUMBER” failure before SMS is called.
+
+Keep the helper stubs like this
+
+when(notificationServiceHelper.getNotificationsToBeSentToday(anyLong(), anyString(), anyString()))
+    .thenReturn(new NotificationResult(List.of(n1, n2, n3), List.of(p1, p2, p3)));
+
+when(notificationServiceHelper.preProcessNotification(anyList(), eq(n1)))
+    .thenReturn(Optional.of(p1)); // p1: "111"
+
+when(notificationServiceHelper.preProcessNotification(anyList(), eq(n2)))
+    .thenThrow(new NotificationPreProcessingException("No contact number found for UUID: " + uuid2));
+
+when(notificationServiceHelper.preProcessNotification(anyList(), eq(n3)))
+    .thenReturn(Optional.of(p3)); // p3: "333"
+
+(And if your method uses @Value strings, set them via ReflectionTestUtils.setField(kycService, "smsNotificationType", "SMS"); and "smsNotificationTypeChar", "S".)
+
+Verifies that should pass now
+
 // Two sends: one for "111" (success) and one for "333" (failure)
 verify(smsService, times(2)).sendSMS(any(SendSmsRequest.class));
 
@@ -24,3 +76,19 @@ verify(noticeTransactionMasterRepository).updateNotificationFailureStatus(
 );
 
 verifyNoMoreInteractions(smsService, noticeTransactionMasterRepository);
+
+If it still says “wanted success but only failures happened”
+
+Print the actual recipients your stub saw (that System.out.println inside the Answer). If you don’t see it, your mock wiring is off; if you do see it and the “111” line is missing, your request.setRecipient(...) isn’t getting “111” (maybe it switches to clientPhone). In that case:
+
+Capture the actual SendSmsRequest and inspect it:
+
+ArgumentCaptor<SendSmsRequest> cap = ArgumentCaptor.forClass(SendSmsRequest.class);
+verify(smsService, atLeastOnce()).sendSMS(cap.capture());
+System.out.println("Recipients: " + cap.getAllValues().stream().map(SendSmsRequest::getRecipient).toList());
+
+Or loosen the success condition further (e.g., endsWith("111")).
+
+
+This isolates whether the failure is from stubbing (most likely) or from upstream data (recipient not “111”).
+
