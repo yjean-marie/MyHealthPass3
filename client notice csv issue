@@ -1,0 +1,18 @@
+Here’s a short Webex-sized message you can drop in CCDT to explain the change and the impact, without the long backstory:
+
+
+---
+
+CCDT Update – Client Notices CSV Generation
+
+Old way: CSVs were created per enabled jurisdiction (even if empty).
+
+New way: Notices are generated higher up via rollout strategy (risk rating, customer type, etc.). We now pull directly from the notice table and group by jurisdiction, so only CSVs with actual clients are created.
+
+Impact: No more empty jurisdiction CSVs. If we need to keep those for parity, we can add a quick check against the country table to generate blank files, but the question is whether that’s necessary.
+
+
+---
+
+Do you want me to make this even tighter, like a one-liner you can just paste in chat as a quick update, or keep this short-summary style?
+
