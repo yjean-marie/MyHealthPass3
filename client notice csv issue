@@ -16,3 +16,25 @@ Impact: No more empty jurisdiction CSVs. If we need to keep those for parity, we
 
 Do you want me to make this even tighter, like a one-liner you can just paste in chat as a quick update, or keep this short-summary style?
 
+
+Got it — here’s a more detailed Webex-style message you can send in CCDT. It’s still compact enough for chat, but with enough context so everyone understands the change and why it matters:
+
+
+---
+
+CCDT Update – Client Notices CSV Generation
+
+Previously, the process started by checking which jurisdictions were enabled (e.g., Trinidad, Bahamas, Curaçao). For each enabled jurisdiction, a CSV was created — even if no clients matched the criteria. That meant we often ended up with empty jurisdiction files in S3.
+
+With the new rollout strategy, client notices are generated earlier in the chain based on broader rules (risk rating, customer type, etc.), not just jurisdiction. We now pull directly from the notice table, filter by date and notice type (SMS, email, letter), and then group clients by jurisdiction. CSVs are generated only for jurisdictions that actually have client notices to send.
+
+Impact: Empty CSVs will no longer be produced. Only jurisdictions with valid client notices will have a CSV.
+Option: If exact parity with the old process is required, we could do a quick country-table check and generate blank files for the missing jurisdictions. But the open question is — do we really need those empty files anymore?
+
+
+---
+
+Would you like me to also prepare a super-tight TL;DR one-liner you could pin at the top of the thread for visibility, while keeping this longer note as the main explanation?
+
+
+
