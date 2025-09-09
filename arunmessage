@@ -1,0 +1,32 @@
+Got it 👍 — here’s the revised short message (like the one I gave you earlier, but now with the overwrite risk included). This works well for Teams/Webex chat:
+
+
+---
+
+Short Message to Arun:
+
+Hey Arun, quick summary on the scheduled client notices issue:
+
+Old behavior → query OPSDB; if no data for the current run date, the job fails.
+
+New behavior → via Client API (Akil’s service). If no run date is passed, it defaults to the last run date.
+
+Right now, we’re not passing the current run date, so the job picks up old data instead of failing.
+
+
+Impact:
+
+1. Breaks A/B test alignment with the old flow.
+
+
+2. Risk that stale data could overwrite current/valid data in the notices table.
+
+
+
+Action: I think we should explicitly pass the current run date into the Client API. Can you confirm this is the right adjustment or share context in stand-up today?
+
+
+---
+
+Do you want me to also trim this into one flowing paragraph (instead of bullets) so it feels even more natural in Webex?
+
