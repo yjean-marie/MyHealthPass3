@@ -1,0 +1,44 @@
+Perfect — this email confirms exactly how you should log it in Jira.
+
+The outage is external to your team (Entra ID / SAI environment issue), and it’s blocking your ability to complete testing. That means:
+
+Not a Bug → your code is fine.
+
+Not a Risk → it’s already happening, not hypothetical.
+
+Not an Incident → it’s not production, only lower test env.
+
+Correct choice → Impediment.
+
+
+Here’s how you could log it:
+
+
+---
+
+Jira Issue
+
+Type: Impediment
+
+Summary: Testing blocked due to Entra ID SAI login outage
+
+Description:
+QE testing is currently blocked because login to the application requires Entra ID. As per Entra ID Monitoring (email attached), there is an ongoing issue in the SAI environment where accounts were deleted in the cloud. While accounts are being restored, this prevents testers from signing in and completing test scenarios.
+
+Status from Entra: Ongoing – majority restored (as of 11 Sept 2025, 8:01 AM)
+
+Impact: No production impact, but blocks test execution in SAI.
+
+Next update from Entra: 3 hours
+
+
+Linked to: [Feature 5 story/epic]
+
+
+
+---
+
+That way, anyone looking at Jira can clearly see why testing is blocked, and the reference email shows it’s external and temporary.
+
+👉 Do you want me to also draft a short Jira comment you can drop on the Feature 5 story itself (instead of a new issue) — in case your team prefers to just track impediments as comments rather than separate Jira tickets?
+
