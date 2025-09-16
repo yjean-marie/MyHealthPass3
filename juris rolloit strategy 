@@ -1,0 +1,35 @@
+Got it — thanks for laying this out so clearly. Here’s a draft email you could send to Rajesh and the business for confirmation. I’ll keep it professional, structured, and aligned with how you usually communicate:
+
+
+---
+
+Subject: Confirmation of Jurisdiction Rollout Strategy Table Data
+
+Hi Rajesh,
+
+As discussed on our call, I’ve prepared the attached Excel with the proposed population of the new Jurisdiction Rollout Strategy table. This reflects the replacement of the existing jurisdiction table, where Bahamas and Curaçao are currently enabled.
+
+In the new table structure, we now account for:
+
+Country (e.g., Bahamas, Curaçao)
+
+Customer Type (Personal, Business)
+
+Risk Rating Strategy (High 3, High 2, High 1, Medium, Standard)
+
+Enable Flag
+
+
+To align with the current state (where Bahamas and Curaçao are enabled), each of these countries will have 10 enabled rules (all combinations of the 2 customer types × 5 risk ratings). With 10 jurisdictions in total, the table will contain 100 rules, of which 20 (10 each for Bahamas and Curaçao) will be enabled = Y.
+
+Request:
+Could you please confirm that this configuration is correct and represents the intended data for the rollout? Once confirmed, we will proceed with promoting this table to production as part of the deployment.
+
+Thanks,
+Sherrell
+
+
+---
+
+👉 Would you like me to also add a short explanatory note in the Excel attachment itself (like a header row note) so the business can cross-check more easily, or just let the email carry the explanation?
+
