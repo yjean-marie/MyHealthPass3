@@ -1,0 +1,6 @@
+@echo off
+curl -L ^
+  "https://rbcc-kyc-portal-cloud-api-kf10-u.imtls.apps.ocp.sai-01.iasifg.rbc.com/stonebranch-job/test" ^
+  -H "Content-Type: application/json" ^
+  -d "{}"
+pause
