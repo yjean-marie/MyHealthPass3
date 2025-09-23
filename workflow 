@@ -1,0 +1,152 @@
+Here’s the full chatbot password reset workflow, incorporating secure authentication, Entrust OTP integration, and a fallback for users without two-factor authentication. It mirrors the in-person service center flow and is aligned with best practices for a regulated banking environment.
+
+
+---
+
+🔐 Chatbot Password Reset Workflow
+
+Step 1: Initiation
+
+Trigger: User types something like “I forgot my password” or selects "Reset Password" from the chatbot menu.
+
+Chatbot Response:
+“No problem! Let’s get you verified so we can help you reset your password.”
+
+
+
+---
+
+Step 2: Identify the Client
+
+Chatbot prompts:
+
+1. “Please enter your full name as it appears on your account.”
+
+
+2. “Now enter the last 4 digits of your account number.”
+
+
+
+Purpose: These two inputs help uniquely identify the individual in a multi-person account scenario.
+
+
+
+---
+
+Step 3: Confirm Delivery Method for OTP
+
+Chatbot Response (after lookup): “Thanks! I’ve found your record. I’ll now send a one-time code to your registered contact.”
+
+> 🟢 “Is it okay if I send the code to your email ending in @mail.com?”
+OR
+🟢 “I’ll send the code to your phone number ending in 1234.”
+
+
+
+User confirms (or selects an alternative if multiple are available).
+
+
+
+---
+
+Step 4: OTP Verification (via Entrust API)
+
+Action: Chatbot calls the Entrust API to trigger OTP.
+
+Chatbot Message:
+“A one-time password has been sent. Please enter it here to continue.”
+
+User enters OTP
+
+Chatbot verifies OTP via Entrust API response.
+
+
+
+---
+
+Step 5: Check for 2FA Setup
+
+Chatbot checks user profile to see if two-factor authentication (2FA) is already enabled.
+
+
+✅ If 2FA is already enabled:
+
+Chatbot Response:
+“Great! Since you already have 2FA enabled, you can reset your password using the Forgot Password option in the app or website. I’ll send you a quick link just in case.”
+
+
+❌ If 2FA is NOT enabled:
+
+Chatbot Response:
+“We’ll need to set up two-factor authentication to secure your account. Let’s walk through that now.”
+
+
+
+---
+
+Step 6: 2FA Onboarding
+
+Steps:
+
+1. Guide the user to enable 2FA using their preferred method (e.g., SMS, authenticator app).
+
+
+2. Confirm 2FA setup is successful.
+
+
+
+Chatbot Response:
+“Awesome! Two-factor authentication is now active.”
+
+
+
+---
+
+Step 7: Issue One-Time Password (OTP Login)
+
+Action: Once 2FA is set up, the chatbot issues a one-time password (not to be confused with the verification OTP) for immediate login.
+
+Chatbot Message:
+“Here’s your temporary login code: X9F7KL. Please use this within the next 10 minutes to log in and reset your password.”
+
+
+
+---
+
+Step 8: Password Reset
+
+User logs in using the one-time password.
+
+User navigates to password reset section in-app or web.
+
+User resets password successfully.
+
+
+
+---
+
+Step 9: Confirmation
+
+Chatbot follows up: “You’re all set! Your password has been updated. Anything else I can help you with today?”
+
+
+
+---
+
+🔁 Fallback Scenarios
+
+🚫 No Valid Contact Method Found:
+
+“I wasn’t able to find a valid email or phone number on file. Please contact our service center at 800-XXXX to update your information.”
+
+
+🧠 User Fails OTP 3 Times:
+
+“It looks like you’ve entered the wrong code a few times. For your security, I’ll need to direct you to a live agent for further help.”
+
+
+
+---
+
+Let me know if you want this as a flowchart, component diagram, or script for training/demo next.
+
