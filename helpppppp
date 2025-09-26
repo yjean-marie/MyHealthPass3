@@ -1,0 +1,31 @@
+Got it — thanks for the context. You want it to sound smoother and professional, while also making it clear that they need to handle this before their offshore start time. Here’s a refined version of your email:
+
+
+---
+
+Subject: Validation of Executed Jobs – Feature 5 Deployment to UAT
+
+Good morning,
+
+Kindly requesting your assistance in validating the results for all executed jobs outlined in the Technical PIV section of this document:
+[Confluence Link]
+
+All jobs were run following the successful deployment of Feature 5 code and migration via MOP.
+
+Teleios Inbound and Streamline Inbound jobs require files to be created and then rerun for a successful outcome.
+
+SMS and Streamline have already been executed, and the results table will indicate the clients that were notified.
+
+ScheduleClientNotice inserted new records into the NoticeTransaction and NoticeTransactionBck tables. Please verify against OPSDB.
+
+
+Kindly prioritize this validation ahead of your offshore start time so results are available for early review.
+
+Kind regards,
+Yuri Jean-Marie
+
+
+---
+
+Would you like me to also make a shorter checklist-style version (more “action-driven” for the devs), or do you prefer this explanatory style with a bit more detail?
+
