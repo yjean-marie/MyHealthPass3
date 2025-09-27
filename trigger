@@ -1,0 +1,15 @@
+CREATE TRIGGER trg_replace_null_with_space
+ON CLIENTPROFILE_KYCPORTAL
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE t
+    SET t.[CUSTOMER_NAME_2] = ' '
+    FROM CLIENTPROFILE_KYCPORTAL t
+    INNER JOIN inserted i
+        ON t.PrimaryKeyColumn = i.PrimaryKeyColumn
+    WHERE i.[CUSTOMER_NAME_2] IS NULL
+       OR LTRIM(RTRIM(i.[CUSTOMER_NAME_2])) = '';
+END
