@@ -1,0 +1,33 @@
+Perfect — here’s the full expert write-up for Q17 plus a shorter summary version you can drop into the sheet.
+
+
+---
+
+Detailed Answer (Q17 – Audit Log Levels)
+
+Answer:
+Partially. Audit logging is in place but not consistently detailed enough to fully support forensic investigations.
+
+Application Logs: User identifiers and timestamps are captured for user actions and stored in audit log tables. However, detail is inconsistent across events, and request/response payloads are not logged.
+
+Database Logs: SQL Server audit logging is not enabled.
+
+Infrastructure Logs: OCP/Stonebranch logs are captured and centralized into Elastic/Kibana and Splunk via Logging-as-a-Service. These provide visibility into platform and job activities but are not always tied to individual users.
+
+Retention: Logs are retained according to enterprise Logging-as-a-Service policy, which ensures availability for investigation within defined periods.
+
+
+Expert Note: To strengthen forensic readiness, enabling SQL Server audit logging, enforcing consistent user identifier capture across all application logs, and confirming enterprise log retention SLAs are recommended.
+
+
+---
+
+Summary (for the sheet cell)
+
+Other – Audit logs exist (user IDs, timestamps, infra logs via Kibana/Splunk), but SQL audit logging is disabled and user-level detail is inconsistent. Retention managed under enterprise Logging-as-a-Service.
+
+
+---
+
+👉 Do you want me to keep flagging these expert “gap + recommendation” notes for each relevant question, so when RISC reads your responses it looks like you’ve already thought through improvements?
+
