@@ -1,0 +1,79 @@
+Great question 👍 — if you needed to actually produce a risk acceptance file (something you’d send to the RISC team, or attach as evidence), it would look like a short, structured memo or template.
+
+Here’s a safe draft format you can adapt for your team:
+
+
+---
+
+Risk Acceptance / Risk-Based Decision Document
+
+Application Name: KYC Refresh Portal
+Application Code: KFLO
+Date: [Insert Date]
+Prepared By: [Your Team / Technology Owner]
+Reviewed By: [Security / Risk Owner]
+
+
+---
+
+1. Background
+
+As part of compliance with Infrastructure Security Standards ISS 2-8-2, all applications must ensure that audit trails are documented and maintained. The KYC Refresh Portal is hosted on OpenShift Container Platform (OCP), with supporting SQL Server databases and APIs (GraphQL, REST).
+
+
+---
+
+2. Risk Considered
+
+Failure to maintain audit trails could lead to:
+
+Inability to trace unauthorized access or data modifications.
+
+Non-compliance with enterprise regulatory requirements.
+
+Increased exposure in case of a data breach.
+
+
+
+---
+
+3. Decision
+
+After review, it has been determined that the KYC Refresh Portal will comply with ISS 2-8-2 through the following controls:
+
+Infrastructure Logging: OCP logs captured and retained via Logging-as-a-Service (LaaS) with visibility in Kibana and Splunk.
+
+Database Logging: SQL Server is encrypted at rest with DB audit logging enabled.
+
+Application Logging: Application generates user activity logs which are integrated into the enterprise logging solution.
+
+Access Restrictions: Access to production is limited to authorized personnel only.
+
+
+
+---
+
+4. Risk Acceptance
+
+No deviations from ISS 2-8-2 were identified; therefore, no exceptions or compensating controls are required at this time.
+This decision will be reviewed annually or if material changes to the infrastructure occur.
+
+
+---
+
+5. Approvals
+
+Technology Owner: ____________________ (Signature / Date)
+
+Application Owner: ____________________ (Signature / Date)
+
+Risk / Security Reviewer: ____________________ (Signature / Date)
+
+
+
+---
+
+That way, you have a formal artifact to hand over — short, structured, and auditable.
+
+👉 Do you want me to make you a “blank template version” in Word/Excel style that you can reuse across other apps too, or should I tailor this one fully for KYC Refresh Portal Q1 only?
+
