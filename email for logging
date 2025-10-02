@@ -1,0 +1,30 @@
+Got it 👍 — we’ll keep it tighter and more natural, without the “this is separate” explanations. Here’s the cleaned-up version:
+
+
+---
+
+Subject: Update on Logging & Monitoring Questionnaire Discussion with Kyung
+
+Hi [Boss’s Name],
+
+I met with Kyung regarding the Logging and Monitoring questionnaire and wanted to provide an update.
+
+We explained how our application currently handles logging and the type of data it processes. He confirmed that while the basic logging requirements are being met, the gap lies in the monitoring requirements (alerting and proactive review of anomalous activity). Once we submit the questionnaire, this will close off the current risk item for this cycle.
+
+Next steps:
+
+We will connect with the JSOC team to understand what monitoring capabilities are available for our application.
+
+By October 25, 2027, all identified logging/monitoring gaps need to be risk-managed or remediated.
+
+
+I’ll continue to track both items and prepare accordingly.
+
+Best regards,
+[Your Name]
+
+
+---
+
+👉 Do you want me to keep the “Next steps” as bullets (so it stands out), or fold them into a single paragraph for a smoother narrative flow?
+
