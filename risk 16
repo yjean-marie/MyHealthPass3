@@ -1,0 +1,62 @@
+That’s helpful — and you’re right, it only partially answers the question. Let’s unpack it.
+
+
+---
+
+Q15 Recap
+
+> "Are real-time alerts generated for unauthorized or abnormal access attempts?"
+
+
+
+What they are really asking:
+
+Do you have automated alerts tied specifically to security-related access anomalies (failed logins, strange login times, privilege escalations, etc.)?
+
+Or is it mostly just operational monitoring (errors, jobs failing, DB issues)?
+
+
+
+---
+
+From what you just told me
+
+Application Support Team → trained mainly on job failures / operational errors, not specifically security anomalies.
+
+Splunk alerts → may exist, but not sure if they’re for security access attempts or just system health.
+
+Training → more informal, not a formal documented SOC-style process.
+
+
+So right now, the picture looks like:
+
+Real-time alerts: Not confirmed for unauthorized/abnormal user access.
+
+Monitoring focus: More on system/application performance and job errors.
+
+Team skillset: They can investigate issues and may pick up anomalies if visible in logs, but that’s not their primary scope.
+
+
+
+---
+
+Expert framing for the questionnaire (Q15)
+
+Answer (Q15 – Real-Time Alerts for Unauthorized/Abnormal Access):
+No. Real-time alerts specifically for unauthorized or abnormal access attempts are not currently configured at the application level. The Application Support Team primarily monitors for job failures and operational errors, with some ad hoc review of access logs through Splunk. While team members have received informal training in reviewing logs and investigating anomalies, there is no formalized security alerting or dedicated training program for abnormal access monitoring. Escalation of suspicious activity, if identified, would follow the Incident Management process with a FIRE Call ID.
+(Follow-up required with Splunk administrators/SOC to confirm whether enterprise-level access anomaly alerts are applied to EntraID events for this application.)
+
+
+---
+
+👉 This way:
+
+You’re transparent (no real-time security alerts).
+
+You note monitoring exists, but focused elsewhere.
+
+You flag the gap (follow-up with SOC).
+
+
+Would you like me to also give you a recommended remediation step here (e.g., “set up Splunk rules for failed login thresholds”)? That often makes these answers look stronger to the RISC team.
+
