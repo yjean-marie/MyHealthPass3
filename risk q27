@@ -1,0 +1,68 @@
+Excellent — this is Q26.
+
+Q26 – Procedures for Reviewing/Escalating Anomalous Access
+
+> "Are there established procedures being used to review, escalate anomalous access to data by RBC or third-party employees? When were procedures last reviewed and approved?"
+
+
+
+
+---
+
+What they’re asking
+
+They want to know if there are formal, documented procedures that say:
+
+1. How anomalous access to sensitive data is identified.
+
+
+2. Who reviews it (app team, SOC, InfoSec, Risk).
+
+
+3. How it’s escalated (incident tickets, FIRE Call ID, management notification).
+
+
+4. When those procedures were last reviewed and approved (so they aren’t stale).
+
+
+
+This is about formal governance — not just “we could do it if it happened.”
+
+
+---
+
+From what you’ve told me so far
+
+Detection/Monitoring: App logs user activity inconsistently; SOC/monitoring teams can investigate when incidents are raised. ✅
+
+Escalation Path: You already have a process — incidents → FIRE Call ID → Production Support/SOC investigate. ✅
+
+Documentation: You’ve said earlier there’s no formal documented procedure for suspicious security activity (only for operational errors). ❌
+
+Review/Approval Date: Since no doc exists, you wouldn’t have a “last reviewed” date. ❌
+
+
+
+---
+
+Expert Answer (Q26)
+
+Answer:
+No formal documented procedure currently exists at the application level for reviewing or escalating anomalous access to data by RBC or third-party employees. In practice, anomalies would be handled through the enterprise Incident Management process: suspicious activity is raised as an incident, escalated via a FIRE Call ID, and investigated by the Production Support Team with escalation to SOC/Information Security as required.
+
+There is no record of a last review/approval date for a specific anomalous access procedure for this application.
+
+Expert Note: It is recommended that a documented procedure specific to anomalous access investigations be developed, aligned with enterprise security policies, and formally reviewed/approved on a recurring basis (e.g., annually).
+
+
+---
+
+Summary (for sheet cell)
+
+No – No formal documented procedure. Escalation occurs via Incident Management process (FIRE Call ID). No last review/approval date available.
+
+
+---
+
+👉 Do you want me to help you draft a short “gap-closing procedure” template for anomalous access (like we did for the risk acceptance doc), so if RISC presses you, you can show you’re already working on formalizing it?
+
