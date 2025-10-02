@@ -1,0 +1,25 @@
+Perfect, thanks for the breakdown — that’s exactly what I needed. Let’s shape Q3 with what you confirmed:
+
+
+---
+
+Answer (Q3 – Anomalous Access Monitoring):
+
+User Access: All user authentication and login events are logged through EntraID and integrated into the enterprise logging services (Kibana, Splunk, Dynatrace).
+
+Data Changes: The application logs data update events, which are also captured in the enterprise logging framework.
+
+Exports: The application does not provide explicit export functionality. End users may copy/paste data as part of normal usage, but this cannot be centrally logged. Bulk exports (for BI purposes) occur outside the application workflow and are not in scope for this control.
+
+Monitoring: At present, no automated anomaly detection rules (e.g., unusual access patterns, failed login spikes, high-volume exports) are configured. Monitoring is primarily manual, with follow-up required to confirm future automation options. (Follow-up with Matthew on monitoring automation.)
+
+Investigations & Escalation: Anomalies are investigated by the Production Support Team. Incidents are tracked and escalated through the enterprise incident management process, which requires a formal FIRE Call ID for approval and investigation.
+
+
+
+---
+
+That way, you’re transparent: yes, logs exist, exports don’t apply, monitoring is manual for now, and there’s a formal escalation path. You also left a placeholder for Matthew. ✅
+
+👉 Do you want me to help you phrase the official “Yes/No/Other” answer for Q3 as “Yes, with limitations” (since you log but don’t automate yet), or would you rather keep it as a clean “Yes” and note the caveat in the comment box?
+
