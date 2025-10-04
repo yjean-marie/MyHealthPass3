@@ -1,0 +1,59 @@
+Perfect, I see the nuance you’re pointing out 👍. Let me rewrite the Issue Description section with your corrected breakdown — still Jira-ready, still point-form, but clearer and polished:
+
+
+---
+
+Issue Description:
+
+The email job is split into two main parts:
+
+1. Process File
+
+a) Send out emails.
+
+b) Update log_records table for each record processed.
+
+
+2. Iterate Through Log Records (for current date)
+
+For each record, find the client_id in notice_transaction_master.
+
+If found → update the record.
+
+If not found → break the loop, which stops processing of all other records for the day.
+
+
+Once the job fails, it populates a record in the log_records table with client_id = null.
+
+In this case, the failure occurred because the CSV file that needed to be processed was not yet present in the S3 bucket.
+
+The job was executed without the file in S3, which caused the failure and created a log_records row with a null client_id.
+
+After the CSV was later placed in the S3 bucket and the job retried, processing hit the null client_id entry (processed in reverse order), which triggered the error again.
+
+
+Root Cause:
+
+Job execution without the required CSV in S3 caused a null client_id record to be inserted into log_records.
+
+Subsequent runs fail once they encounter this null client_id in the processing sequence.
+
+
+Resolution / Workaround:
+
+Run a cleanup query to reset or adjust records where client_id is null.
+
+The recommended query is to update those records to an older date (e.g., yesterday’s date) so they are skipped in current processing.
+
+
+Sample Query Path (for resolution):
+
+UPDATE log_records
+SET created_at = DATEADD(day, -1, GETDATE())
+WHERE client_id IS NULL;
+
+
+---
+
+Do you want me to also add a “Steps to Reproduce / Expected vs Actual Behavior” section so it reads more like a formal bug ticket in Jira?
+
