@@ -1,0 +1,23 @@
+import java.io.FileWriter;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+// inside your code block:
+String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+String pageStr = String.valueOf(page);
+String sizeStr = String.valueOf(size);
+
+try (FileWriter writer = new FileWriter("output.csv", true)) { // append mode
+    dbResult.stream()
+        .map(ClientProfileKycPortal::getUID)
+        .forEach(uid -> {
+            try {
+                writer.append(String.join(",", timestamp, pageStr, sizeStr, uid)).append("\n");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+} catch (IOException e) {
+    e.printStackTrace();
+}
