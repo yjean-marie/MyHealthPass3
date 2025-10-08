@@ -1,0 +1,22 @@
+Here’s a shorter, WebEx-friendly version of that message:
+
+
+---
+
+Hey team — quick summary on the notification issue:
+
+The Notification page pulls UUIDs from notice_transaction_master, then calls the Client API for client profiles. The Client API uses the latest run date (from SELECT MAX(run_date) in OPS DB).
+
+Right now, a few client records were updated to Oct 7–8, but most are still Oct 6. Because the max run date is Oct 8, the Client API only returns those few Oct 8 records — so the UI shows a count but no records.
+
+To fix it, we can either:
+1️⃣ Revert the Oct 7–8 records back to Oct 6, or
+2️⃣ Update all Oct 6 records (test data) to Oct 8.
+
+Either way will unblock testing. Which option do we prefer?
+
+
+---
+
+Would you like me to make it sound slightly more casual (for chat flow) or keep it crisp like this?
+
