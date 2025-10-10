@@ -1,0 +1,212 @@
+Got it—your diagnosis makes sense. Here’s a crisp write-up you can drop into Jira/Confluence (plus concrete fixes).
+
+Bug summary (what users see)
+
+On the Restrain Override page, response metadata says there are 5 items, but only 2 rows render. This happens when the user is P2L1 (L1 officer) and their email matches multiple AO rows that share the same (AO Code, Transit) pair.
+
+Root cause (why it happens)
+
+1. We build an AO list from AO where (avprm_email = :email OR l1_delegate_email = :email) (or filtered by countries if Pan ≠ 1).
+
+
+2. For each AO row, we run a restrain query that joins restrain ↔ notice_transaction_master and returns UUIDs that satisfy the business rules (action in the L1/L2/L3 set, revised/original due‐date windows, status, etc.) and rst.ao_code = :aoCode AND rst.transit = :transit.
+
+
+3. Because Amy maps to six AO rows but only two unique (ao_code, transit) pairs (three rows for 801032 and three for 801036, same transit), we execute duplicate queries and push duplicate UUIDs into the master list.
+
+
+4. We set size (aka totalCount) from the raw UUID list length (e.g., 5) before deduplication.
+
+
+5. When fetching details by UUID, only 2 unique records exist, so the grid shows 2 while metadata still says 5.
+
+
+
+Correctness principles
+
+A client should appear once per unique UUID.
+
+totalCount must reflect unique UUIDs after applying all filters but before pagination.
+
+
+Fix options (pick any 1–2, or combine)
+
+A) Deduplicate (AO Code, Transit) before querying
+
+Why: Prevents running the same restrain query multiple times.
+
+Build a set: distinctPairs = {(ao_code, transit)} from the AO list.
+
+Loop over distinctPairs instead of every AO row.
+
+
+Pseudocode:
+
+Set<Pair<String,String>> distinctPairs =
+    aoRows.stream()
+          .map(r -> pair(r.getAoCode(), r.getTransit()))
+          .collect(toSet());
+
+Set<UUID> uuids = new HashSet<>();
+for (var p : distinctPairs) {
+    uuids.addAll(runRestrainUuidQuery(p.aoCode(), p.transit(), filters));
+}
+List<UUID> uniqueUuids = new ArrayList<>(uuids);
+// IMPORTANT: totalCount = uniqueUuids.size()
+
+B) Return DISTINCT UUIDs in SQL
+
+Why: Cheap, safe backstop even if upstream misses a duplicate.
+
+SELECT DISTINCT ntm.uuid
+FROM restrain r
+JOIN notice_transaction_master ntm ON r.uuid = ntm.uuid
+WHERE r.ao_code = :aoCode
+  AND r.transit = :transit
+  AND r.restrain_override_action IN (:actions)
+  AND (
+       (r.revised_restrain_due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 DAY')
+    OR (r.refresh_status = 'DUE_FOR_RESTRAIN'
+        AND r.original_restrain_due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 DAY')
+  );
+
+C) One set-based query using IN over unique pairs
+
+Why: Fewer round trips; lets the DB dedupe.
+
+-- Build temp table or CTE of unique pairs
+WITH ao_pairs(ao_code, transit) AS (
+  SELECT DISTINCT ao_code, transit
+  FROM AO
+  WHERE (avprm_email = :email OR l1_delegate_email = :email)
+    AND (:isPan = 1 OR country IN (:countries))
+)
+SELECT DISTINCT ntm.uuid
+FROM restrain r
+JOIN notice_transaction_master ntm ON r.uuid = ntm.uuid
+JOIN ao_pairs p ON p.ao_code = r.ao_code AND p.transit = r.transit
+WHERE r.restrain_override_action IN (:actions)
+  AND (
+       (r.revised_restrain_due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 DAY')
+    OR (r.refresh_status = 'DUE_FOR_RESTRAIN'
+        AND r.original_restrain_due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 DAY')
+  );
+
+D) Always dedupe before pagination
+
+Why: Guarantees metadata matches the rendered list.
+
+After collecting UUIDs: uniqueUuids = uuids.distinct()
+
+totalCount = uniqueUuids.size()
+
+Apply offset/limit on uniqueUuids (or use a paged IN (...) fetch of details).
+
+
+Pagination contract (what to change)
+
+Current: totalCount = rawUuidList.length (can include duplicates).
+
+Change to: totalCount = count(distinct UUIDs after filters).
+
+Fetch details by paging the distinct UUID list (e.g., slice IDs for page N, then SELECT ... WHERE uuid IN (:pageIds)).
+
+
+Tests to add (minimal, high-signal)
+
+1. Duplicate AO rows, same (code, transit)
+
+
+
+Setup: AO has 3 rows for (801032, T1) and 3 for (801036, T1) tied to Amy.
+
+restrain has 2 matching UUIDs across those pairs.
+
+Expect: totalCount = 2, items length = 2, no duplicates.
+
+
+2. Pan vs non-Pan path
+
+
+
+Setup: Same as above; run with isPan = 1 and isPan = 0 + country list covering the AO rows.
+
+Expect: Same distinct results both ways.
+
+
+3. Edge: no matching restrain rows
+
+
+
+Expect: totalCount = 0, empty items.
+
+
+4. Performance/regression
+
+
+
+Setup: 5k AO rows with many dup pairs.
+
+Expect: Query count minimized (A) or single set-based call (C); response time acceptable.
+
+
+Safe migration notes
+
+If you change SQL to DISTINCT, still dedupe in code for belt-and-suspenders (A + B/D).
+
+Ensure the UI uses the API’s totalCount, not a client-side length, for the pager.
+
+
+Drop-in Jira text (pasteable)
+
+Title: Restrain Override shows incorrect total when AO has duplicate (AO Code, Transit) rows for a user
+
+Symptoms: Pager reports N items but only M (< N) render; duplicates appear in UUID aggregation for users whose email maps to multiple AO rows sharing the same (ao_code, transit).
+
+Root Cause: We execute the restrain/NTM query once per AO row. When multiple AO rows share identical (ao_code, transit), the same UUIDs are re-added to the master UUID list. totalCount/size is computed from this non-distinct list, while the details fetch collapses to the two unique UUIDs—causing a mismatch.
+
+Fix:
+
+1. Build a distinct set of (ao_code, transit) before querying;
+
+
+2. Ensure the restrain query returns DISTINCT uuid;
+
+
+3. Compute totalCount from distinct UUIDs and page on the distinct list before fetching details.
+
+
+
+Validation:
+
+Amy (P2L1) maps to six AO rows → two unique pairs → two unique UUIDs → totalCount=2, grid=2.
+
+Pan and per-country paths yield identical distinct results.
+
+
+Risk: Low; functional change limited to deduplication + accurate pagination.
+
+
+---
+
+If you want, I can also draft the exact DAO/repository change for your stack (JPA/QueryDSL or raw SQL) and a quick unit test scaffold.
+
+
+Here’s a short, business-friendly TL;DR you can drop in a chat or email:
+
+
+---
+
+TL;DR:
+It initially looked like some records were missing from the Restrain Override list, but that’s not the case. All the correct records are being shown — there are no omissions.
+
+What’s really happening is that the system is counting the same record multiple times behind the scenes because of duplicates in the setup for that officer. So the summary at the top (the “total count”) shows a higher number, but the actual list only shows the unique records that truly exist.
+
+In short — nothing’s being hidden or lost, it’s just a duplicate counting issue in the background that makes it look like fewer results are showing.
+
+
+---
+
+Would you like me to make a slightly more formal version too (for your email or meeting notes)?
+
+
