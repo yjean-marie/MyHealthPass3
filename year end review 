@@ -1,0 +1,72 @@
+Here’s your fully updated and cohesive version, refined for your RBC self-evaluation — with the corrected framing for your role in the Client API & Notification Table work. It reads in a clean, professional RBC tone, ready to paste into Workday or your formal review:
+
+
+---
+
+🧭 Drive to Impact
+
+Over the last eight months, I focused on delivering high-impact features that improved automation, compliance, and visibility across the KYC ecosystem.
+
+SMS Delivery Tracking: Led the end-to-end enhancement to include delivery-status tracking for SMS notifications from vendor Telios, moving beyond carrier-only feedback. Engaged Telios and the Network Gateway team to implement a daily S3-based delivery file, built a Stonebranch job to fetch and parse this file, and introduced a message-ID-based mapping system. This provided full visibility into SMS success rates and client engagement.
+
+Stonebranch Onboarding (Feature 4): Migrated 13 legacy cron jobs to API-driven web-service tasks, enabling full automation and real-time tracking. Implemented Schedule Job API integration for job lifecycle updates (“started,” “ongoing,” “failed,” “succeeded”), improving audit traceability and operational control.
+
+Client API & Notification Table (Feature 5): Partnered with the DataHub team early in the design of the new Client API, contributing to discussions on caching strategy and integration best practices. Once the normalized notification table (developed by another team member) and Client API were completed, I integrated both into our operational jobs—updating 13 of 20 jobs to consume the new data structures and interfaces. This ensured system-wide alignment and consistent client-data retrieval across environments.
+
+Reapply Restraint: Delivered a new automated job to reinstate client restrictions after 30 days, eliminating manual tracking by branch managers and reducing compliance risk.
+
+
+These initiatives collectively improved job automation, reduced operational delays, and strengthened delivery accuracy across the KYC platform.
+
+
+---
+
+🔄 Adapt Quickly, Always Learn
+
+Transitioning from the Core Banking (EYP0) team to KYC required rapid upskilling and system re-orientation.
+
+Quickly learned Stonebranch orchestration, Vault integrations, and KYC scheduling workflows to maintain continuous delivery.
+
+Designed reusable components such as the Schedule Job API and job tracking schema, which were adopted by both the 2024 backend efficiency stream and the 2025 client-engagement stream.
+
+Explored Azure OCR and agentic orchestration techniques while supporting the Amplify Agentic KYC solution, helping pilot automation for document verification and data extraction.
+
+Incorporated feedback from QE, SRE, and App Custodian teams to fine-tune deployments and health checks.
+
+
+This adaptability allowed me to integrate new frameworks quickly and deliver scalable, sustainable solutions.
+
+
+---
+
+🌱 Unlock the Potential of Our People
+
+Throughout this period, I focused on enabling my teammates to work more efficiently and confidently.
+
+Defined and implemented a GitHub branching strategy (modified GitFlow) to streamline collaboration and reduce merge conflicts.
+
+Facilitated weekly design reviews to encourage knowledge sharing and architectural alignment.
+
+Partnered with the DataHub team on Client API design considerations, providing guidance on caching and retrieval patterns.
+
+Took ownership of DAST and Aqua vulnerability remediation (including P1 Tomcat fixes) to keep developers focused on feature delivery rather than compliance.
+
+Provided mentorship and technical leadership to the Amplify intern team, guiding their work on the Agentic KYC solution for document verification and analytics.
+
+
+These efforts cultivated a more empowered and productive development culture across the team.
+
+
+---
+
+🗣 Speak Up for the Good of RBC
+
+I consistently championed secure, transparent, and high-quality delivery across all environments.
+
+Advocated for early identification and mitigation of vulnerabilities and misconfigurations that could affect production reliability.
+
+Raised key technical risks (e.g., timeout configurations, throttling limits, environment mismatches) and worked collaboratively across teams to resolve them before deployment.
+
+Promoted open, constructive discussion during retrospectives and design reviews, ensuring decisions were informed by both technical and business perspectives.
+
+Actively supported cross-team alignment with App Custodians, QE,
