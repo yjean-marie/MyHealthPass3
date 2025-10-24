@@ -1,0 +1,33 @@
+Totally makes sense. Here’s a lean Copilot prompt that relies on your project’s existing patterns and context.
+
+Add a new GET endpoint to our Spring Boot (Java 17) Job API that returns the most recent run for a given job name and calendar date, and sets the HTTP response code based on the job’s status.
+
+Requirements (use existing project conventions/entities/repos):
+- Route: create a sensible path (e.g., GET /api/jobs/latest) with query params: name (required), date (required, ISO yyyy-MM-dd).
+- Validate inputs; on missing/invalid -> 400.
+- Query the DB for runs matching the job name (case-insensitive) on that calendar date. Use the project’s timezone/storage convention for date filtering. Select ONLY the most recent run for that day (order by run timestamp desc, take 1).
+- If no record found -> 404.
+- If a record is found, return it as JSON and set the HTTP status based on `status`:
+  - completed  -> 200 OK
+  - started    -> 202 Accepted
+  - in progress-> 202 Accepted
+  - failed     -> 500 Internal Server Error
+  - unknown    -> 500
+- Keep naming, package structure, annotations, and logging consistent with this codebase. Reuse existing entity/fields (e.g., run timestamp and status) and repository patterns; only create new pieces if truly missing.
+
+Deliverables:
+- Controller/handler method implementing the endpoint.
+- Service method that performs the lookup and picks the most recent record.
+- Repository query optimized for name + date range, using the project’s style (derived method or @Query).
+- Small status→HttpStatus helper (switch/if) in the appropriate place.
+- Web layer/unit test(s) for: 400 invalid input, 404 no record, most-recent selection when multiple runs exist same day, and status→HTTP mapping (200/202/500).
+
+If you want this even tighter (for inline use in a code comment), here’s the ultra-brief version:
+
+GET endpoint: /api/jobs/latest?name=&date=yyyy-MM-dd
+- Validate params → 400 on error.
+- Find runs for `name` (case-insensitive) on `date` (calendar day per project TZ), pick most recent.
+- None → 404.
+- Found → return record JSON; HTTP code by status:
+  completed=200, started=202, in progress=202, failed=500, else=500.
+- Use existing entities/repos/conventions; add tests for 400/404/most-recent/mapping.
