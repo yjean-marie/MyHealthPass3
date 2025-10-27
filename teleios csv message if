@@ -1,0 +1,79 @@
+Got it — here’s how you can frame that defect clearly and completely for your JIRA story 👇
+
+
+---
+
+🧩 Defect Title
+
+Generate message for unrecognized Message ID during SMS delivery status processing
+
+
+---
+
+Defect Description
+
+When the SMS delivery status CSV file is processed daily, the service reads all records pushed to the S3 bucket by the carrier provider.
+However, this CSV file contains all SMS messages sent by RBC, not only those initiated by the KYC service.
+
+Currently, if a record (by Message ID) cannot be found in the Notice Transaction Master Table, the service skips it silently. No informational log or message is generated, resulting in incomplete reporting.
+
+This defect aims to generate an explicit message whenever a Message ID from the CSV file is not recognized (i.e., not found in the Notice Transaction Master Table).
+Such cases represent SMS messages sent by other RBC services.
+
+
+---
+
+Expected Behavior
+
+For every record in the CSV:
+
+If the Message ID is not found in the Notice Transaction Master Table, generate a message such as:
+
+> Message ID {id} not found in Notice Transaction Master Table – skipped as non-KYC record.
+
+
+
+These counts should also be reflected in the summary report at the end of processing.
+
+
+
+---
+
+Updated Summary Report Fields
+
+At the end of each run, the report should include the following counts:
+
+Metric	Description
+
+Total Rows Processed	Total records read from the CSV
+Total Rows Not Found	Records where Message ID not found in Notice Transaction Master Table (non-KYC messages)
+Total Rows Failed	Records found but failed during processing
+Total Rows Found & Processed Successfully	Successfully matched and processed KYC records
+Total Rows Found & Processed With Errors	Found records that had internal processing errors
+Total Rows Found, Backed Up & Processed Successfully	Records that were found, backed up, and processed without issues
+Total Rows Found, Backed Up & Processed With Errors	Records that were found, backed up, but processed with errors
+Total Rows Found (Overall)	Sum of all rows that were found and matched in Notice Transaction Master Table
+
+
+
+---
+
+Acceptance Criteria
+
+1. For every unrecognized Message ID, a log or message is generated clearly indicating that the record is not part of the KYC service.
+
+
+2. The final processing report includes the new “Total Rows Not Found” count.
+
+
+3. No impact on processing logic or downstream systems for recognized records.
+
+
+4. The implementation should maintain current success/error reporting behavior for matched records.
+
+
+
+
+---
+
+Would you like me to make it sound more formal and formatted like an RBC defect ticket (summary, background, impact, fix, and validation steps)? That’s typically how RBC QA likes it for traceability.
