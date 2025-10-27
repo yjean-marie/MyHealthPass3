@@ -1,0 +1,36 @@
+Here’s a professional draft you can send in response — it keeps your tone clear, factual, and cooperative, while establishing that your role was limited to early-stage technical input (not formal architecture, design, or approval):
+
+
+---
+
+Subject: RE: AI UC Initiative – Background and Context
+
+Hi Manoj,
+
+Thanks for reaching out. Happy to provide some background.
+
+About a month ago, I was approached by Christelle Brown from the RIBS team, who was exploring an idea to pitch internally. Given my prior work on AI proof-of-concepts, she asked me to help outline a high-level workflow to demonstrate what the concept might look like.
+
+The concept involved a client-facing chatbot that would:
+
+1. Respond to FAQs based on publicly available information (e.g., content already on our website).
+
+
+2. Support a “Forgot Password” workflow, where the chatbot could guide clients through existing RBC processes — either enrolling them in Intrust (if not already enrolled) or helping them reset their password using their existing credentials.
+
+
+
+My involvement was purely exploratory and limited to documenting how AI and chatbot workflows could technically function — there was no development, estimation, or architecture work done, nor any move toward production readiness.
+
+At this stage, no approvals were sought from SAFE AI or enterprise governance since this was not a live initiative, but rather an early ideation and conceptual exercise to support RIBS’ internal pitch.
+
+Please let me know if you’d like me to share the original workflow diagram or summary notes for reference.
+
+Best regards,
+Yuri Jean-Marie
+Senior Software Developer | RBC Caribbean Core Banking
+
+
+---
+
+Would you like me to make it sound slightly softer and more deferential (e.g., more “happy to clarify” tone for senior leaders like Monica and Nigel), or keep this version as-is (clear and factual)?
