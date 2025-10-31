@@ -1,0 +1,112 @@
+Excellent question — and you're absolutely right to call that out. Let me explain with full transparency.
+
+
+---
+
+🔍 Why I Left Out Some Lines (Like mkdir, pwd, ls, etc.)
+
+✅ 1. Focus on the CVE Fix First
+
+You asked specifically how to solve the Aqua vulnerability (CVE-2025-59375) in the nginx-unprivileged image. So I zoomed in on:
+
+Removing libexpat
+
+Ensuring container still runs cleanly
+
+Making it Aqua-compliant
+
+
+That led me to simplify the Dockerfile to only the parts strictly needed to:
+
+Remove the vulnerable package
+
+Copy files
+
+Start NGINX in the foreground
+
+
+But that’s not the whole story — and you're absolutely right that this image also includes logging setup, secret injection, and directory prep that your team depends on.
+
+
+---
+
+🛠 Here's What I Should've Done
+
+I should've given you a full version of your Dockerfile — just modified for the unprivileged context and Aqua fix — not just the minimum working example.
+
+Let me now give you the correct and complete version, retaining all your original logic:
+
+
+---
+
+✅ 🔁 Complete Dockerfile (based on your current one)
+
+FROM oss-docker.rbcartifactory.fg.rbc.com/nginxinc/nginx-unprivileged:stable as base
+
+USER root
+
+# Remove libexpat to resolve CVE-2025-59375
+RUN apt-get update && \
+    apt-get remove -y libexpat1 libexpat1-dev || echo "libexpat not present" && \
+    apt-get autoremove -y && apt-get clean
+
+# Copy app UI
+COPY ./dist/rbcc-kyc-refresh-ui /usr/share/nginx/html/kyc-portal
+
+# Copy nginx config
+COPY ./default.conf.template /etc/nginx/templates/default.conf.template
+
+# Debug (optional, keep if still needed)
+RUN pwd
+RUN ls -ltr
+
+# Set up docker-entrypoint scripts
+RUN mkdir -p /docker-entrypoint.d
+COPY docker-entrypoint.sh /docker-entrypoint.d/
+RUN chmod +x /docker-entrypoint.d/docker-entrypoint.sh
+RUN chown 101 /docker-entrypoint.d/docker-entrypoint.sh
+
+COPY inject-secrets.sh /docker-entrypoint.d/
+RUN chmod +x /docker-entrypoint.d/inject-secrets.sh
+
+# Set up log directory
+RUN mkdir -p /app/logs
+RUN chown -R 101 /usr/share/nginx/html/
+
+USER 101
+
+# Set this ONLY if your entrypoint handles NGINX start
+# ENTRYPOINT ["/docker-entrypoint.d/docker-entrypoint.sh"]
+
+# Otherwise, just run nginx directly:
+CMD ["nginx", "-g", "daemon off;"]
+
+EXPOSE 8080
+
+
+---
+
+🧠 Why This Is Better
+
+✅ Keeps all your original logic: mkdirs, chmods, chowns, file copies
+
+✅ Removes libexpat to fix Aqua CVE
+
+✅ Uses CMD instead of RUN to avoid restart loops
+
+✅ Works with the unprivileged image as-is (no need for root post-setup)
+
+
+
+---
+
+Let me know if:
+
+Your entrypoint script starts NGINX (then switch to ENTRYPOINT)
+
+You want to auto-test Aqua scan output
+
+Or want a diff patch version for PR review
+
+
+You're doing everything right — just needed a slight realignment on Dockerfile layers.
