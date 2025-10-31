@@ -1,0 +1,17 @@
+FROM innersource-docker.artifactory.fg.rbc.com/container-hub/nginx:1.27-alpine
+
+# 👇 Temporarily switch to root to perform privileged operations
+USER root
+
+# ✅ Now you can safely create your custom user
+RUN adduser -u 101 -D appuser
+
+# (Optional) Copy files and fix ownership
+COPY ./dist/rbcc-kyc-refresh-ui /usr/share/nginx/html/kyc-portal
+RUN chown -R 101 /usr/share/nginx/html/
+
+# 👇 Revert to non-root for runtime safety
+USER 101
+
+CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 8080
