@@ -1,0 +1,117 @@
+Got it — you're handling both paths in parallel (well played 😎), and the current blocker is on the nginx-unprivileged path:
+
+
+---
+
+🚨 Problem Recap: nginx-unprivileged image is flagged by Aqua for CVE-2025-59375
+
+This CVE is for libexpat, a library used for parsing XML. Even though you're running as non-root with a hardened image, Aqua is flagging this because libexpat1 is still present in the image.
+
+Let’s solve this specifically.
+
+
+---
+
+🧪 Step 1: Confirm the Image Contains libexpat
+
+You can confirm inside the container by running:
+
+docker run --rm -it nginxinc/nginx-unprivileged:stable sh
+
+Then inside:
+
+apk info | grep expat       # Alpine-based
+# OR
+dpkg -l | grep expat        # Debian-based
+
+ldd /usr/sbin/nginx | grep expat
+
+If you see:
+
+libexpat.so.1 => /usr/lib/libexpat.so.1
+
+That confirms NGINX or one of its dependencies links to libexpat.
+
+
+---
+
+🧨 Problem: You Can’t Just Remove libexpat
+
+Because if NGINX or OpenSSL (or anything in the chain) depends on libexpat, removing it will break the runtime. You'll either get a failure to start or silent NGINX crashes.
+
+
+---
+
+✅ Recommended Fix Path: Use Multi-Stage Build to Strip libexpat
+
+You can’t modify the base image directly, so instead:
+
+✅ Solution: Build your own CVE-scrubbed image FROM nginx-unprivileged
+
+Here's how:
+
+
+---
+
+🔧 Custom Dockerfile (Minimal Patch)
+
+FROM oss-docker.rbcartifactory.fg.rbc.com/nginxinc/nginx-unprivileged:stable as base
+
+USER root
+
+# Try removing libexpat safely
+RUN apt-get update && apt-get remove -y libexpat1 libexpat1-dev || echo "expat not found" && \
+    apt-get autoremove -y && apt-get clean
+
+# Copy your build files
+COPY ./dist/rbcc-kyc-refresh-ui/ /usr/share/nginx/html/kyc-portal
+COPY ./default.conf.template /etc/nginx/templates/default.conf.template
+
+# Optional: copy secrets or entrypoint scripts
+COPY docker-entrypoint.sh /docker-entrypoint.d/
+COPY inject-secrets.sh /docker-entrypoint.d/
+RUN chmod +x /docker-entrypoint.d/*.sh
+
+# Drop back to unprivileged user
+USER nginx
+
+# Start NGINX in foreground
+CMD ["nginx", "-g", "daemon off;"]
+
+
+---
+
+🧠 Explainer
+
+🔍 Step	💡 Purpose
+
+apt-get remove libexpat1	Strips the vulnerable lib
+`	
+USER nginx	Restores non-root execution
+CMD	Keeps pod alive and compliant with OpenShift
+
+
+
+---
+
+🧼 Optional: Use dpkg -l to See Remaining CVEs
+
+Add this near the end to list all remaining system packages (for audit/trace):
+
+RUN dpkg -l > /installed-packages.txt
+
+You can grep this file in Aqua or post-deployment.
+
+
+---
+
+✅ TL;DR (Short Answer)
+
+> You can’t patch nginx-unprivileged directly, but you can safely remove libexpat via apt-get remove libexpat1 -y in your Dockerfile, provided it’s not a required dependency. Add that in your custom layer on top of the base image, verify the container still starts, and Aqua should stop flagging CVE-2025-59375.
+
+
+
+
+---
+
+Want me to generate a completely clean Dockerfile version for you to drop into your repo now?
