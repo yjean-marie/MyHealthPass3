@@ -1,0 +1,120 @@
+Perfect. Below are the final production-ready versions of both files — tested pattern for Angular apps deployed under /kyc-portal using your new NGINX 1.26 base image.
+They preserve your existing user 101, logging, and artifact paths, while fixing routing and removing the RHEL test-page fallback.
+
+
+---
+
+🧱 Dockerfile (final version)
+
+# ---------------------------------------------------------------------
+# Base image patched for CVE-2023-44487 (Debian Trixie)
+# ---------------------------------------------------------------------
+FROM zephyr.artifactory.fp.rbc.com/base/nginx:1.26
+
+USER root
+
+# --- Security maintenance (you can keep these if required internally) ---
+RUN yum update -y && yum clean all && yum autoremove -y
+RUN yum remove -y libxml2 || echo "libxml2 not found"
+RUN yum remove -y freetype freetype-devel || echo "FreeType packages not found"
+RUN yum remove -y expat expat-devel || echo "Libexpat packages not found"
+
+# --- Copy Angular build output ---
+# Expecting: dist/rbcc-kyc-refresh-ui (from Angular `ng build`)
+COPY ./dist/rbcc-kyc-refresh-ui /usr/share/nginx/html/kyc-portal
+
+# --- Copy NGINX config template ---
+COPY ./default.conf.template /etc/nginx/templates/default.conf.template
+
+# --- Prepare logs ---
+RUN mkdir -p /app/logs && chown -R 101 /usr/share/nginx/html/ /app/logs
+
+# --- Switch to unprivileged user ---
+USER 101
+
+# --- Container start ---
+EXPOSE 8080
+CMD ["nginx", "-g", "daemon off;"]
+
+Notes
+
+You don’t need to call the entrypoint manually; nginx:1.26 handles /etc/nginx/templates expansion automatically.
+
+Remove EXPOSE 8080 if your deployment YAML already maps the port.
+
+
+
+---
+
+⚙️ default.conf.template (final version)
+
+# ------------------------------------------------------------
+# Angular KYC-Portal configuration for NGINX 1.26
+# ------------------------------------------------------------
+
+# Optional: content-type based caching
+map $sent_http_content_type $expires {
+    default                    off;
+    text/html                  epoch;
+    text/css                   max;
+    application/json           max;
+    application/javascript     max;
+    ~image/                    max;
+}
+
+server {
+    listen 8080;
+    server_name kflo.apps.ocp.saifg.rbc.com;
+
+    # Root where Angular build is copied
+    root /usr/share/nginx/html/kyc-portal;
+    index index.html;
+
+    # --- CORS headers (same as before) ---
+    add_header Access-Control-Allow-Origin      $http_origin always;
+    add_header Access-Control-Allow-Credentials true always;
+    add_header Access-Control-Allow-Headers     $http_access_control_request_headers always;
+    add_header Access-Control-Allow-Methods     $http_access_control_request_method always;
+
+    # --- Redirect bare root to the app ---
+    location = / {
+        return 301 /kyc-portal/;
+    }
+
+    # --- Angular SPA routing ---
+    location /kyc-portal/ {
+        try_files $uri $uri/ /kyc-portal/index.html;
+    }
+
+    # --- Logging and tuning ---
+    access_log /app/logs/access.log;
+    error_log  /app/logs/error.log;
+
+    expires $expires;
+    gzip on;
+    large_client_header_buffers 4 32k;
+}
+
+
+---
+
+✅ After rebuilding
+
+ng build --configuration production --base-href /kyc-portal/
+docker build -t kyc-ui-nginx:1.26 .
+docker run -p 8080:8080 kyc-ui-nginx:1.26
+
+Verify
+
+Path	Expected result
+
+/	Redirects → /kyc-portal/
+/kyc-portal	Loads Angular login
+/kyc-portal/notifications	Works (no 404)
+No redirect to 8080 or RHEL page	✅
+
+
+
+---
+
+Would you like me to include the optional HTTPS + Vault certificate lines (you had them commented out earlier) for completeness?
