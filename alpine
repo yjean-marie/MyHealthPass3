@@ -1,0 +1,25 @@
+FROM nginx:1.27-alpine
+
+USER root
+
+# Copy UI and config files
+COPY ./dist/rbcc-kyc-refresh-ui /usr/share/nginx/html/kyc-portal
+COPY ./default.conf.template /etc/nginx/templates/default.conf.template
+
+# Inject your entrypoint scripts
+RUN mkdir -p /docker-entrypoint.d
+COPY docker-entrypoint.sh /docker-entrypoint.d/
+COPY inject-secrets.sh /docker-entrypoint.d/
+RUN chmod +x /docker-entrypoint.d/*.sh
+
+# Set proper ownership for app content
+RUN mkdir -p /app/logs && \
+    chown -R 101 /usr/share/nginx/html/ /app/logs /docker-entrypoint.d/
+
+# Run as the original UID 101 (same as your original working image)
+USER 101
+
+# Start nginx in foreground (keeps container alive)
+CMD ["nginx", "-g", "daemon off;"]
+
+EXPOSE 8080
