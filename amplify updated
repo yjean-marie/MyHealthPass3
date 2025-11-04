@@ -1,0 +1,181 @@
+Absolutely — here is a refined version of all three slides, with the second slide updated to align with your vision: each step in the KYC journey should “feed into” both the current process (Before Beacon) and the optimized version (After Beacon). This will give you a smooth narration structure and better visual clarity for your demo.
+
+
+---
+
+✅ SLIDE 1: “Know Your Client” Process – Current State
+
+Slide Title
+
+“Know Your Client” Process – Current State
+
+Slide Content
+
+(Visual: Horizontal flowchart with the following steps)
+
+KYC Regulation
+
+Gap Identification
+
+Outreach to Client
+
+Document Collection
+
+Verification
+
+Validation
+
+KYC Update
+
+
+(Overlay: Small callouts showing pain points per stage: e.g., “Manual effort,” “Rulebooks per jurisdiction,” “Human verification,” “Multiple follow-ups”)
+
+
+---
+
+Speaker Notes:
+
+> Let’s begin with the current state of our KYC journey.
+
+From left to right, we start with interpreting the KYC regulation and identifying what's missing — this differs across countries and products.
+
+Once we identify a gap, outreach begins. This is where things slow down. Communication is manual, often 1-to-1, and clients don’t always respond promptly.
+
+Document collection happens next. This means email threads, PDF attachments, calls — and a lot of back-and-forth.
+
+Once we finally receive documents, verification and validation are manual too. Staff go line by line, checking whether documents meet criteria.
+
+Only then can we update the system.
+
+It’s a fragile process. Small errors lead to big consequences — missing a regulatory detail, incorrect data updates, or delayed processing. It’s not scalable or sustainable.
+
+
+
+
+---
+
+✅ SLIDE 2: How Beacon Solves the Problem
+
+Slide Title
+
+How Beacon Solves the Problem
+
+Slide Content
+
+(Split-screen layout: left = “Before Beacon,” right = “After Beacon”)
+Overlay each of the 7 stages from Slide 1 — with parallel explanations:
+
+Stage	Before Beacon (Manual)	After Beacon (With Automation)
+
+KYC Regulation	Analyst manually checks PDFs, policies, and rulebooks	AI analyzes rules by jurisdiction + product instantly
+Gap Identification	Staff determine gaps manually, using spreadsheets	Gaps are inferred through pattern detection and rules engine
+Outreach to Client	Manual emails / letters / follow-ups	Auto-generated messages with links and status dashboards
+Document Collection	Email attachments, uploads, multiple follow-ups	Single portal + reminders + receipt validation
+Verification	Human verifies document types and validity	AI extracts and matches data to jurisdictional rules
+Validation	Staff double-check entries and file status updates	Automated matching with exception alerts to staff
+KYC Update	Manual updates into the backend systems	System updates automatically with optional staff review
+
+
+(Footnote: Average time reduced from 10 days → 3 hours)
+
+
+---
+
+Speaker Notes:
+
+> Here’s where Beacon radically changes the game.
+
+For each step in the KYC process, we looked at what’s manual today — and reimagined it with automation and intelligence.
+
+Rather than separate it out, we map each of the stages from Slide 1 across both the Before and After views here.
+
+So at the top:
+Instead of reading regulatory PDFs or interpreting legal policies manually, Beacon reads and parses those rules using GenAI.
+
+It then moves into gap identification — no more Excel trackers. Beacon infers what’s missing based on product type, jurisdiction, and the client’s status.
+
+Outreach is now automated. The system generates client messages with secure upload links and reminders.
+
+On the document side, instead of getting attachments across email or scanning shared folders, Beacon provides a single portal that confirms receipt, type, and status.
+
+And once documents are in, AI does the first round of verification: ID checks, expiration dates, matching required fields.
+
+Validation still includes human oversight — but the errors are flagged automatically, not discovered too late.
+
+Finally, Beacon updates the backend systems — seamlessly and securely.
+
+This is not just faster. It’s auditable, compliant, and scalable.
+
+
+
+
+---
+
+✅ SLIDE 3: North Star Vision – AI-Driven KYC Agent
+
+Slide Title
+
+North Star Vision: AI-Driven KYC Agent
+
+Slide Content
+
+(Visual: Two sections — Left = “Client Experience”, Right = “Staff Experience” — with central node “Beacon AI KYC Agent” orchestrating both)
+
+Client Experience:
+
+Secure portal access
+
+Upload docs & track status
+
+Get real-time alerts
+
+See completed requirements
+
+
+Staff Experience:
+
+Proactive refresh management
+
+Automated gap analysis
+
+Document verification
+
+Backend integration + audit trail
+
+
+(Footnote: GenAI + backend orchestration + KYC compliance engine)
+
+
+---
+
+Speaker Notes:
+
+> This is the North Star — where we’re headed with Beacon.
+
+The center of the system is an AI-driven KYC Agent — designed to assist both clients and staff.
+
+For clients, we’re giving them transparency and control:
+A clean portal to see what’s required, upload their documents, and track status — with notifications and timelines built in.
+
+For staff, we’re automating the painful pieces:
+Beacon knows when a refresh is due, what requirements are needed, and how to verify documents based on the rules.
+
+This agent also integrates with our core systems and generates an audit trail, helping us stay on top of regulatory compliance.
+
+This is not just automation for the sake of it — this is building a safer, smarter, and more scalable KYC process for RBC.
+
+
+
+
+---
+
+Let me know if you'd like:
+
+✅ A diagram added to slide 2 showing the “feeding” structure visually
+
+📊 A fourth slide with live demo screenshots or mock flow
+
+📥 Export to PowerPoint with these updates
+
+
+Ready when you are!
