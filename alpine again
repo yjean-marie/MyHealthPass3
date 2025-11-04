@@ -1,0 +1,29 @@
+FROM innersource-docker.artifactory.fg.rbc.com/container-hub/nginx:1.28-alpine
+
+USER root
+
+# Install dos2unix for fixing line endings (in case of Windows edits)
+RUN apk add --no-cache dos2unix
+
+# Copy UI and config files
+COPY ./dist/rbcc-kyc-refresh-ui /usr/share/nginx/html/kyc-portal
+COPY ./default.conf.template /etc/nginx/templates/default.conf.template
+
+# Inject your entrypoint scripts
+RUN mkdir -p /docker-entrypoint.d
+COPY docker-entrypoint.sh /docker-entrypoint.d/
+COPY inject-secrets.sh /docker-entrypoint.d/
+
+# Fix line endings and ensure scripts are executable
+RUN dos2unix /docker-entrypoint.d/*.sh \
+    && chmod +x /docker-entrypoint.d/*.sh
+
+# Set proper ownership
+RUN mkdir -p /app/logs \
+    && chown -R 101 /usr/share/nginx/html/ /app/logs /docker-entrypoint.d/
+
+USER 101
+
+# NOTE: Do not RUN any script here — they’ll run at container startup automatically
+CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 8080
