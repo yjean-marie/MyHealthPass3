@@ -1,0 +1,126 @@
+Thanks! The image confirms a few key things. You're using:
+
+FROM innersource-docker.artifactory.fg.rbc.com/container-hub/nginx:1.27-alpine
+
+And everything worked fine on 1.27-alpine, but broke when you bumped to 1.28-alpine. The exact error was:
+
+/docker-entrypoint.sh: line 31: /docker-entrypoint.d/docker-entrypoint.sh: not found
+
+
+---
+
+✅ Diagnosis Summary
+
+Here’s what’s happening:
+
+✅ 1.27-alpine	❌ 1.28-alpine
+
+Tolerant of minor issues	Stricter about shell script formatting
+Likely ignored CRLF or permission issues	Fails fast if: <br>• File not executable<br>• File has Windows (CRLF) line endings
+
+
+This is a breaking change introduced in Alpine 3.19+, which is now used in nginx:1.28-alpine.
+
+
+---
+
+📌 Your Current Dockerfile (From Image)
+
+FROM innersource-docker.artifactory.fg.rbc.com/container-hub/nginx:1.27-alpine
+
+USER root
+
+# Copy UI and config files
+COPY ./dist/rbcc-kyc-refresh-ui /usr/share/nginx/html/kyc-portal
+COPY ./default.conf.template /etc/nginx/templates/default.conf.template
+
+# Inject your entrypoint scripts
+RUN mkdir -p /docker-entrypoint.d
+COPY docker-entrypoint.sh /docker-entrypoint.d/
+COPY inject-secrets.sh /docker-entrypoint.d/
+RUN chmod +x /docker-entrypoint.d/*.sh
+
+# Set proper ownership for app content
+RUN mkdir -p /app/logs && \
+    chown -R 101 /usr/share/nginx/html/ /app/logs /docker-entrypoint.d/
+
+USER 101
+
+CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 8080
+
+
+---
+
+🛠 Fix for nginx:1.28-alpine
+
+Here’s the updated Dockerfile that:
+
+1. Preserves all your original logic
+
+
+2. Fixes the shell error on 1.28 by adding dos2unix
+
+
+3. Keeps you running as UID 101
+
+
+
+FROM innersource-docker.artifactory.fg.rbc.com/container-hub/nginx:1.28-alpine
+
+USER root
+
+# Install dos2unix for fixing line endings
+RUN apk add --no-cache dos2unix
+
+# Copy UI and config files
+COPY ./dist/rbcc-kyc-refresh-ui /usr/share/nginx/html/kyc-portal
+COPY ./default.conf.template /etc/nginx/templates/default.conf.template
+
+# Inject your entrypoint scripts
+RUN mkdir -p /docker-entrypoint.d
+COPY docker-entrypoint.sh /docker-entrypoint.d/
+COPY inject-secrets.sh /docker-entrypoint.d/
+
+# Fix permissions and CRLF line endings
+RUN dos2unix /docker-entrypoint.d/*.sh \
+    && chmod +x /docker-entrypoint.d/*.sh
+
+# Set proper ownership for app content
+RUN mkdir -p /app/logs && \
+    chown -R 101 /usr/share/nginx/html/ /app/logs /docker-entrypoint.d/
+
+USER 101
+
+CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 8080
+
+
+---
+
+💡 Notes
+
+dos2unix ensures your shell scripts don't crash due to CRLF (^M) characters.
+
+You can remove dos2unix from the Dockerfile only if you're 100% sure your local scripts are saved with LF line endings only.
+
+Keeping USER 101 is fine. There is no need to switch to 1001 unless your pipeline specifically requires it.
+
+
+
+---
+
+✅ Final Tip
+
+To confirm whether this resolves the issue before pushing to prod, you can:
+
+docker build -t test-nginx:1.28 .
+docker run --rm -it test-nginx:1.28 sh
+ls -l /docker-entrypoint.d/
+
+If everything is +x and runs without shell errors, you’re good to go.
+
+
+---
+
+Would you like me to generate a .Dockerfile text download for convenience?
