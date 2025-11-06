@@ -1,0 +1,27 @@
+Perfect — here’s the updated executive explanation with that context woven in naturally:
+
+
+---
+
+🧭 Executive Explanation (for Amy / leadership)
+
+The issue with promoting the banner feature to Test stems from our ongoing migration of build pipelines. Initially, the promotion failed under the legacy Helios V1 (Jenkins) pipeline due to a deployment issue within that environment. When the team reached out to DevOps, we were advised that Helios V1 is being deprecated and all deployments must now transition to Helios V2, which runs on GitHub Actions.
+
+This migration has since been initiated, but the first deployment attempt under the new framework encountered setup and configuration alignment issues — which are expected during initial onboarding. In short, the delay is pipeline-related rather than feature-related, and once the Helios V2 configuration stabilizes, promotions should proceed normally.
+
+
+
+
+
+
+---
+
+Would you like me to make a matching short version (2–3 lines) for your postponement message to Amy or to include in the Jira ticket comment?
+
+
+
+
+
+Sure — here’s a clean 2–3 liner you can use for Amy or in a ticket/postponement note:
+
+> The banner feature couldn’t be promoted to Test due to a pipeline issue. The initial Jenkins (Helios V1) deployment failed, and since that version is being deprecated, the team migrated to Helios V2 (GitHub Actions). The first deployment under the new framework encountered configuration setup issues, which are currently being resolved.
