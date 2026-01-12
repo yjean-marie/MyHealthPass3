@@ -1,0 +1,7 @@
+I’ve reviewed the vulnerabilities that were flagged and they are all related to container image scanning results.
+I’m currently working on addressing the core vulnerability itself by updating the affected library/packages and will provide confirmation once that is completed.
+For context, identification wasn’t as immediate as before due to some visibility differences following the move to GitHub Actions, where these scan results are surfaced differently than they were previously.
+I’ve set up a call with Kamad tomorrow to get clarity on why this is happening and to confirm whether adjustments are needed to how this stage is configured in our GitHub Actions workflow.
+I’ll keep you posted on progress.
+Thanks,
+[Your Name]
