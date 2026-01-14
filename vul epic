@@ -1,0 +1,8 @@
+Hey Priyanka — quick alignment on the vulnerability tracking we discussed.
+We’ve got ~20 scanner findings, but they really map to about 4–5 distinct CVEs, some affecting multiple codebases. A number of these are high-priority findings and already escalated, so we do need to move on them quickly.
+To keep things clean and traceable while we work through them, what I’m proposing is:
+one Security / Vulnerability epic (or reuse an existing one if there is one),
+one story per CVE, and
+sub-tasks per affected codebase where applicable.
+That avoids creating 20+ duplicated stories but still gives us clear visibility and tracking as we prioritise and pull them into sprints.
+Let me know if that structure works for you, or if there’s an established approach you’d prefer us to follow.
