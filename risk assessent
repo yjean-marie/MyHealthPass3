@@ -1,0 +1,254 @@
+Release Risk Assessment & Rollback Strategy
+Release 1 – Helios v1 (Jenkins) to Helios v2 (GitHub Actions) Migration
+1. Document Purpose
+
+This document outlines the deployment risk, rollback constraints, and mitigation strategies associated with Release 1, scheduled for 20 February 2026, which introduces production deployments using Helios v2 (GitHub Actions) following the decommissioning of Helios v1 (Jenkins) pipelines.
+
+The objective is to:
+
+Clearly articulate the identified risk
+
+Document feasible mitigation options
+
+Define the recovery strategy in the absence of a traditional rollback
+
+Record risk acceptance for governance and audit purposes
+
+2. Release Overview
+
+Release Name: Release 1
+
+Production Date: 20 February 2026
+
+Change Type: CI/CD platform migration (Helios v1 → Helios v2) with functional changes
+
+Deployment Mechanism: Helios v2 (GitHub Actions)
+
+3. In-Scope Components (Release 1)
+
+The following five repositories are included in Release 1 and contain functional changes:
+
+Portal Cloud API
+
+Box Cloud API
+
+Orchestrator Cloud API
+
+Restrain Cloud API
+
+Refresh UI
+
+All components have already been:
+
+Migrated to Helios v2
+
+Successfully deployed and validated in:
+
+Dev
+
+QAT
+
+QAT3
+
+UAT
+
+Pre-Prod
+
+4. Identified Risk
+Risk Description
+
+All existing Helios v1 (Jenkins) pipelines for the organisation’s repositories are currently disabled.
+As a result, Release 1 production deployments executed via Helios v2 do not have an immediate fallback to Helios v1 in the event of a production issue.
+
+If a critical issue occurs after deployment:
+
+A traditional rollback to the previously deployed production state via Jenkins is not available
+
+Recovery must rely on Helios v2–based rollback or fix-forward remediation
+
+5. Risk Scenario
+
+Release 1 is deployed to production using Helios v2
+
+A blocking or high-severity issue is identified post-deployment
+
+Helios v1 pipelines are unavailable for rollback
+
+The team must:
+
+Roll back using Helios v2, or
+
+Fix forward within the approved change window
+
+Escalate via Emergency Change if remediation exceeds the window
+
+6. Potential Impact
+
+Inability to immediately revert to a previously stable deployment via Jenkins
+
+Increased operational pressure during the change window
+
+Potential service degradation if remediation extends beyond the deployment window
+
+Reliance on emergency change processes if required
+
+7. Risk Assessment
+
+Risk Type: Deployment / Operational Risk
+
+Likelihood: Low–Medium
+
+Impact: High
+
+Overall Risk Rating: Medium–High (prior to mitigation)
+
+8. Mitigation Option 1 – Temporary Re-Enablement of Helios v1 (Jenkins)
+Description
+
+Request a temporary exemption to re-enable Helios v1 (Jenkins) pipelines for the five repositories included in Release 1, allowing rollback to the previously deployed production state if required.
+
+This would require:
+
+Formal approval from Monica Brown
+
+Temporary reactivation of Jenkins pipelines for Release 1 scope only
+
+Benefits
+
+Restores a proven rollback mechanism
+
+Minimises production deployment risk for Release 1
+
+Limitations
+
+Exemption approval is uncertain
+
+Not aligned with standard exemption criteria
+
+Additional exemptions would be required for future releases
+
+Not a scalable long-term solution
+
+Residual Risk (If Approved)
+
+Residual Risk: Low
+
+Governance Dependency: High
+
+9. Mitigation Option 2 – Helios v2 Controlled Rollback Strategy (Recommended)
+Description
+
+Establish a Helios v2–validated rollback baseline by deploying the current production versions of the affected repositories through Helios v2 to Pre-Prod prior to Release 1, followed by regression testing.
+
+This ensures rollback capability within Helios v2 itself.
+
+9.1 Execution Approach – Release 1 (Five Repositories)
+
+Baseline Deployment
+
+Take the current production versions of the five repositories
+
+Deploy via Helios v2 through all lower environments up to Pre-Prod
+
+Regression Validation
+
+Perform full regression testing in Pre-Prod
+
+Validate functional parity with production
+
+Confirm Helios v2 pipeline stability
+
+Production Deployment
+
+Deploy Release 1 changes to production via Helios v2
+
+Rollback & Recovery
+
+If issues arise:
+
+Roll back to the Helios v2–validated baseline
+
+If rollback deployment fails:
+
+Apply fix-forward remediation
+
+Raise an Emergency Change if remediation exceeds the approved window
+
+9.2 Follow-On Approach – Remaining Five Repositories (Pipeline-Only Change)
+
+Between Release 1 and Release 2, the remaining five repositories will be migrated to Helios v2 without introducing any functional changes.
+
+Execution Steps
+
+Identify the current production versions of the remaining repositories
+
+Convert pipelines to Helios v2
+
+Deploy the unchanged production code via Helios v2 through:
+
+Dev
+
+QAT
+
+QAT3
+
+UAT
+
+Pre-Prod
+
+Perform regression testing and obtain:
+
+Master Test Plan (MTP) sign-off
+
+Required approvals
+
+Deploy the same production versions to production via Helios v2
+
+If issues occur:
+
+Fix forward within the change window
+
+Escalate via Emergency Change if required
+
+10. Residual Risk (Post-Mitigation)
+
+Even with mitigation in place:
+
+Rollback is dependent on Helios v2
+
+If both forward deployment and rollback fail, recovery relies on fix-forward remediation
+
+Emergency Change processes may be required
+
+This residual risk is explicitly acknowledged and accepted as part of the Helios v1 → Helios v2 transition phase.
+
+11. Recommended Approach
+
+Mitigation Option 2 is recommended for Release 1 as it:
+
+Avoids reliance on governance exemptions
+
+Aligns with the long-term CI/CD strategy
+
+Provides a validated rollback mechanism within Helios v2
+
+Scales cleanly to remaining repositories
+
+12. Go-Live Preconditions
+
+Release 1 production deployment is conditional on:
+
+Successful regression testing in Pre-Prod
+
+MTP approval and sign-off
+
+Helios v2 pipeline verification
+
+Change window approval
+
+13. Risk Acceptance
+
+The identified deployment and rollback risks associated with Release 1 are understood and accepted, subject to the mitigation measures outlined in this document and adherence to emergency change procedures if required.
+
+Risk Owner: (To be assigned)
+Approval Authority: (Change / Release Governance)
